@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FroFroKit - Retro Learning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Quicksand:wght@400;700&display=swap');
+
+        :root {
+            --retro-purple: #2d1b4e;
+            --retro-pink: #ff007f;
+            --retro-cyan: #00f3ff;
+            --retro-yellow: #ffcc00;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--retro-purple);
+            color: #fff;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .retro-font { font-family: 'Press Start 2P', cursive; }
+        .pixel-font { font-family: 'VT323', monospace; }
+
+        .retro-border {
+            border: 4px solid #fff;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+        }
+
+        .btn-retro {
+            font-family: 'Press Start 2P', cursive;
+            padding: 12px 24px;
+            border: 4px solid #fff;
+            background: #44337a;
+            box-shadow: 6px 6px 0px #000;
+            transition: all 0.1s;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .btn-retro:active {
+            transform: translate(3px, 3px);
+            box-shadow: 3px 3px 0px #000;
+        }
+
+        .btn-cyan { background: var(--retro-cyan); color: #000; border-color: #000; box-shadow: 4px 4px 0px #004d52; }
+        .btn-pink { background: var(--retro-pink); color: #fff; border-color: #fff; box-shadow: 4px 4px 0px #6d0036; }
+        .btn-yellow { background: var(--retro-yellow); color: #000; border-color: #000; box-shadow: 4px 4px 0px #8a6d00; }
+
+        .screen { min-height: calc(100vh - 80px); }
+        .hidden { display: none; }
+
+        .grid-bg {
+            background-image: linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        canvas {
+            image-rendering: pixelated;
+            background: #000;
+        }
+
+        .pack-shake {
+            animation: shake 0.5s infinite;
+        }
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .rarity-common { color: #fff; }
+        .rarity-rare { color: #00f3ff; text-shadow: 0 0 5px #00f3ff; }
+        .rarity-epic { color: #ff007f; text-shadow: 0 0 8px #ff007f; }
+        .rarity-legendary { color: #ffcc00; text-shadow: 0 0 10px #ffcc00; animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body class="grid-bg">
+
+    <!-- NAVIGATION -->
+    <header class="h-20 bg-black/50 border-b-4 border-white flex items-center justify-between px-8 sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <div class="text-3xl">🧊</div>
+            <h1 class="retro-font text-xl tracking-tighter">FROFRO<span class="text-cyan-400">KIT</span></h1>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <div class="hidden md:flex gap-4 pixel-font text-2xl">
+                <span class="text-yellow-400">COINS: <span id="nav-coins">0</span></span>
+                <span class="text-pink-400">XP: <span id="nav-xp">0</span></span>
+            </div>
+            <button id="nav-market-btn" class="btn-retro text-xs py-2 px-4">Market</button>
+            <div id="user-display" class="pixel-font text-xl text-cyan-300">Guest</div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <!-- HOME SCREEN -->
+        <div id="screen-home" class="screen flex flex-col items-center justify-center gap-12">
+            <div class="text-center">
+                <h2 class="retro-font text-4xl mb-4 animate-pulse">CHOOSE YOUR QUEST</h2>
+                <p class="pixel-font text-2xl text-indigo-200">The Ultimate Classroom Adventure</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 w-full max-w-5xl">
+                <div class="bg-indigo-900/40 p-6 retro-border flex flex-col items-center text-center">
+                    <div class="text-6xl mb-4">🏃</div>
+                    <h3 class="retro-font text-sm mb-4">Pixel Climber</h3>
+                    <p class="pixel-font text-xl mb-6">Answer to jump higher. Don't touch the lava!</p>
+                    <button id="play-platformer-btn" class="btn-retro btn-cyan w-full">Play</button>
+                </div>
+
+                <div class="bg-indigo-900/40 p-6 retro-border flex flex-col items-center text-center opacity-50">
+                    <div class="text-6xl mb-4">🛡️</div>
+                    <h3 class="retro-font text-sm mb-4">FroFro Defense</h3>
+                    <p class="pixel-font text-xl mb-6">Strategic defense meets mental math.</p>
+                    <button disabled class="btn-retro btn-pink w-full cursor-not-allowed">Soon</button>
+                </div>
+
+                <div class="bg-indigo-900/40 p-6 retro-border flex flex-col items-center text-center">
+                    <div class="text-6xl mb-4">🌐</div>
+                    <h3 class="retro-font text-sm mb-4">Multiplayer</h3>
+                    <p class="pixel-font text-xl mb-6">Join your classmates in a real-time race.</p>
+                    <button id="show-lobby-btn" class="btn-retro w-full">Join Room</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MULTIPLAYER LOBBY -->
+        <div id="screen-lobby" class="screen hidden flex flex-col items-center py-10">
+            <div class="max-w-md w-full bg-black/60 p-8 retro-border">
+                <h2 class="retro-font text-xl mb-6 text-center">JOIN ROOM</h2>
+                <input id="room-id-input" type="text" placeholder="ENTER 6-DIGIT CODE" class="w-full bg-indigo-950 border-4 border-white p-4 mb-4 text-center retro-font text-lg outline-none focus:border-cyan-400">
+                <button id="join-room-btn" class="btn-retro btn-cyan w-full mb-4">Enter Game</button>
+                <button id="back-home-lobby-btn" class="text-center w-full pixel-font text-xl hover:underline">Back to Menu</button>
+            </div>
+
+            <div id="active-lobby" class="hidden mt-10 w-full max-w-2xl bg-black/60 p-8 retro-border">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="retro-font text-lg">ROOM: <span id="current-room-id" class="text-cyan-400">------</span></h2>
+                    <div class="pixel-font text-2xl text-yellow-400">Players: <span id="player-count">0</span></div>
+                </div>
+                <div id="player-list" class="grid grid-cols-2 gap-4 mb-8"></div>
+            </div>
+        </div>
+
+        <!-- PLATFORMER GAME SCREEN -->
+        <div id="screen-platformer" class="screen hidden">
+            <div class="flex flex-col items-center">
+                <div class="flex justify-between w-full max-w-4xl mb-4 px-4">
+                    <div class="retro-font text-xs text-cyan-400">Height: <span id="plat-height">0</span>m</div>
+                    <div class="retro-font text-xs text-pink-400">Lives: <span id="plat-lives">3</span></div>
+                </div>
+                <div class="relative w-full max-w-4xl">
+                    <canvas id="platformer-canvas" class="w-full h-[500px] border-4 border-white shadow-2xl" width="800" height="500"></canvas>
+                    <div class="absolute bottom-4 right-4 flex gap-2">
+                        <button id="plat-quiz-btn" class="btn-retro btn-cyan py-4 px-8 text-lg">JUMP (QUIZ)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MARKET SCREEN -->
+        <div id="screen-market" class="screen hidden flex flex-col items-center py-10">
+             <h2 class="retro-font text-3xl mb-4 text-cyan-400">MARKET</h2>
+             
+             <div class="grid lg:grid-cols-3 gap-8 w-full max-w-6xl">
+                <!-- PACKS COLUMN -->
+                <div class="lg:col-span-2 grid md:grid-cols-2 gap-6">
+                    <!-- CLASSIC PACK -->
+                    <div class="bg-black/60 p-6 retro-border flex flex-col items-center">
+                        <h3 class="retro-font text-sm mb-2">RETRO PACK</h3>
+                        <div id="pack-visual-retro" class="text-7xl mb-4 cursor-pointer hover:scale-110 transition-transform">🎁</div>
+                        <p class="pixel-font text-xl mb-4 text-yellow-400">Cost: 100 Coins</p>
+                        <button id="btn-pack-retro" class="btn-retro btn-pink w-full text-[10px]">Open Retro</button>
+                    </div>
+
+                    <!-- ELEMENTS PACK -->
+                    <div class="bg-black/60 p-6 retro-border flex flex-col items-center border-green-400">
+                        <h3 class="retro-font text-sm mb-2 text-green-400">ELEMENTS</h3>
+                        <div id="pack-visual-elements" class="text-7xl mb-4 cursor-pointer hover:scale-110 transition-transform">🌿</div>
+                        <p class="pixel-font text-xl mb-4 text-yellow-400">Cost: 250 Coins</p>
+                        <button id="btn-pack-elements" class="btn-retro btn-cyan w-full text-[10px]">Open Elements</button>
+                    </div>
+
+                    <!-- GALACTIC PACK -->
+                    <div class="bg-black/60 p-6 retro-border flex flex-col items-center border-purple-400">
+                        <h3 class="retro-font text-sm mb-2 text-purple-400">GALACTIC</h3>
+                        <div id="pack-visual-galactic" class="text-7xl mb-4 cursor-pointer hover:scale-110 transition-transform">🚀</div>
+                        <p class="pixel-font text-xl mb-4 text-yellow-400">Cost: 500 Coins</p>
+                        <button id="btn-pack-galactic" class="btn-retro btn-yellow w-full text-[10px]">Open Galactic</button>
+                    </div>
+                </div>
+
+                <!-- INVENTORY -->
+                <div class="bg-black/60 p-6 retro-border">
+                    <h3 class="retro-font text-sm mb-4 text-center">YOUR SKINS</h3>
+                    <div id="skin-list" class="grid grid-cols-3 gap-2 overflow-y-auto max-h-[400px]">
+                        <!-- Skins added here -->
+                    </div>
+                </div>
+             </div>
+             <button id="back-home-market-btn" class="btn-retro mt-8">Back to Menu</button>
+        </div>
+
+        <!-- QUIZ OVERLAY -->
+        <div id="quiz-container" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4">
+            <div class="bg-indigo-900 border-4 border-white p-8 max-w-2xl w-full shadow-[10px_10px_0px_#000]">
+                <div class="text-center mb-8">
+                    <div class="retro-font text-[10px] text-cyan-400 mb-2 uppercase tracking-tighter">Analyzing Brainwaves...</div>
+                    <h2 id="quiz-question" class="pixel-font text-5xl font-bold">Question?</h2>
+                </div>
+                <div id="quiz-options" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div class="mt-8 h-4 bg-black border-2 border-white p-1">
+                    <div id="quiz-timer-bar" class="h-full bg-cyan-400 transition-all duration-100" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global state
+        const gameState = {
+            user: null,
+            coins: 150,
+            xp: 0,
+            screen: 'home',
+            activeSkin: '🧊',
+            inventory: ['🧊']
+        };
+
+        const packs = {
+            retro: {
+                cost: 100,
+                visual: 'pack-visual-retro',
+                skins: [
+                    { emoji: '🧊', rarity: 'common', weight: 40 },
+                    { emoji: '🤖', rarity: 'common', weight: 40 },
+                    { emoji: '👾', rarity: 'rare', weight: 15 },
+                    { emoji: '💎', rarity: 'legendary', weight: 5 }
+                ]
+            },
+            elements: {
+                cost: 250,
+                visual: 'pack-visual-elements',
+                skins: [
+                    { emoji: '🌿', rarity: 'common', weight: 35 },
+                    { emoji: '🔥', rarity: 'common', weight: 35 },
+                    { emoji: '🌊', rarity: 'rare', weight: 20 },
+                    { emoji: '⚡', rarity: 'epic', weight: 8 },
+                    { emoji: '🌪️', rarity: 'legendary', weight: 2 }
+                ]
+            },
+            galactic: {
+                cost: 500,
+                visual: 'pack-visual-galactic',
+                skins: [
+                    { emoji: '🚀', rarity: 'common', weight: 30 },
+                    { emoji: '🛸', rarity: 'rare', weight: 30 },
+                    { emoji: '🪐', rarity: 'rare', weight: 20 },
+                    { emoji: '👨‍🚀', rarity: 'epic', weight: 15 },
+                    { emoji: '🌌', rarity: 'legendary', weight: 5 }
+                ]
+            }
+        };
+
+        const questions = [
+            { q: "What is 15 + 27?", a: ["32", "42", "45", "38"], correct: 1 },
+            { q: "Which planet is the Red Planet?", a: ["Mars", "Venus", "Saturn", "Jupiter"], correct: 0 },
+            { q: "9 x 8 = ?", a: ["72", "64", "81", "70"], correct: 0 },
+            { q: "Capital of France?", a: ["London", "Paris", "Berlin", "Madrid"], correct: 1 },
+            { q: "Continents in the world?", a: ["5", "6", "7", "8"], correct: 2 }
+        ];
+
+        let db, auth, appId;
+
+        // Firebase Initialization with safer error handling
+        window.addEventListener('load', async () => {
+            let config;
+            try {
+                config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "" };
+            } catch(e) {
+                config = { apiKey: "" };
+            }
+            
+            if (config.apiKey) {
+                const app = initializeApp(config);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'frofrokit-default';
+
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (err) {
+                        console.error("Auth error:", err);
+                    }
+                };
+                initAuth();
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        gameState.user = user;
+                        document.getElementById('user-display').innerText = user.uid.substring(0, 8);
+                        loadUserData();
+                    }
+                });
+            } else {
+                console.warn("Firebase not configured correctly. Using in-memory state.");
+                updateStatsUI();
+                renderInventory();
+            }
+
+            // Bind Pack Openings here to ensure function is available
+            document.getElementById('btn-pack-retro').onclick = () => openPack('retro');
+            document.getElementById('btn-pack-elements').onclick = () => openPack('elements');
+            document.getElementById('btn-pack-galactic').onclick = () => openPack('galactic');
+        });
+
+        async function loadUserData() {
+            if (!gameState.user || !db) return;
+            const userRef = doc(db, 'artifacts', appId, 'users', gameState.user.uid, 'profile', 'data');
+            try {
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    gameState.coins = data.coins ?? 150;
+                    gameState.xp = data.xp ?? 0;
+                    gameState.activeSkin = data.activeSkin ?? '🧊';
+                    gameState.inventory = data.inventory ?? ['🧊'];
+                    updateStatsUI();
+                    renderInventory();
+                } else {
+                    await setDoc(userRef, { coins: 150, xp: 0, activeSkin: '🧊', inventory: ['🧊'] });
+                }
+            } catch (e) { console.error("Data Load Error", e); }
+        }
+
+        async function saveUserData() {
+            if (!gameState.user || !db) return;
+            const userRef = doc(db, 'artifacts', appId, 'users', gameState.user.uid, 'profile', 'data');
+            try {
+                await updateDoc(userRef, {
+                    coins: gameState.coins,
+                    xp: gameState.xp,
+                    activeSkin: gameState.activeSkin,
+                    inventory: gameState.inventory
+                });
+            } catch(e) {
+                console.error("Save error", e);
+            }
+        }
+
+        function updateStatsUI() {
+            document.getElementById('nav-coins').innerText = gameState.coins;
+            document.getElementById('nav-xp').innerText = gameState.xp;
+        }
+
+        // --- MARKET LOGIC ---
+        function renderInventory() {
+            const list = document.getElementById('skin-list');
+            list.innerHTML = '';
+            gameState.inventory.forEach(skin => {
+                const item = document.createElement('div');
+                const isActive = skin === gameState.activeSkin;
+                item.className = `p-4 text-3xl cursor-pointer retro-border flex items-center justify-center transition-all ${isActive ? 'bg-cyan-900 border-cyan-400 scale-105' : 'bg-white/5 opacity-70 hover:opacity-100'}`;
+                item.innerText = skin;
+                item.onclick = () => {
+                    gameState.activeSkin = skin;
+                    saveUserData();
+                    renderInventory();
+                };
+                list.appendChild(item);
+            });
+        }
+
+        async function openPack(packType) {
+            const pack = packs[packType];
+            if (gameState.coins < pack.cost) {
+                alert("Not enough coins! Answer more questions to earn some!");
+                return;
+            }
+
+            const visual = document.getElementById(pack.visual);
+            visual.classList.add('pack-shake');
+            
+            const buttons = document.querySelectorAll('#screen-market button');
+            buttons.forEach(b => b.disabled = true);
+
+            setTimeout(async () => {
+                visual.classList.remove('pack-shake');
+                gameState.coins -= pack.cost;
+                
+                const totalWeight = pack.skins.reduce((sum, s) => sum + s.weight, 0);
+                let random = Math.random() * totalWeight;
+                let selectedSkinObj = pack.skins[0];
+
+                for (const skin of pack.skins) {
+                    if (random < skin.weight) {
+                        selectedSkinObj = skin;
+                        break;
+                    }
+                    random -= skin.weight;
+                }
+
+                const randomSkin = selectedSkinObj.emoji;
+                if (!gameState.inventory.includes(randomSkin)) {
+                    gameState.inventory.push(randomSkin);
+                }
+                
+                const modal = document.createElement('div');
+                modal.className = "fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center p-8";
+                modal.innerHTML = `
+                    <h2 class="retro-font text-2xl mb-8">PACK OPENED!</h2>
+                    <div class="text-9xl mb-8 animate-bounce">${randomSkin}</div>
+                    <div class="retro-font rarity-${selectedSkinObj.rarity} mb-12">${selectedSkinObj.rarity.toUpperCase()}</div>
+                    <button id="close-reveal" class="btn-retro btn-cyan">AWESOME!</button>
+                `;
+                document.body.appendChild(modal);
+
+                document.getElementById('close-reveal').onclick = () => {
+                    modal.remove();
+                    buttons.forEach(b => b.disabled = false);
+                    gameState.activeSkin = randomSkin;
+                    updateStatsUI();
+                    renderInventory();
+                    saveUserData();
+                };
+            }, 1200);
+        }
+
+        // --- NAVIGATION ---
+        const showScreen = (screenId) => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            const target = document.getElementById('screen-' + screenId);
+            if (target) target.classList.remove('hidden');
+            gameState.screen = screenId;
+            if (screenId === 'platformer') initPlatformer();
+            else stopPlatformer();
+        };
+
+        // --- PLATFORMER ENGINE ---
+        const pCanvas = document.getElementById('platformer-canvas');
+        const pCtx = pCanvas.getContext('2d');
+        let pAnimId;
+        let pState = { x: 400, y: 400, dy: 0, height: 0, lives: 3, platforms: [] };
+
+        function initPlatformer() {
+            pState = { x: 400, y: 400, dy: 0, height: 0, lives: 3, platforms: [] };
+            for (let i = 0; i < 6; i++) {
+                pState.platforms.push({ x: Math.random() * 700, y: 100 * i, w: 100, h: 15 });
+            }
+            if (pAnimId) cancelAnimationFrame(pAnimId);
+            pAnimId = requestAnimationFrame(platformerLoop);
+        }
+
+        function stopPlatformer() {
+            if (pAnimId) cancelAnimationFrame(pAnimId);
+        }
+
+        function platformerLoop() {
+            if (gameState.screen !== 'platformer') return;
+            pCtx.fillStyle = '#0a0a20';
+            pCtx.fillRect(0, 0, 800, 500);
+
+            pState.dy += 0.4;
+            pState.y += pState.dy;
+
+            if (pState.y < 200) {
+                let diff = 200 - pState.y;
+                pState.y = 200;
+                pState.height += Math.floor(diff);
+                pState.platforms.forEach(p => {
+                    p.y += diff;
+                    if (p.y > 500) {
+                        p.y = 0;
+                        p.x = Math.random() * 700;
+                    }
+                });
+            }
+
+            if (pState.y > 480) {
+                pState.lives--;
+                pState.y = 200;
+                pState.dy = 0;
+                document.getElementById('plat-lives').innerText = pState.lives;
+                if (pState.lives <= 0) {
+                    alert("Game Over! Final Height: " + pState.height);
+                    showScreen('home');
+                    return;
+                }
+            }
+
+            pCtx.font = "32px Arial";
+            pCtx.textAlign = "center";
+            pCtx.textBaseline = "middle";
+            pCtx.fillText(gameState.activeSkin, pState.x, pState.y);
+
+            pCtx.fillStyle = '#ff007f';
+            pState.platforms.forEach(p => {
+                pCtx.fillRect(p.x, p.y, p.w, p.h);
+                if (pState.dy > 0 && 
+                    pState.x > p.x && pState.x < p.x + p.w &&
+                    pState.y + 16 > p.y && pState.y + 16 < p.y + p.h + 5) {
+                    pState.dy = -10;
+                }
+            });
+
+            document.getElementById('plat-height').innerText = pState.height;
+            pAnimId = requestAnimationFrame(platformerLoop);
+        }
+
+        // --- QUIZ ---
+        let quizTimer;
+        const triggerQuiz = () => {
+            const quiz = document.getElementById('quiz-container');
+            const qData = questions[Math.floor(Math.random() * questions.length)];
+            document.getElementById('quiz-question').innerText = qData.q;
+            const optionsBox = document.getElementById('quiz-options');
+            optionsBox.innerHTML = '';
+            
+            qData.a.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "btn-retro text-left";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    clearInterval(quizTimer);
+                    quiz.classList.add('hidden');
+                    if (idx === qData.correct) {
+                        pState.dy = -22;
+                        gameState.coins += 10;
+                        gameState.xp += 15;
+                        updateStatsUI();
+                        saveUserData();
+                    }
+                };
+                optionsBox.appendChild(btn);
+            });
+
+            quiz.classList.remove('hidden');
+            let timeLeft = 100;
+            clearInterval(quizTimer);
+            quizTimer = setInterval(() => {
+                timeLeft -= 1.5;
+                document.getElementById('quiz-timer-bar').style.width = timeLeft + "%";
+                if (timeLeft <= 0) {
+                    clearInterval(quizTimer);
+                    quiz.classList.add('hidden');
+                }
+            }, 50);
+        };
+
+        // Static Event Listeners
+        document.getElementById('play-platformer-btn').onclick = () => showScreen('platformer');
+        document.getElementById('show-lobby-btn').onclick = () => showScreen('lobby');
+        document.getElementById('nav-market-btn').onclick = () => showScreen('market');
+        document.getElementById('back-home-market-btn').onclick = () => showScreen('home');
+        document.getElementById('back-home-lobby-btn').onclick = () => showScreen('home');
+        document.getElementById('plat-quiz-btn').onclick = triggerQuiz;
+
+    </script>
+</body>
+</html>
