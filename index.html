@@ -9,11 +9,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Quicksand:wght@400;700&display=swap');
 
         :root {
-            --retro-purple: #2d1b4e;
+            --retro-purple: #1a0b2e;
             --retro-pink: #ff007f;
             --retro-cyan: #00f3ff;
             --retro-yellow: #ffcc00;
-            --retro-red: #ff4d4d;
         }
 
         body {
@@ -22,7 +21,7 @@
             color: #fff;
             margin: 0;
             overflow: hidden; 
-            touch-action: none; 
+            touch-action: manipulation; 
         }
 
         .retro-font { font-family: 'Press Start 2P', cursive; }
@@ -30,586 +29,621 @@
 
         .retro-border {
             border: 4px solid #fff;
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.8);
         }
 
         .btn-retro {
             font-family: 'Press Start 2P', cursive;
-            padding: 12px 24px;
+            padding: 12px 20px;
             border: 4px solid #fff;
             background: #44337a;
-            box-shadow: 6px 6px 0px #000;
+            box-shadow: 4px 4px 0px #000;
             transition: all 0.1s;
             text-transform: uppercase;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             cursor: pointer;
             user-select: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-retro:active {
-            transform: translate(3px, 3px);
-            box-shadow: 3px 3px 0px #000;
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
         }
 
-        .btn-cyan { background: var(--retro-cyan); color: #000; border-color: #000; box-shadow: 4px 4px 0px #004d52; }
-        .btn-pink { background: var(--retro-pink); color: #fff; border-color: #fff; box-shadow: 4px 4px 0px #6d0036; }
-        .btn-yellow { background: var(--retro-yellow); color: #000; border-color: #000; box-shadow: 4px 4px 0px #8a6d00; }
+        .btn-cyan { background: var(--retro-cyan); color: #000; border-color: #000; }
+        .btn-pink { background: var(--retro-pink); color: #fff; border-color: #fff; }
+        .btn-yellow { background: var(--retro-yellow); color: #000; border-color: #000; }
 
-        .screen { height: calc(100vh - 80px); overflow-y: auto; overflow-x: hidden; }
+        .screen { height: calc(100vh - 80px); overflow-y: auto; position: relative; }
         .hidden { display: none !important; }
 
-        .grid-bg {
-            background-image: linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
+        /* Stars Background Effect */
+        .stars-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            background: radial-gradient(circle at center, #2d1b4e 0%, #1a0b2e 100%);
         }
 
         canvas {
             image-rendering: pixelated;
-            background: #000;
+            background: transparent;
             max-width: 100%;
             height: auto;
             display: block;
+            border: 2px solid rgba(255,255,255,0.1);
         }
 
-        #joystick-container {
+        /* iPad / Mobile Controls */
+        .touch-controls {
             position: fixed;
-            bottom: 40px;
-            left: 40px;
-            width: 120px;
-            height: 120px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-            border: 2px solid white;
-            z-index: 100;
-            display: none;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 200;
         }
-        #joystick-knob {
-            width: 50px;
-            height: 50px;
+        .touch-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.15);
+            border: 3px solid white;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            user-select: none;
+        }
+        .touch-btn:active { background: rgba(0, 243, 255, 0.4); }
+
+        .energy-bar-container {
+            width: 160px;
+            height: 16px;
+            background: #222;
+            border: 2px solid #fff;
+            overflow: hidden;
+        }
+        .energy-bar-fill {
+            height: 100%;
             background: var(--retro-cyan);
-            border-radius: 50%;
-            position: absolute;
-            top: 35px;
-            left: 35px;
-            box-shadow: 0 0 10px var(--retro-cyan);
+            transition: width 0.3s ease;
         }
 
         .news-ticker {
-            background: rgba(0,0,0,0.5);
-            border-top: 2px solid var(--retro-cyan);
+            background: rgba(0,0,0,0.8);
             border-bottom: 2px solid var(--retro-cyan);
-            padding: 8px 0;
-            width: 100%;
+            padding: 6px 0;
             overflow: hidden;
             white-space: nowrap;
         }
-
         .ticker-content {
             display: inline-block;
-            animation: ticker 35s linear infinite;
+            animation: ticker 40s linear infinite;
             font-family: 'VT323', monospace;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             color: var(--retro-cyan);
         }
-
         @keyframes ticker {
             0% { transform: translateX(100%); }
             100% { transform: translateX(-100%); }
         }
-
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .energy-bar-container {
-            width: 200px;
-            height: 20px;
-            background: #333;
-            border: 2px solid #fff;
-        }
-        .energy-bar-fill {
-            height: 100%;
-            background: var(--retro-yellow);
-            transition: width 0.3s;
-        }
     </style>
 </head>
-<body class="grid-bg">
+<body>
 
-    <header class="h-20 bg-black/80 border-b-4 border-white flex items-center justify-between px-4 md:px-8 sticky top-0 z-50">
-        <div class="flex items-center gap-2 md:gap-4">
-            <button id="btn-settings" class="text-2xl hover:scale-110 transition-transform">⚙️</button>
-            <h1 class="retro-font text-sm md:text-xl tracking-tighter">FROFRO<span class="text-cyan-400">KIT</span></h1>
+    <div class="stars-container" id="stars"></div>
+
+    <header class="h-20 bg-black/90 border-b-4 border-white flex items-center justify-between px-4 md:px-8 sticky top-0 z-[100]">
+        <div class="flex items-center gap-4">
+            <button id="btn-settings" class="text-2xl">⚙️</button>
+            <h1 class="retro-font text-xs md:text-lg">FROFRO<span class="text-cyan-400">KIT</span></h1>
         </div>
         
-        <div class="flex items-center gap-3 md:gap-6">
-            <div class="flex gap-2 md:gap-4 pixel-font text-lg md:text-2xl">
-                <span class="text-yellow-400">$<span id="nav-coins">0</span></span>
+        <div class="flex items-center gap-4">
+            <div class="flex gap-3 pixel-font text-xl md:text-2xl">
+                <span class="text-yellow-400">$<span id="nav-coins">150</span></span>
                 <span class="text-pink-400">XP:<span id="nav-xp">0</span></span>
             </div>
-            <button id="nav-market-btn" class="btn-retro text-[8px] py-2 px-3">Market</button>
-            <div id="user-display" class="hidden sm:block pixel-font text-xl text-cyan-300">Guest</div>
+            <button id="nav-market-btn" class="btn-retro text-[8px] hidden sm:flex">Market</button>
         </div>
     </header>
 
-    <main class="container mx-auto">
-
-        <!-- NEWS FEED -->
+    <main id="app-container">
         <div id="news-feed" class="news-ticker">
             <div class="ticker-content">
-                NEW GAME ALERT: Breakout mode is now live! Escape the maximum security prison by solving math riddles. -- Multiplayer Beta continues -- Adjust your device settings for the best experience -- Don't let your energy reach zero!
+                SYSTEM UPDATE: New "Brain Quest" mode added for classic learning! -- iPad controls optimized -- Earn double coins in Breakout mode! -- Check the skin shop for new arrivals -- Keep learning, keep gaming!
             </div>
         </div>
 
-        <!-- HOME SCREEN -->
-        <div id="screen-home" class="screen flex flex-col items-center justify-center gap-6 md:gap-12 p-4">
-            <div class="text-center">
-                <h2 class="retro-font text-2xl md:text-4xl mb-4 animate-pulse">CHOOSE YOUR QUEST</h2>
-                <p class="pixel-font text-xl md:text-2xl text-indigo-200">The Ultimate Learning Adventure</p>
+        <!-- SCREEN: HOME -->
+        <div id="screen-home" class="screen flex flex-col items-center justify-center p-6 gap-8">
+            <div class="text-center space-y-2">
+                <h2 class="retro-font text-xl md:text-3xl text-white animate-pulse">SELECT MISSION</h2>
+                <p class="pixel-font text-xl text-cyan-300">Learning is your superpower</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
-                <div class="bg-indigo-900/40 p-6 retro-border flex flex-col items-center text-center">
-                    <div class="text-6xl mb-4">🏃</div>
-                    <h3 class="retro-font text-sm mb-4">Pixel Climber</h3>
-                    <p class="pixel-font text-xl mb-6">Answer to jump. Climb to the stars!</p>
-                    <button id="play-platformer-init" class="btn-retro btn-cyan w-full">Solo Play</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
+                <!-- Brain Quest -->
+                <div class="bg-indigo-900/60 p-6 retro-border flex flex-col items-center text-center hover:bg-indigo-800/80 transition-colors">
+                    <div class="text-5xl mb-4">🧠</div>
+                    <h3 class="retro-font text-[10px] mb-4">Brain Quest</h3>
+                    <p class="pixel-font text-lg mb-6 text-gray-300">Classic Q&A mode. Pure knowledge, big rewards.</p>
+                    <button onclick="showScreen('quiz-classic')" class="btn-retro btn-yellow w-full">Start Quiz</button>
                 </div>
 
-                <div class="bg-indigo-900/40 p-6 retro-border flex flex-col items-center text-center">
-                    <div class="text-6xl mb-4">⛓️</div>
-                    <h3 class="retro-font text-sm mb-4">Breakout</h3>
-                    <p class="pixel-font text-xl mb-6">Escape the high-security prison. Solve to gain energy!</p>
-                    <button id="play-breakout-btn" class="btn-retro btn-pink w-full">Escape Now</button>
+                <!-- Pixel Climber -->
+                <div class="bg-indigo-900/60 p-6 retro-border flex flex-col items-center text-center hover:bg-indigo-800/80 transition-colors">
+                    <div class="text-5xl mb-4">🧗</div>
+                    <h3 class="retro-font text-[10px] mb-4">Pixel Climber</h3>
+                    <p class="pixel-font text-lg mb-6 text-gray-300">Climb the endless tower by answering fast.</p>
+                    <button onclick="showScreen('platformer')" class="btn-retro btn-cyan w-full">Climb</button>
                 </div>
 
-                <div class="bg-indigo-900/40 p-6 retro-border flex flex-col items-center text-center">
-                    <div class="text-6xl mb-4">🏪</div>
-                    <h3 class="retro-font text-sm mb-4">Skin Shop</h3>
-                    <p class="pixel-font text-xl mb-6">Spend coins to look legendary.</p>
-                    <button id="home-market-btn" class="btn-retro w-full">Shop Now</button>
+                <!-- Breakout -->
+                <div class="bg-indigo-900/60 p-6 retro-border flex flex-col items-center text-center hover:bg-indigo-800/80 transition-colors">
+                    <div class="text-5xl mb-4">🔓</div>
+                    <h3 class="retro-font text-[10px] mb-4">Breakout</h3>
+                    <p class="pixel-font text-lg mb-6 text-gray-300">Explore the maze. Find terminals to escape.</p>
+                    <button onclick="showScreen('breakout')" class="btn-retro btn-pink w-full">Escape</button>
+                </div>
+
+                <!-- Shop -->
+                <div class="bg-indigo-900/60 p-6 retro-border flex flex-col items-center text-center hover:bg-indigo-800/80 transition-colors">
+                    <div class="text-5xl mb-4">🛍️</div>
+                    <h3 class="retro-font text-[10px] mb-4">Skin Shop</h3>
+                    <p class="pixel-font text-lg mb-6 text-gray-300">Customize your avatar with your hard-earned coins.</p>
+                    <button onclick="showScreen('market')" class="btn-retro w-full">Shop</button>
                 </div>
             </div>
         </div>
 
-        <!-- BREAKOUT SCREEN -->
-        <div id="screen-breakout" class="screen hidden overflow-hidden relative">
-            <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                <div class="retro-font text-xs text-yellow-400">ENERGY</div>
+        <!-- SCREEN: CLASSIC QUIZ -->
+        <div id="screen-quiz-classic" class="screen hidden flex items-center justify-center p-4">
+            <div class="bg-indigo-950/90 retro-border p-8 max-w-2xl w-full text-center space-y-8">
+                <div class="flex justify-between items-center">
+                    <span class="retro-font text-[10px] text-yellow-400">BRAIN QUEST</span>
+                    <span class="pixel-font text-2xl">Streak: <span id="quiz-streak">0</span></span>
+                </div>
+                <h2 id="classic-q-text" class="pixel-font text-4xl md:text-6xl font-bold py-10">...</h2>
+                <div id="classic-q-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Buttons injected here -->
+                </div>
+                <button onclick="showScreen('home')" class="btn-retro mt-6">Back to Menu</button>
+            </div>
+        </div>
+
+        <!-- SCREEN: PLATFORMER -->
+        <div id="screen-platformer" class="screen hidden bg-black/40">
+            <div class="flex flex-col items-center h-full pt-4">
+                <div class="flex justify-between w-full max-w-4xl px-6 mb-2">
+                    <div class="retro-font text-[10px] text-cyan-400">ALTITUDE: <span id="plat-height">0</span>m</div>
+                    <div class="retro-font text-[10px] text-pink-400">LIVES: <span id="plat-lives">3</span></div>
+                </div>
+                <canvas id="platformer-canvas" width="800" height="600"></canvas>
+            </div>
+            <div class="touch-controls">
+                <div class="flex gap-4">
+                    <div class="touch-btn" id="btn-left">⬅️</div>
+                    <div class="touch-btn" id="btn-right">➡️</div>
+                </div>
+                <div class="touch-btn btn-cyan" id="btn-jump" style="width:120px">JUMP!</div>
+            </div>
+            <button onclick="showScreen('home')" class="btn-retro fixed top-24 right-4 z-[150] text-[8px]">Exit</button>
+        </div>
+
+        <!-- SCREEN: BREAKOUT -->
+        <div id="screen-breakout" class="screen hidden bg-slate-900">
+            <div class="absolute top-4 left-4 z-50 flex flex-col gap-2">
+                <div class="retro-font text-[8px] text-yellow-400">ENERGY CORE</div>
                 <div class="energy-bar-container">
                     <div id="breakout-energy-fill" class="energy-bar-fill" style="width: 100%"></div>
                 </div>
-                <div class="retro-font text-[10px] text-cyan-400">SCORE: <span id="breakout-score">0</span></div>
             </div>
-            <div class="flex items-center justify-center h-full bg-slate-900">
+            <div class="flex items-center justify-center h-full">
                 <canvas id="breakout-canvas" width="800" height="600"></canvas>
             </div>
-            <button id="breakout-exit" class="btn-retro fixed bottom-4 right-4 text-[10px]">Exit</button>
-        </div>
-
-        <!-- SETTINGS MODAL -->
-        <div id="modal-settings" class="modal-overlay hidden">
-            <div class="bg-indigo-950 border-4 border-white p-8 max-w-md w-full retro-border">
-                <h2 class="retro-font text-lg mb-8 text-center">SETTINGS</h2>
-                <div class="space-y-6">
-                    <div>
-                        <label class="pixel-font text-2xl block mb-2">Music Volume</label>
-                        <input type="range" id="volume-slider" min="0" max="100" value="50" class="w-full">
-                    </div>
-                    <div>
-                        <label class="pixel-font text-2xl block mb-2">Device Type</label>
-                        <select id="device-select" class="w-full bg-black border-2 border-white p-2 pixel-font text-xl text-cyan-400">
-                            <option value="phone">Phone (Joystick)</option>
-                            <option value="ipad">iPad (Large Touch)</option>
-                            <option value="computer">Computer (Keyboard)</option>
-                        </select>
-                    </div>
-                    <button id="btn-save-settings" class="btn-retro btn-cyan w-full mt-4">Save & Close</button>
+            <div class="touch-controls">
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="opacity-0"></div>
+                    <div class="touch-btn" id="break-up">⬆️</div>
+                    <div class="opacity-0"></div>
+                    <div class="touch-btn" id="break-left">⬅️</div>
+                    <div class="touch-btn" id="break-down">⬇️</div>
+                    <div class="touch-btn" id="break-right">➡️</div>
                 </div>
             </div>
+            <button onclick="showScreen('home')" class="btn-retro fixed top-24 right-4 z-[150] text-[8px]">Exit</button>
         </div>
 
-        <!-- PLATFORMER SCREEN -->
-        <div id="screen-platformer" class="screen hidden overflow-hidden">
-            <div class="flex flex-col items-center h-full">
-                <div class="flex justify-between w-full max-w-4xl p-4">
-                    <div class="retro-font text-xs text-cyan-400">ALT: <span id="plat-height">0</span>m</div>
-                    <div class="retro-font text-xs text-pink-400">❤️: <span id="plat-lives">3</span></div>
+        <!-- SCREEN: MARKET -->
+        <div id="screen-market" class="screen hidden p-6 flex flex-col items-center">
+            <h2 class="retro-font text-xl md:text-3xl mb-8 text-cyan-400">AVATAR SHOP</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-4xl">
+                <div class="bg-black/60 p-4 retro-border flex flex-col items-center gap-4">
+                    <div class="text-5xl">🦊</div>
+                    <button onclick="buySkin('🦊', 50)" class="btn-retro btn-yellow w-full">50 $</button>
                 </div>
-                <div class="relative w-full max-w-4xl flex-grow bg-black">
-                    <canvas id="platformer-canvas" width="800" height="600"></canvas>
-                    <div class="absolute bottom-6 left-0 right-0 px-6 flex justify-between items-end pointer-events-none">
-                        <div id="touch-area-left" class="w-1/3 h-40 pointer-events-auto"></div>
-                        <button id="plat-quiz-btn" class="btn-retro btn-cyan py-6 px-10 text-xl pointer-events-auto shadow-[8px_8px_0px_#000]">JUMP</button>
-                    </div>
+                <div class="bg-black/60 p-4 retro-border flex flex-col items-center gap-4">
+                    <div class="text-5xl">🤖</div>
+                    <button onclick="buySkin('🤖', 100)" class="btn-retro btn-yellow w-full">100 $</button>
+                </div>
+                <div class="bg-black/60 p-4 retro-border flex flex-col items-center gap-4">
+                    <div class="text-5xl">🦖</div>
+                    <button onclick="buySkin('🦖', 200)" class="btn-retro btn-yellow w-full">200 $</button>
+                </div>
+                <div class="bg-black/60 p-4 retro-border flex flex-col items-center gap-4">
+                    <div class="text-5xl">👾</div>
+                    <button onclick="buySkin('👾', 500)" class="btn-retro btn-yellow w-full">500 $</button>
                 </div>
             </div>
-            <button id="platformer-exit" class="btn-retro fixed bottom-4 right-4 text-[10px]">Exit</button>
+            <button onclick="showScreen('home')" class="btn-retro mt-12">Back Home</button>
         </div>
 
-        <!-- MARKET SCREEN -->
-        <div id="screen-market" class="screen hidden p-4 flex flex-col items-center">
-             <h2 class="retro-font text-2xl md:text-3xl mb-8 text-cyan-400">THE SKIN SHOP</h2>
-             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl pb-20">
-                <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="bg-black/60 p-6 retro-border flex flex-col items-center">
-                        <h3 class="retro-font text-xs mb-2">RETRO PACK</h3>
-                        <div class="text-6xl mb-4">🎁</div>
-                        <p class="pixel-font text-xl mb-4 text-yellow-400">100 Coins</p>
-                        <button id="btn-pack-retro" class="btn-retro btn-pink w-full">Open</button>
-                    </div>
-                </div>
-                <div class="bg-black/60 p-4 retro-border">
-                    <h3 class="retro-font text-xs mb-4 text-center">INVENTORY</h3>
-                    <div id="skin-list" class="grid grid-cols-4 gap-2"></div>
-                </div>
-             </div>
-             <button id="back-home-market-btn" class="btn-retro fixed bottom-4 right-4 z-50">Menu</button>
-        </div>
-
-        <!-- QUIZ OVERLAY -->
-        <div id="quiz-container" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4">
-            <div class="bg-indigo-900 border-4 border-white p-6 md:p-8 max-w-2xl w-full">
-                <h2 id="quiz-question" class="pixel-font text-3xl md:text-5xl font-bold text-center mb-8">Question?</h2>
-                <div id="quiz-options" class="grid grid-cols-1 gap-3"></div>
+        <!-- QUIZ OVERLAY (For Games) -->
+        <div id="quiz-modal" class="hidden fixed inset-0 z-[300] bg-black/90 flex items-center justify-center p-4">
+            <div class="bg-indigo-900 border-4 border-white p-6 md:p-10 max-w-xl w-full text-center">
+                <h2 id="modal-q-text" class="pixel-font text-4xl mb-8 text-white">...</h2>
+                <div id="modal-q-options" class="grid grid-cols-1 gap-4"></div>
             </div>
         </div>
 
     </main>
 
-    <div id="joystick-container">
-        <div id="joystick-knob"></div>
-    </div>
-
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-
-        // --- GAME STATE ---
-        const gameState = {
-            coins: 150, 
-            xp: 0, 
-            screen: 'home',
-            activeSkin: '🧊', 
-            inventory: ['🧊'], 
-            inputX: 0,
-            inputY: 0,
-            volume: 0.5, 
-            device: 'computer' 
+        // --- CORE STATE ---
+        const state = {
+            coins: 150,
+            xp: 0,
+            streak: 0,
+            activeSkin: '🧊',
+            inventory: ['🧊'],
+            input: { x: 0, y: 0 },
+            volume: 0.5,
+            audioEnabled: false
         };
 
-        let currentUser = null;
-        let activeLoop = null;
-
-        // --- SOUND SYSTEM ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playNote(freq, type, duration, vol = 0.1) {
-            if (gameState.volume <= 0) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(vol * gameState.volume, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
+        // --- AUDIO ENGINE ---
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            state.audioEnabled = true;
         }
 
-        const playJump = () => playNote(400, 'square', 0.2);
-        const playCorrect = () => { playNote(523.25, 'triangle', 0.1); setTimeout(() => playNote(659.25, 'triangle', 0.3), 100); };
-        const playFail = () => playNote(150, 'sawtooth', 0.4);
-
-        // --- FIREBASE SETUP ---
-        let db, auth, appId;
-        const initFirebase = async () => {
+        function playSound(freq, type = 'square', duration = 0.1, vol = 0.1) {
+            if (!state.audioEnabled || state.volume <= 0) return;
             try {
-                const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "" };
-                if (!config.apiKey) return;
-                const app = initializeApp(config);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'frofrokit-1';
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol * state.volume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUser = user;
-                        document.getElementById('user-display').innerText = user.uid.substring(0, 6);
-                        loadData();
-                    } else {
-                        signInAnonymously(auth);
-                    }
-                });
-            } catch (e) { console.error("Firebase Init Error", e); }
+        const sounds = {
+            jump: () => playSound(400, 'square', 0.2),
+            correct: () => { playSound(523, 'triangle', 0.1); setTimeout(() => playSound(659, 'triangle', 0.2), 100); },
+            fail: () => playSound(150, 'sawtooth', 0.4),
+            collect: () => playSound(880, 'sine', 0.1, 0.05)
         };
 
-        async function loadData() {
-            if (!currentUser || !db) return;
-            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
-            const snap = await getDoc(docRef);
-            if (snap.exists()) {
-                const data = snap.data();
-                Object.assign(gameState, data);
-                updateUI();
-            }
+        // --- UI UPDATES ---
+        function updateStats() {
+            document.getElementById('nav-coins').innerText = state.coins;
+            document.getElementById('nav-xp').innerText = state.xp;
+            document.getElementById('quiz-streak').innerText = state.streak;
         }
 
-        async function saveData() {
-            if (!currentUser || !db) return;
-            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
-            await setDoc(docRef, { coins: gameState.coins, xp: gameState.xp, inventory: gameState.inventory, activeSkin: gameState.activeSkin, volume: gameState.volume, device: gameState.device }, { merge: true });
-            updateUI();
-        }
-
-        function updateUI() {
-            document.getElementById('nav-coins').innerText = gameState.coins;
-            document.getElementById('nav-xp').innerText = gameState.xp;
-        }
-
-        // --- BREAKOUT GAME LOGIC ---
-        const breakoutCanvas = document.getElementById('breakout-canvas');
-        const bCtx = breakoutCanvas.getContext('2d');
-        let breakoutState = {
-            player: { x: 400, y: 300, energy: 100, score: 0 },
-            walls: [],
-            stations: []
-        };
-
-        function initBreakout() {
-            breakoutState.player = { x: 400, y: 300, energy: 100, score: 0 };
-            breakoutState.walls = [];
-            breakoutState.stations = [];
-            // Create random walls
-            for(let i=0; i<15; i++) {
-                breakoutState.walls.push({
-                    x: Math.random() * 700 + 50,
-                    y: Math.random() * 500 + 50,
-                    w: Math.random() * 100 + 50,
-                    h: Math.random() * 100 + 50
-                });
-            }
-            // Create terminal stations
-            for(let i=0; i<3; i++) {
-                breakoutState.stations.push({
-                    x: Math.random() * 700 + 50,
-                    y: Math.random() * 500 + 50,
-                    active: true
-                });
-            }
-            breakoutLoop();
-        }
-
-        function breakoutLoop() {
-            bCtx.fillStyle = '#0f172a';
-            bCtx.fillRect(0,0,800,600);
-
-            // Movement logic
-            if (breakoutState.player.energy > 0) {
-                const nextX = breakoutState.player.x + gameState.inputX * 5;
-                const nextY = breakoutState.player.y + gameState.inputY * 5;
-                
-                let collision = false;
-                breakoutState.walls.forEach(w => {
-                    if (nextX > w.x && nextX < w.x + w.w && nextY > w.y && nextY < w.y + w.h) collision = true;
-                });
-
-                if (!collision) {
-                    breakoutState.player.x = Math.max(0, Math.min(800, nextX));
-                    breakoutState.player.y = Math.max(0, Math.min(600, nextY));
-                    if (gameState.inputX !== 0 || gameState.inputY !== 0) {
-                        breakoutState.player.energy -= 0.1;
-                    }
-                }
-            }
-
-            // Draw Walls
-            bCtx.fillStyle = '#475569';
-            breakoutState.walls.forEach(w => bCtx.fillRect(w.x, w.y, w.w, w.h));
-
-            // Draw Stations
-            breakoutState.stations.forEach(s => {
-                bCtx.fillStyle = s.active ? '#00f3ff' : '#444';
-                bCtx.beginPath();
-                bCtx.arc(s.x, s.y, 20, 0, Math.PI * 2);
-                bCtx.fill();
-                bCtx.font = '12px Arial';
-                bCtx.fillStyle = '#fff';
-                bCtx.fillText("TERMINAL", s.x - 30, s.y - 30);
-
-                // Collision with station
-                const dist = Math.hypot(breakoutState.player.x - s.x, breakoutState.player.y - s.y);
-                if (dist < 30 && s.active) {
-                    s.active = false;
-                    triggerQuiz('breakout');
-                }
-            });
-
-            // Draw Player
-            bCtx.font = "30px Arial";
-            bCtx.textAlign = "center";
-            bCtx.fillText(gameState.activeSkin, breakoutState.player.x, breakoutState.player.y);
-
-            // UI
-            document.getElementById('breakout-energy-fill').style.width = breakoutState.player.energy + '%';
-            document.getElementById('breakout-score').innerText = Math.floor(breakoutState.player.score);
-
-            if (breakoutState.player.energy <= 0) {
-                bCtx.fillStyle = 'rgba(0,0,0,0.7)';
-                bCtx.fillRect(0,0,800,600);
-                bCtx.fillStyle = 'red';
-                bCtx.font = '40px Arial';
-                bCtx.fillText("OUT OF ENERGY!", 400, 250);
-                bCtx.font = '20px Arial';
-                bCtx.fillStyle = 'white';
-                bCtx.fillText("Find a terminal or exit", 400, 300);
-            }
-
-            activeLoop = requestAnimationFrame(breakoutLoop);
-        }
-
-        // --- PLATFORMER GAME LOGIC ---
-        const platCanvas = document.getElementById('platformer-canvas');
-        const pCtx = platCanvas.getContext('2d');
-        let pState = { x: 400, y: 300, dy: 0, platforms: [], score: 0, lives: 3 };
-
-        function platformerLoop() {
-            pCtx.fillStyle = '#050510';
-            pCtx.fillRect(0,0,800,600);
-            
-            pState.x += gameState.inputX * 7;
-            pState.dy += 0.5;
-            pState.y += pState.dy;
-
-            if (pState.y < 250) {
-                let diff = 250 - pState.y;
-                pState.y = 250;
-                pState.score += Math.floor(diff/10);
-                pState.platforms.forEach(p => {
-                    p.y += diff;
-                    if (p.y > 600) { p.y = 0; p.x = Math.random() * 700; }
-                });
-            }
-
-            pCtx.fillStyle = '#ff007f';
-            pState.platforms.forEach(p => {
-                pCtx.fillRect(p.x, p.y, p.w, p.h);
-                if (pState.dy > 0 && 
-                    pState.x > p.x - 20 && pState.x < p.x + p.w + 20 &&
-                    pState.y > p.y - 20 && pState.y < p.y + p.h) {
-                    pState.dy = -12;
-                    playJump();
-                }
-            });
-
-            pCtx.font = "40px Arial";
-            pCtx.textAlign = "center";
-            pCtx.fillText(gameState.activeSkin, pState.x, pState.y);
-            document.getElementById('plat-height').innerText = pState.score;
-            document.getElementById('plat-lives').innerText = pState.lives;
-            
-            if (pState.y > 650) {
-                playFail();
-                pState.lives--;
-                pState.y = 200;
-                if (pState.lives <= 0) showScreen('home');
-            }
-
-            activeLoop = requestAnimationFrame(platformerLoop);
-        }
-
-        // --- NAVIGATION & INPUT ---
         function showScreen(id) {
+            initAudio(); // Start audio context on user interaction
             cancelAnimationFrame(activeLoop);
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('screen-' + id).classList.remove('hidden');
-            if (id === 'platformer') {
-                pState = { x: 400, y: 300, dy: 0, platforms: [], score: 0, lives: 3 };
-                for (let i = 0; i < 7; i++) pState.platforms.push({ x: Math.random() * 700, y: i * 100, w: 120, h: 20 });
-                platformerLoop();
-            } else if (id === 'breakout') {
-                initBreakout();
+            
+            if (id === 'platformer') startPlatformer();
+            if (id === 'breakout') startBreakout();
+            if (id === 'quiz-classic') startClassicQuiz();
+        }
+
+        // --- DATA ---
+        const questions = [
+            { q: "12 + 15 = ?", a: ["27", "25", "29", "30"], c: 0 },
+            { q: "8 x 4 = ?", a: ["32", "28", "36", "30"], c: 0 },
+            { q: "Opposite of 'Hot'?", a: ["Cold", "Warm", "Ice", "Fast"], c: 0 },
+            { q: "Which is a planet?", a: ["Mars", "Sun", "Moon", "Star"], c: 0 },
+            { q: "9 - 4 = ?", a: ["5", "3", "6", "4"], c: 0 },
+            { q: "5 x 5 = ?", a: ["25", "20", "30", "15"], c: 0 },
+            { q: "Half of 20?", a: ["10", "5", "15", "12"], c: 0 }
+        ];
+
+        // --- CLASSIC QUIZ ---
+        function startClassicQuiz() {
+            const q = questions[Math.floor(Math.random() * questions.length)];
+            document.getElementById('classic-q-text').innerText = q.q;
+            const container = document.getElementById('classic-q-options');
+            container.innerHTML = '';
+            
+            // Randomize options
+            let options = q.a.map((text, i) => ({ text, isCorrect: i === q.c }));
+            options.sort(() => Math.random() - 0.5);
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "btn-retro py-6 text-xl";
+                btn.innerText = opt.text;
+                btn.onclick = () => {
+                    if (opt.isCorrect) {
+                        sounds.correct();
+                        state.coins += 5;
+                        state.streak++;
+                        startClassicQuiz();
+                    } else {
+                        sounds.fail();
+                        state.streak = 0;
+                        startClassicQuiz();
+                    }
+                    updateStats();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // --- PLATFORMER ---
+        let activeLoop = null;
+        let pData = {};
+        function startPlatformer() {
+            const canvas = document.getElementById('platformer-canvas');
+            const ctx = canvas.getContext('2d');
+            pData = {
+                x: 400, y: 300, dy: 0, 
+                platforms: [], height: 0, lives: 3
+            };
+            for(let i=0; i<8; i++) {
+                pData.platforms.push({ x: Math.random()*700, y: i*80 + 100, w: 100, h: 15 });
+            }
+            
+            function loop() {
+                ctx.clearRect(0,0,800,600);
+                
+                // Movement
+                pData.x += state.input.x * 6;
+                pData.dy += 0.4;
+                pData.y += pData.dy;
+
+                // Screen Wrap
+                if (pData.x < 0) pData.x = 800;
+                if (pData.x > 800) pData.x = 0;
+
+                // Scrolling
+                if (pData.y < 300) {
+                    let diff = 300 - pData.y;
+                    pData.y = 300;
+                    pData.height += Math.floor(diff/10);
+                    pData.platforms.forEach(p => {
+                        p.y += diff;
+                        if (p.y > 600) { p.y = 0; p.x = Math.random()*700; }
+                    });
+                }
+
+                // Draw Platforms
+                ctx.fillStyle = '#ff007f';
+                pData.platforms.forEach(p => {
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                    if (pData.dy > 0 && 
+                        pData.x > p.x - 20 && pData.x < p.x + p.w + 20 &&
+                        pData.y > p.y - 20 && pData.y < p.y + p.h) {
+                        pData.dy = -12;
+                        sounds.jump();
+                    }
+                });
+
+                // Draw Player
+                ctx.font = "40px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(state.activeSkin, pData.x, pData.y);
+
+                // HUD
+                document.getElementById('plat-height').innerText = pData.height;
+                document.getElementById('plat-lives').innerText = pData.lives;
+
+                if (pData.y > 650) {
+                    sounds.fail();
+                    pData.lives--;
+                    pData.y = 100;
+                    pData.dy = 0;
+                    if (pData.lives <= 0) showScreen('home');
+                }
+
+                activeLoop = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        // --- BREAKOUT ---
+        let bData = {};
+        function startBreakout() {
+            const canvas = document.getElementById('breakout-canvas');
+            const ctx = canvas.getContext('2d');
+            bData = {
+                player: { x: 400, y: 300, energy: 100 },
+                terminals: [
+                    { x: 100, y: 100, active: true },
+                    { x: 700, y: 100, active: true },
+                    { x: 100, y: 500, active: true },
+                    { x: 700, y: 500, active: true }
+                ]
+            };
+
+            function loop() {
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0,0,800,600);
+
+                if (bData.player.energy > 0) {
+                    bData.player.x += state.input.x * 4;
+                    bData.player.y += state.input.y * 4;
+                    if (state.input.x !== 0 || state.input.y !== 0) {
+                        bData.player.energy -= 0.05;
+                    }
+                }
+
+                // Terminals
+                bData.terminals.forEach(t => {
+                    ctx.fillStyle = t.active ? '#00f3ff' : '#333';
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, 25, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.fillStyle = "#fff";
+                    ctx.font = "12px monospace";
+                    ctx.fillText("TERMINAL", t.x - 25, t.y - 35);
+
+                    let dist = Math.hypot(bData.player.x - t.x, bData.player.y - t.y);
+                    if (dist < 40 && t.active) {
+                        t.active = false;
+                        openQuizModal(() => {
+                            bData.player.energy = Math.min(100, bData.player.energy + 40);
+                            setTimeout(() => t.active = true, 5000);
+                        });
+                    }
+                });
+
+                // Player
+                ctx.font = "40px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(state.activeSkin, bData.player.x, bData.player.y);
+
+                document.getElementById('breakout-energy-fill').style.width = bData.player.energy + '%';
+                
+                if (bData.player.energy <= 0) {
+                    ctx.fillStyle = "rgba(0,0,0,0.8)";
+                    ctx.fillRect(0,0,800,600);
+                    ctx.fillStyle = "red";
+                    ctx.font = "30px Press Start 2P";
+                    ctx.fillText("LOW ENERGY", 400, 300);
+                }
+
+                activeLoop = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        // --- QUIZ MODAL (In-game) ---
+        function openQuizModal(onWin) {
+            const modal = document.getElementById('quiz-modal');
+            const q = questions[Math.floor(Math.random() * questions.length)];
+            document.getElementById('modal-q-text').innerText = q.q;
+            const container = document.getElementById('modal-q-options');
+            container.innerHTML = '';
+
+            q.a.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = "btn-retro py-4";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    modal.classList.add('hidden');
+                    if (i === q.c) {
+                        sounds.correct();
+                        state.coins += 20;
+                        onWin();
+                    } else {
+                        sounds.fail();
+                    }
+                    updateStats();
+                };
+                container.appendChild(btn);
+            });
+            modal.classList.remove('hidden');
+        }
+
+        // --- SHOP ---
+        window.buySkin = (emoji, price) => {
+            if (state.coins >= price) {
+                state.coins -= price;
+                state.activeSkin = emoji;
+                sounds.collect();
+                updateStats();
+            } else {
+                sounds.fail();
+            }
+        };
+
+        // --- INPUT HANDLING ---
+        // Keyboard
+        window.onkeydown = (e) => {
+            if (e.key.includes('Left')) state.input.x = -1;
+            if (e.key.includes('Right')) state.input.x = 1;
+            if (e.key.includes('Up')) state.input.y = -1;
+            if (e.key.includes('Down')) state.input.y = 1;
+            if (e.key === ' ' && !document.getElementById('screen-platformer').classList.contains('hidden')) {
+                if (pData.dy === 0 || Math.abs(pData.dy) < 1) pData.dy = -12;
+            }
+        };
+        window.onkeyup = () => { state.input.x = 0; state.input.y = 0; };
+
+        // Touch Controls
+        const bindTouch = (id, axis, val) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const start = (e) => { e.preventDefault(); state.input[axis] = val; };
+            const end = (e) => { e.preventDefault(); state.input[axis] = 0; };
+            el.addEventListener('touchstart', start);
+            el.addEventListener('touchend', end);
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', end);
+        };
+
+        bindTouch('btn-left', 'x', -1);
+        bindTouch('btn-right', 'x', 1);
+        bindTouch('break-left', 'x', -1);
+        bindTouch('break-right', 'x', 1);
+        bindTouch('break-up', 'y', -1);
+        bindTouch('break-down', 'y', 1);
+
+        document.getElementById('btn-jump').onclick = () => {
+            if (pData.dy === 0 || Math.abs(pData.dy) < 5) {
+                pData.dy = -12;
+                sounds.jump();
+            }
+        };
+
+        // --- STAR BACKGROUND ---
+        function createStars() {
+            const stars = document.getElementById('stars');
+            for(let i=0; i<100; i++) {
+                const s = document.createElement('div');
+                const size = Math.random()*3;
+                s.style.position = 'absolute';
+                s.style.width = size + 'px';
+                s.style.height = size + 'px';
+                s.style.background = '#fff';
+                s.style.left = Math.random()*100 + '%';
+                s.style.top = Math.random()*100 + '%';
+                s.style.opacity = Math.random();
+                stars.appendChild(s);
             }
         }
 
-        document.getElementById('play-platformer-init').onclick = () => showScreen('platformer');
-        document.getElementById('play-breakout-btn').onclick = () => showScreen('breakout');
-        document.getElementById('home-market-btn').onclick = () => showScreen('market');
-        document.getElementById('back-home-market-btn').onclick = () => showScreen('home');
-        document.getElementById('platformer-exit').onclick = () => showScreen('home');
-        document.getElementById('breakout-exit').onclick = () => showScreen('home');
-        document.getElementById('btn-settings').onclick = () => document.getElementById('modal-settings').classList.remove('hidden');
-        document.getElementById('btn-save-settings').onclick = () => {
-            gameState.volume = document.getElementById('volume-slider').value / 100;
-            gameState.device = document.getElementById('device-select').value;
-            document.getElementById('modal-settings').classList.add('hidden');
-            saveData();
+        window.onload = () => {
+            createStars();
+            updateStats();
         };
 
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') gameState.inputX = -1;
-            if (e.key === 'ArrowRight') gameState.inputX = 1;
-            if (e.key === 'ArrowUp') gameState.inputY = -1;
-            if (e.key === 'ArrowDown') gameState.inputY = 1;
-        });
-        window.addEventListener('keyup', (e) => {
-            if (['ArrowLeft', 'ArrowRight'].includes(e.key)) gameState.inputX = 0;
-            if (['ArrowUp', 'ArrowDown'].includes(e.key)) gameState.inputY = 0;
-        });
+        // Global exposing for simpler HTML calling
+        window.showScreen = showScreen;
 
-        // --- QUIZ ENGINE ---
-        const questions = [
-            { q: "15 + 24?", a: ["39", "41", "34", "44"], correct: 0 },
-            { q: "What is 7 x 8?", a: ["54", "56", "64", "49"], correct: 1 },
-            { q: "Next number: 2, 4, 8, 16, ...", a: ["24", "30", "32", "20"], correct: 2 }
-        ];
-
-        function triggerQuiz(gameMode) {
-            const quiz = document.getElementById('quiz-container');
-            const q = questions[Math.floor(Math.random() * questions.length)];
-            document.getElementById('quiz-question').innerText = q.q;
-            const opts = document.getElementById('quiz-options');
-            opts.innerHTML = '';
-            q.a.forEach((opt, i) => {
-                const b = document.createElement('button');
-                b.className = "btn-retro text-left py-4";
-                b.innerText = opt;
-                b.onclick = () => {
-                    quiz.classList.add('hidden');
-                    if (i === q.correct) {
-                        playCorrect();
-                        if (gameMode === 'breakout') {
-                            breakoutState.player.energy = Math.min(100, breakoutState.player.energy + 40);
-                            breakoutState.player.score += 50;
-                            // Reset stations occasionally
-                            setTimeout(() => {
-                                breakoutState.stations.forEach(s => s.active = true);
-                            }, 5000);
-                        } else {
-                            pState.dy = -25;
-                        }
-                        gameState.coins += 10;
-                        saveData();
-                    } else {
-                        playFail();
-                    }
-                };
-                opts.appendChild(b);
-            });
-            quiz.classList.remove('hidden');
-        }
-
-        document.getElementById('plat-quiz-btn').onclick = () => triggerQuiz('platformer');
-
-        window.onload = initFirebase;
     </script>
 </body>
 </html>
