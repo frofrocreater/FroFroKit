@@ -41,6 +41,7 @@
             font-size: 0.7rem;
             display: inline-block;
             text-align: center;
+            user-select: none;
         }
 
         .retro-button:active {
@@ -63,7 +64,7 @@
             margin: 0 auto;
             max-width: 100%;
             border: 4px solid #fff;
-            background: #333;
+            background: #000;
         }
 
         .hidden { display: none !important; }
@@ -79,56 +80,52 @@
             pointer-events: none;
         }
 
+        /* Jeopardy Styling */
         .jeopardy-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 12px;
+            background: #000;
+            padding: 10px;
+            border: 4px solid #fff;
+        }
+        .jeopardy-header {
+            background: #060ce9;
+            color: white;
+            text-align: center;
+            padding: 10px 5px;
+            font-size: 10px;
+            border: 2px solid #fff;
         }
         .jeopardy-card {
             background: #060ce9;
             border: 2px solid #ffcc00;
             color: #ffcc00;
-            height: 80px;
+            height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Press Start 2P', cursive;
-            font-size: 14px;
+            font-size: 18px;
             cursor: pointer;
+            transition: transform 0.1s;
         }
+        .jeopardy-card:hover { transform: scale(1.02); }
         .jeopardy-card.used {
-            opacity: 0.3;
+            background: #000033;
+            color: #333;
+            border-color: #333;
             cursor: default;
-        }
-
-        .pack-card {
-            background: linear-gradient(135deg, #222, #444);
-            border: 3px solid #fff;
-            position: relative;
-            overflow: hidden;
-        }
-        .pack-card::after {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            transform: rotate(45deg);
-            animation: shine 3s infinite;
-        }
-        @keyframes shine {
-            0% { left: -100%; }
-            100% { left: 100%; }
         }
     </style>
 </head>
 <body class="crt">
 
     <header class="p-4 text-center">
-        <h1 class="pixel-font text-3xl mb-2 text-white italic" style="text-shadow: 4px 4px var(--neon-pink);">FROFROKIT</h1>
+        <h1 onclick="adminTap()" class="pixel-font text-3xl mb-2 text-white italic cursor-pointer select-none" style="text-shadow: 4px 4px var(--neon-pink);">FROFROKIT</h1>
         <div class="flex justify-center gap-4 text-xl">
-            <span class="text-yellow-400">COINS: <span id="coin-display">0</span></span>
-            <span id="save-status" class="text-[10px] text-green-400 self-center">● SAVED</span>
+            <span class="text-yellow-400">COINS: <span id="coin-display">50</span></span>
+            <span id="save-status" class="text-[10px] text-green-400 self-center">● STANDALONE</span>
         </div>
     </header>
 
@@ -176,82 +173,35 @@
             </div>
         </section>
 
-        <!-- Sets Management -->
-        <section id="sets" class="hidden">
-            <h2 class="pixel-font text-center text-cyan-400 mb-6">STUDY SETS</h2>
-            
-            <div class="mb-8 text-center">
-                <button onclick="openSetEditor()" class="retro-button bg-green-600 text-white">+ CREATE NEW SET</button>
-            </div>
-
-            <div id="sets-list" class="grid gap-4">
-                <!-- User sets will load here -->
-            </div>
-        </section>
-
-        <!-- Set Editor Modal -->
-        <section id="set-editor" class="hidden fixed inset-0 z-[300] bg-black/95 overflow-y-auto p-4">
-            <div class="max-w-2xl mx-auto py-10">
-                <div class="retro-border p-6 bg-black">
-                    <h2 class="pixel-font text-sm text-yellow-400 mb-6" id="editor-title">CREATE NEW SET</h2>
-                    
-                    <div class="mb-6">
-                        <label class="block text-xs mb-2">SET NAME:</label>
-                        <input type="text" id="set-name-input" class="retro-input w-full" placeholder="e.g. History Quiz">
-                    </div>
-
-                    <div id="editor-questions-container" class="space-y-6">
-                        <!-- Questions rows go here -->
-                    </div>
-
-                    <button onclick="addQuestionToEditor()" class="retro-button w-full mt-6 bg-blue-600 text-white">+ ADD QUESTION</button>
-                    
-                    <div class="flex gap-4 mt-10">
-                        <button onclick="saveCurrentSet()" class="retro-button flex-1 bg-green-500">SAVE SET</button>
-                        <button onclick="showSection('sets')" class="retro-button flex-1">CANCEL</button>
-                    </div>
+        <!-- Admin Dashboard -->
+        <section id="admin-panel" class="hidden">
+            <h2 class="pixel-font text-center text-red-500 mb-6">ADMIN DASHBOARD</h2>
+            <div class="retro-border p-6 bg-black/80 space-y-4">
+                <div>
+                    <p class="text-xs mb-2">ADD COINS:</p>
+                    <button onclick="modifyCoins(100)" class="retro-button bg-yellow-500">+100</button>
+                    <button onclick="modifyCoins(1000)" class="retro-button bg-yellow-600">+1000</button>
+                </div>
+                <div>
+                    <p class="text-xs mb-2">ACTIONS:</p>
+                    <button onclick="unlockAllSkins()" class="retro-button bg-blue-500">UNLOCK ALL SKINS</button>
+                    <button onclick="resetData()" class="retro-button bg-red-600">RESET ALL DATA</button>
                 </div>
             </div>
         </section>
 
-        <!-- Mode Selection -->
-        <section id="mode-prompt" class="hidden fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4">
-            <div class="retro-border p-8 bg-black/80 text-center max-w-sm w-full">
-                <h2 class="pixel-font text-lg mb-6 text-yellow-400">SELECT MODE</h2>
-                <div class="flex flex-col gap-4">
-                    <button onclick="startSolo()" class="retro-button">SOLO</button>
-                    <button onclick="startHostLobby()" class="retro-button bg-cyan-600">HOST LOBBY</button>
-                    <button onclick="cancelPrompt()" class="text-xs underline mt-2 text-gray-400">CANCEL</button>
-                </div>
+        <!-- Jeopardy Screen -->
+        <section id="jeopardy-container" class="hidden">
+            <h2 class="pixel-font text-center text-blue-500 mb-6 text-2xl" style="text-shadow: 2px 2px #fff;">STUDY JEOPARDY</h2>
+            <div class="jeopardy-grid" id="jeopardy-board">
+                <!-- Headers -->
+                <div class="jeopardy-header pixel-font">TOPIC A</div>
+                <div class="jeopardy-header pixel-font">TOPIC B</div>
+                <div class="jeopardy-header pixel-font">TOPIC C</div>
+                <!-- Rows will be injected by JS -->
             </div>
-        </section>
-
-        <!-- Lobby Room -->
-        <section id="lobby-room" class="hidden text-center py-10">
-            <div class="retro-border p-8 bg-black/60 max-w-md mx-auto">
-                <h2 class="pixel-font text-lg text-cyan-400 mb-2">LOBBY ROOM</h2>
-                <p class="text-xs text-gray-400 mb-6">Waiting for players...</p>
-                
-                <div class="bg-black p-4 border-2 border-dashed border-white mb-6">
-                    <p class="text-[10px] uppercase text-gray-500 mb-1">Join Code</p>
-                    <p id="lobby-code-display" class="pixel-font text-3xl tracking-widest text-yellow-400">000000</p>
-                </div>
-
-                <div class="text-left mb-6">
-                    <p class="pixel-font text-[10px] mb-2 text-pink-500">PLAYERS:</p>
-                    <div id="lobby-players-list" class="text-sm space-y-1">
-                        <!-- Player list synced here -->
-                    </div>
-                </div>
-
-                <div id="host-controls-lobby" class="hidden">
-                    <button onclick="beginLobbyGame()" class="retro-button w-full bg-green-500 mb-2">START GAME</button>
-                    <button onclick="showSection('menu')" class="retro-button w-full">DISBAND</button>
-                </div>
-                <div id="player-controls-lobby" class="hidden">
-                    <p class="text-xs italic text-yellow-400 animate-pulse">Waiting for host to start...</p>
-                    <button onclick="showSection('menu')" class="retro-button w-full mt-4">LEAVE</button>
-                </div>
+            <div class="mt-8 text-center">
+                <button onclick="showSection('menu')" class="retro-button bg-red-600 text-white">QUIT BOARD</button>
             </div>
         </section>
 
@@ -261,227 +211,409 @@
                 <span class="pixel-font text-xs">SCORE: <span id="game-score">0</span></span>
                 <span id="active-skin-display" class="text-xs text-yellow-400">🐤</span>
             </div>
-            <canvas id="main-canvas" width="400" height="500"></canvas>
-            <div id="lobby-info" class="hidden mt-4 text-xs pixel-font text-cyan-400"></div>
-        </section>
-
-        <!-- Jeopardy Screen -->
-        <section id="jeopardy-container" class="hidden">
-            <h2 class="pixel-font text-center text-blue-400 mb-6">STUDY JEOPARDY</h2>
-            <div class="jeopardy-grid" id="jeopardy-board"></div>
-            <button onclick="showSection('menu')" class="retro-button mt-8 w-full">QUIT GAME</button>
+            <canvas id="main-canvas" width="400" height="500" class="mx-auto"></canvas>
+            <div class="mt-4 flex flex-wrap justify-center gap-4">
+                <button onmousedown="handleInput('left', true)" onmouseup="handleInput('left', false)" ontouchstart="event.preventDefault(); handleInput('left', true)" ontouchend="handleInput('left', false)" class="retro-button">LEFT</button>
+                <button onmousedown="handleInput('up', true)" onmouseup="handleInput('up', false)" ontouchstart="event.preventDefault(); handleInput('up', true)" ontouchend="handleInput('up', false)" class="retro-button bg-cyan-400">ACTION / JUMP</button>
+                <button onmousedown="handleInput('right', true)" onmouseup="handleInput('right', false)" ontouchstart="event.preventDefault(); handleInput('right', true)" ontouchend="handleInput('right', false)" class="retro-button">RIGHT</button>
+                <button onclick="showSection('menu')" class="retro-button bg-red-500">QUIT</button>
+            </div>
+            <p class="mt-2 text-gray-500 text-[10px]">MOBILE: USE BUTTONS | PC: ARROW KEYS & SPACE</p>
         </section>
 
         <!-- Quiz Section -->
         <section id="quiz-container" class="hidden">
             <div class="retro-border p-6 rounded-lg text-center max-w-lg mx-auto bg-black/80">
-                <div id="quiz-type" class="pixel-font text-[10px] mb-4 text-orange-400">QUIZ MODE</div>
+                <div id="quiz-type" class="pixel-font text-[10px] mb-4 text-orange-400">POWER UP QUIZ!</div>
                 <h3 id="question-text" class="text-2xl mb-8">...</h3>
                 <div id="options-grid" class="grid grid-cols-1 gap-4"></div>
             </div>
         </section>
 
-        <!-- Market -->
         <section id="market" class="hidden">
             <h2 class="pixel-font text-center text-yellow-400 mb-6">THEME PACKS</h2>
-            <div id="market-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="pack-card p-6 text-center border-green-500">
-                    <p class="pixel-font text-sm mb-2 text-green-400">NATURE PACK</p>
-                    <div class="text-2xl my-3">🌿 🦊 🍄</div>
-                    <button onclick="buyPack('nature', 100)" class="retro-button">100 🪙</button>
-                </div>
-                <div class="pack-card p-6 text-center border-blue-400">
-                    <p class="pixel-font text-sm mb-2 text-blue-400">SPACE PACK</p>
-                    <div class="text-2xl my-3">🚀 👽 🪐</div>
-                    <button onclick="buyPack('space', 100)" class="retro-button">100 🪙</button>
-                </div>
-                <div class="pack-card p-6 text-center border-purple-500">
-                    <p class="pixel-font text-sm mb-2 text-purple-400">SPOOKY PACK</p>
-                    <div class="text-2xl my-3">💀 🧛 🕸️</div>
-                    <button onclick="buyPack('spooky', 100)" class="retro-button">100 🪙</button>
-                </div>
-                <div class="pack-card p-6 text-center border-cyan-400">
-                    <p class="pixel-font text-sm mb-2 text-cyan-400">CYBER PACK</p>
-                    <div class="text-2xl my-3">🤖 💾 ⚡</div>
-                    <button onclick="buyPack('cyber', 100)" class="retro-button">100 🪙</button>
-                </div>
-            </div>
-            <p id="pack-feedback" class="text-center mt-6 pixel-font text-[10px] text-pink-400"></p>
+            <div id="market-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </section>
 
-        <!-- Collection / Admin -->
         <section id="collection" class="hidden">
             <h2 class="pixel-font text-center text-pink-400 mb-6">YOUR SKINS</h2>
             <div id="skins-grid" class="grid grid-cols-3 gap-4"></div>
-            
-            <div class="mt-12 text-center p-4 retro-border bg-black/30">
-                <h3 class="pixel-font text-xs mb-2">ACCOUNT</h3>
-                <div id="admin-controls" class="hidden">
-                    <p class="text-green-400 pixel-font text-[10px] mb-4">ADMIN ACCESS GRANTED</p>
-                    <p class="text-[8px] text-gray-400 mb-2">ACTIVE PLAYERS:</p>
-                    <div id="admin-user-list" class="text-left text-xs bg-black/60 p-2 max-h-48 overflow-y-auto flex flex-col gap-2"></div>
-                </div>
-                <div id="guest-controls">
-                    <input type="password" id="admin-code" placeholder="Enter Code" class="retro-input text-center w-40 mb-2">
-                    <button onclick="checkAdmin()" class="retro-button">SIGN IN</button>
+        </section>
+
+        <section id="sets" class="hidden">
+            <h2 class="pixel-font text-center text-cyan-400 mb-6">STUDY SETS</h2>
+            <div class="mb-8 text-center">
+                <button onclick="openSetEditor()" class="retro-button bg-green-600 text-white">+ CREATE NEW SET</button>
+            </div>
+            <div id="sets-list" class="grid gap-4"></div>
+        </section>
+
+        <!-- Set Editor Modal -->
+        <section id="set-editor" class="hidden fixed inset-0 z-[300] bg-black/95 overflow-y-auto p-4">
+            <div class="max-w-2xl mx-auto py-10">
+                <div class="retro-border p-6 bg-black">
+                    <h2 class="pixel-font text-sm text-yellow-400 mb-6">CREATE NEW SET</h2>
+                    <input type="text" id="set-name-input" class="retro-input w-full mb-4" placeholder="SET NAME">
+                    <div id="editor-questions-container" class="space-y-4"></div>
+                    <button onclick="addQuestionToEditor()" class="retro-button w-full mt-4 bg-blue-600">+ ADD QUESTION</button>
+                    <div class="flex gap-4 mt-6">
+                        <button onclick="saveCurrentSet()" class="retro-button flex-1 bg-green-500">SAVE</button>
+                        <button onclick="showSection('sets')" class="retro-button flex-1">CANCEL</button>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Results -->
-        <section id="results" class="hidden text-center py-12">
-            <div class="retro-border p-8 bg-black/50">
-                <h2 class="pixel-font text-2xl mb-4 text-yellow-400">GAME OVER</h2>
-                <p class="text-xl mb-4" id="result-score">Score: 0</p>
-                <button onclick="showSection('menu')" class="retro-button">BACK</button>
-            </div>
-        </section>
-        
-        <!-- Join Screen (Multiplayer) -->
-        <section id="join-screen" class="hidden">
-            <div class="retro-border p-6 bg-black/60 mb-8 text-center">
-                <h2 class="pixel-font text-sm text-yellow-400 mb-4">ENTER CODE</h2>
-                <div class="flex justify-center gap-2">
-                    <input type="text" id="manual-join-code" maxlength="6" placeholder="000000" class="retro-input w-32 text-center text-lg tracking-widest uppercase">
-                    <button onclick="joinByCode()" class="retro-button">GO</button>
+        <section id="mode-prompt" class="hidden fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4">
+            <div class="retro-border p-8 bg-black text-center">
+                <h2 class="pixel-font text-sm mb-6 text-yellow-400">CHOOSE MODE</h2>
+                <div class="flex flex-col gap-4">
+                    <button onclick="startSolo()" class="retro-button">SOLO PLAY</button>
+                    <button onclick="startHostLobby()" class="retro-button bg-cyan-600">HOST ROOM</button>
+                    <button onclick="cancelPrompt()" class="text-xs underline text-gray-500">BACK</button>
                 </div>
             </div>
-
-            <h2 class="pixel-font text-center text-cyan-400 mb-6">OR BROWSE PUBLIC</h2>
-            <div id="lobby-list" class="grid gap-4">
-                <p class="text-center text-gray-400 text-xs">SEARCHING FOR GAMES...</p>
-            </div>
-            <button onclick="showSection('menu')" class="retro-button mt-8 w-full">BACK</button>
         </section>
+
+        <section id="join-screen" class="hidden text-center">
+            <div class="retro-border p-6 bg-black/60 mb-8">
+                <h2 class="pixel-font text-sm text-yellow-400 mb-4">ENTER ROOM CODE</h2>
+                <input type="text" id="manual-join-code" maxlength="6" class="retro-input w-32 text-center text-lg mb-4">
+                <button onclick="alert('Lobby feature requires Cloud mode. Try Solo Play!')" class="retro-button w-full">JOIN LOBBY</button>
+            </div>
+            <button onclick="showSection('menu')" class="retro-button">BACK</button>
+        </section>
+
     </main>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'frofro-v3';
-
+    <script>
+        // --- GLOBAL STATE ---
         let state = {
-            user: null,
-            coins: 0,
-            ownedSkins: ['default'],
-            activeSkin: 'default',
-            isAdmin: false,
+            coins: parseInt(localStorage.getItem('fro_coins')) || 50,
+            ownedSkins: JSON.parse(localStorage.getItem('fro_skins')) || ['default'],
+            activeSkin: localStorage.getItem('fro_active_skin') || 'default',
             score: 0,
             currentMode: '',
             isGameRunning: false,
             tempMode: null,
-            currentLobbyId: null,
-            players: [],
-            lobbyUnsubscribe: null,
-            customSets: [],
-            activeSetId: 'default',
-            editingSetId: null
+            customSets: JSON.parse(localStorage.getItem('fro_sets') || '[]'),
+            activeSetId: localStorage.getItem('fro_active_set') || 'default',
+            adminTaps: 0,
+            jeopardyUsed: []
         };
 
         const skins = {
-            'default': { emoji: '🐤', name: 'Chick', pack: 'starter' },
-            'racer': { emoji: '🏎️', name: 'Speedy', pack: 'starter' },
-            'ufo': { emoji: '🛸', name: 'Invader', pack: 'space' },
-            'alien': { emoji: '👽', name: 'Alien', pack: 'space' },
-            'rocket': { emoji: '🚀', name: 'Rocket', pack: 'space' },
-            'planet': { emoji: '🪐', name: 'Saturn', pack: 'space' },
-            'fox': { emoji: '🦊', name: 'Fox', pack: 'nature' },
-            'mushroom': { emoji: '🍄', name: 'Shroom', pack: 'nature' },
-            'leaf': { emoji: '🌿', name: 'Fern', pack: 'nature' },
-            'tree': { emoji: '🌲', name: 'Pine', pack: 'nature' },
-            'ghost': { emoji: '👻', name: 'Ghost', pack: 'spooky' },
-            'skull': { emoji: '💀', name: 'Bones', pack: 'spooky' },
-            'bat': { emoji: '🦇', name: 'Bat', pack: 'spooky' },
-            'vamp': { emoji: '🧛', name: 'Drac', pack: 'spooky' },
-            'robot': { emoji: '🤖', name: 'Bot', pack: 'cyber' },
-            'floppy': { emoji: '💾', name: 'Data', pack: 'cyber' },
-            'bolt': { emoji: '⚡', name: 'Volt', pack: 'cyber' },
-            'chip': { emoji: '🔌', name: 'Plug', pack: 'cyber' }
+            'default': { emoji: '🐤', name: 'Chick', pack: 'Starter' },
+            'racer': { emoji: '🏎️', name: 'Speedy', pack: 'Starter' },
+            'ufo': { emoji: '🛸', name: 'Invader', pack: 'Space' },
+            'alien': { emoji: '👽', name: 'Alien', pack: 'Space' },
+            'fox': { emoji: '🦊', name: 'Fox', pack: 'Nature' },
+            'mushroom': { emoji: '🍄', name: 'Shroom', pack: 'Nature' },
+            'surfer': { emoji: '🏄', name: 'Surfer', pack: 'Beach' }
         };
 
         const defaultQuestions = [
-            { q: "2 + 2?", a: ["4", "22", "5", "3"], c: 0 },
-            { q: "Capital of UK?", a: ["Paris", "London", "Berlin", "Dublin"], c: 1 },
-            { q: "3 x 3?", a: ["6", "9", "12", "33"], c: 1 },
-            { q: "Color of the sky?", a: ["Green", "Blue", "Red", "Yellow"], c: 1 },
-            { q: "Largest planet?", a: ["Earth", "Mars", "Jupiter", "Venus"], c: 2 }
+            { q: "What is 5 + 7?", a: ["11", "12", "13", "14"], c: 1 },
+            { q: "Which planet is the Red Planet?", a: ["Mars", "Venus", "Jupiter", "Saturn"], c: 0 },
+            { q: "Capital of France?", a: ["Lyon", "Nice", "Paris", "Marseille"], c: 2 },
+            { q: "Fastest land animal?", a: ["Lion", "Cheetah", "Horse", "Leopard"], c: 1 },
+            { q: "Primary color?", a: ["Green", "Purple", "Red", "Orange"], c: 2 },
+            { q: "H2O is common name for?", a: ["Air", "Salt", "Water", "Iron"], c: 2 }
         ];
 
-        // --- AUTH & DATA ---
-        async function init() {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
+        // --- NAVIGATION & UI ---
+        function showSection(id) {
+            state.isGameRunning = false;
+            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if (id === 'menu') updateUI();
+            if (id === 'collection') renderCollection();
+            if (id === 'sets') renderSetsList();
+            if (id === 'market') renderMarket();
+            if (id === 'jeopardy-container') initJeopardy();
+        }
+
+        function updateUI() {
+            document.getElementById('coin-display').innerText = state.coins;
+            localStorage.setItem('fro_coins', state.coins);
+            const indicator = document.getElementById('active-set-indicator');
+            if (state.activeSetId === 'default') {
+                indicator.innerText = "SET: DEFAULT QUESTIONS";
             } else {
-                await signInAnonymously(auth);
+                const s = state.customSets.find(x => x.id === state.activeSetId);
+                indicator.innerText = `SET: ${s ? s.name.toUpperCase() : 'DEFAULT'}`;
             }
         }
-        init();
 
-        onAuthStateChanged(auth, (u) => {
-            state.user = u;
-            if (u) {
-                loadProgress(u);
-                updatePresence(u);
-                syncLobbies();
-                syncSets(u);
-                onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'presence', u.uid), (doc) => {
-                    if (doc.exists() && doc.data().isAdmin) {
-                        enableAdminUI();
+        // --- ADMIN SYSTEM ---
+        function adminTap() {
+            state.adminTaps++;
+            if (state.adminTaps >= 5) {
+                showSection('admin-panel');
+                state.adminTaps = 0;
+            }
+        }
+        function modifyCoins(amt) { state.coins += amt; updateUI(); }
+        function unlockAllSkins() { state.ownedSkins = Object.keys(skins); localStorage.setItem('fro_skins', JSON.stringify(state.ownedSkins)); renderCollection(); }
+        function resetData() { localStorage.clear(); location.reload(); }
+
+        // --- JEOPARDY LOGIC ---
+        function initJeopardy() {
+            const board = document.getElementById('jeopardy-board');
+            // Keep headers
+            const headers = Array.from(board.querySelectorAll('.jeopardy-header'));
+            board.innerHTML = '';
+            headers.forEach(h => board.appendChild(h));
+
+            const values = [100, 200, 300, 400];
+            values.forEach(val => {
+                for(let col=0; col<3; col++) {
+                    const cardId = `j-${val}-${col}`;
+                    const card = document.createElement('div');
+                    card.className = 'jeopardy-card';
+                    if (state.jeopardyUsed.includes(cardId)) {
+                        card.classList.add('used');
                     }
-                }, (err) => {});
+                    card.innerText = `$${val}`;
+                    card.onclick = () => {
+                        if (!state.jeopardyUsed.includes(cardId)) {
+                            state.jeopardyUsed.push(cardId);
+                            triggerQuiz(val);
+                        }
+                    };
+                    board.appendChild(card);
+                }
+            });
+        }
+
+        // --- GAME ENGINE ---
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+        let gameObj = { x: 50, y: 250, v: 0, obstacles: [], frame: 0 };
+        let inputState = { left: false, right: false, up: false };
+
+        function handleInput(dir, isActive) {
+            if (dir === 'left') inputState.left = isActive;
+            if (dir === 'right') inputState.right = isActive;
+            if (dir === 'up') {
+                inputState.up = isActive;
+                if (isActive) jump();
+            }
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.code === 'ArrowLeft') inputState.left = true;
+            if (e.code === 'ArrowRight') inputState.right = true;
+            if (e.code === 'Space' || e.code === 'ArrowUp') { 
+                if(!inputState.up) jump();
+                inputState.up = true; 
             }
         });
+        window.addEventListener('keyup', e => {
+            if (e.code === 'ArrowLeft') inputState.left = false;
+            if (e.code === 'ArrowRight') inputState.right = false;
+            if (e.code === 'Space' || e.code === 'ArrowUp') inputState.up = false;
+        });
 
-        async function updatePresence(user) {
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', user.uid), {
-                uid: user.uid,
-                activeSkin: state.activeSkin,
-                lastSeen: Date.now(),
-                isAdmin: state.isAdmin
-            }, { merge: true });
+        function jump() {
+            if (state.currentMode === 'flappy') gameObj.v = -5.5;
+            if (state.currentMode === 'surf' && gameObj.y >= 430) gameObj.v = -7;
         }
 
-        async function saveProgress() {
-            if (!state.user) return;
-            document.getElementById('save-status').innerText = "● SAVING...";
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'profile', 'data'), {
-                    coins: state.coins,
-                    ownedSkins: state.ownedSkins,
-                    activeSkin: state.activeSkin,
-                    activeSetId: state.activeSetId,
-                    lastSaved: Date.now()
+        function initGame() {
+            state.score = 0;
+            state.isGameRunning = true;
+            // Setup initial position based on mode
+            const startX = (state.currentMode === 'racer') ? 180 : 80;
+            const startY = (state.currentMode === 'racer') ? 400 : 250;
+            gameObj = { x: startX, y: startY, v: 0, obstacles: [], frame: 0 };
+            document.getElementById('active-skin-display').innerText = skins[state.activeSkin].emoji;
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameLoop() {
+            if (!state.isGameRunning) return;
+            
+            // Background
+            ctx.fillStyle = "#111";
+            ctx.fillRect(0, 0, 400, 500);
+            
+            gameObj.frame++;
+            
+            if (state.currentMode === 'flappy') {
+                // Gravity
+                gameObj.v += 0.25;
+                gameObj.y += gameObj.v;
+                gameObj.x = 80; // Keep bird at fixed X
+
+                if (gameObj.frame % 90 === 0) {
+                    const gap = 150;
+                    const minH = 50;
+                    const maxH = 500 - gap - 100;
+                    const h = Math.random() * maxH + minH;
+                    gameObj.obstacles.push({ x: 400, h: h, w: 60, gap: gap });
+                }
+
+                gameObj.obstacles.forEach((o) => {
+                    o.x -= 3;
+                    ctx.fillStyle = "#2ecc71"; 
+                    // Draw Pipes
+                    ctx.fillRect(o.x, 0, o.w, o.h);
+                    ctx.fillRect(o.x, o.h + o.gap, o.w, 500 - (o.h + o.gap));
+                    
+                    // Collision Detection (Hitbox)
+                    const pX = gameObj.x;
+                    const pY = gameObj.y;
+                    if (pX + 20 > o.x && pX - 20 < o.x + o.w) {
+                        if (pY - 20 < o.h || pY + 20 > o.h + o.gap) {
+                            triggerQuiz();
+                        }
+                    }
                 });
-                updatePresence(state.user);
-                document.getElementById('save-status').innerText = "● SAVED";
-            } catch (e) {}
-        }
 
-        async function loadProgress(user) {
-            const snap = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data'));
-            if (snap.exists()) {
-                const data = snap.data();
-                state.coins = data.coins || 0;
-                state.ownedSkins = data.ownedSkins || ['default'];
-                state.activeSkin = data.activeSkin || 'default';
-                state.activeSetId = data.activeSetId || 'default';
+                if (gameObj.y > 500 || gameObj.y < -50) triggerQuiz();
             }
-            updateUI();
+
+            if (state.currentMode === 'racer') {
+                // Draw Road
+                ctx.fillStyle = "#333";
+                ctx.fillRect(50, 0, 300, 500);
+                ctx.strokeStyle = "#fff";
+                ctx.setLineDash([20, 20]);
+                ctx.beginPath(); ctx.moveTo(200, 0); ctx.lineTo(200, 500); ctx.stroke();
+                
+                // Continuous movement logic
+                if (inputState.left && gameObj.x > 60) gameObj.x -= 5;
+                if (inputState.right && gameObj.x < 310) gameObj.x += 5;
+                
+                // Update player vertical position for Racer
+                gameObj.y = 400;
+
+                if (gameObj.frame % 45 === 0) {
+                    gameObj.obstacles.push({ x: Math.random() * 250 + 60, y: -60, w: 40, h: 60, speed: Math.random() * 3 + 4 });
+                }
+                gameObj.obstacles.forEach(o => {
+                    o.y += o.speed;
+                    ctx.fillStyle = "#e74c3c"; // Traffic Red
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                    // Collision
+                    if (Math.abs(gameObj.x - o.x) < 35 && Math.abs(gameObj.y - o.y) < 50) triggerQuiz();
+                });
+            }
+
+            if (state.currentMode === 'surf') {
+                // Water Line
+                ctx.fillStyle = "#3498db";
+                ctx.fillRect(0, 450, 400, 50);
+
+                gameObj.v += 0.3;
+                gameObj.y += gameObj.v;
+                if (gameObj.y > 430) { gameObj.y = 430; gameObj.v = 0; }
+                gameObj.x = 80;
+
+                if (gameObj.frame % 70 === 0) {
+                    gameObj.obstacles.push({ x: 400, y: 410, w: 40, h: 40 });
+                }
+                gameObj.obstacles.forEach(o => {
+                    o.x -= 5;
+                    ctx.fillStyle = "#fff"; // White caps
+                    ctx.beginPath();
+                    ctx.moveTo(o.x, o.y + 40);
+                    ctx.lineTo(o.x + 20, o.y);
+                    ctx.lineTo(o.x + 40, o.y + 40);
+                    ctx.fill();
+                    // Collision
+                    if (Math.abs(gameObj.x - o.x) < 30 && Math.abs(gameObj.y - o.y) < 30) triggerQuiz();
+                });
+            }
+
+            // Cleanup off-screen
+            gameObj.obstacles = gameObj.obstacles.filter(o => o.x > -100 && o.y < 600);
+
+            // Draw Player
+            ctx.font = "30px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(skins[state.activeSkin].emoji, gameObj.x, gameObj.y);
+            
+            state.score++;
+            document.getElementById('game-score').innerText = state.score;
+            requestAnimationFrame(gameLoop);
         }
 
-        // --- CUSTOM SETS SYSTEM ---
-        function syncSets(user) {
-            onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'sets'), (snap) => {
-                state.customSets = [];
-                snap.forEach(d => state.customSets.push({ id: d.id, ...d.data() }));
-                renderSetsList();
+        function triggerQuiz(reward = 10) {
+            state.isGameRunning = false;
+            showSection('quiz-container');
+            let pool = (state.activeSetId === 'default') ? defaultQuestions : (state.customSets.find(x => x.id === state.activeSetId)?.questions || defaultQuestions);
+            const q = pool[Math.floor(Math.random() * pool.length)];
+            
+            document.getElementById('question-text').innerText = q.q;
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+            
+            q.a.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = "retro-button";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if (i === q.c) {
+                        state.coins += reward;
+                        alert(`CORRECT! +${reward} COINS`);
+                    } else {
+                        alert("WRONG! THE ANSWER WAS: " + q.a[q.c]);
+                    }
+                    showSection('menu');
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        // --- MARKET & COLLECTION HELPERS ---
+        function renderMarket() {
+            const grid = document.getElementById('market-grid');
+            grid.innerHTML = '';
+            const packs = [
+                { id: 'space', name: 'SPACE PACK', icons: '🚀 👽 🪐', cost: 100 },
+                { id: 'nature', name: 'NATURE PACK', icons: '🌿 🦊 🍄', cost: 100 },
+                { id: 'beach', name: 'BEACH PACK', icons: '🏄 🌴 🐚', cost: 150 }
+            ];
+            packs.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "retro-border p-6 text-center bg-black/50";
+                div.innerHTML = `
+                    <p class="pixel-font text-xs text-cyan-400 mb-2">${p.name}</p>
+                    <div class="text-2xl mb-4">${p.icons}</div>
+                    <button onclick="buyPack('${p.id}', ${p.cost})" class="retro-button">${p.cost} 🪙</button>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        window.buyPack = (id, cost) => {
+            if (state.coins >= cost) {
+                state.coins -= cost;
+                let newSkins = [];
+                if (id === 'space') newSkins = ['ufo', 'alien'];
+                if (id === 'nature') newSkins = ['fox', 'mushroom'];
+                if (id === 'beach') newSkins = ['surfer'];
+                state.ownedSkins = [...new Set([...state.ownedSkins, ...newSkins])];
+                localStorage.setItem('fro_skins', JSON.stringify(state.ownedSkins));
                 updateUI();
+                alert("PACK UNLOCKED!");
+            } else {
+                alert("NOT ENOUGH COINS!");
+            }
+        };
+
+        function renderCollection() {
+            const grid = document.getElementById('skins-grid');
+            grid.innerHTML = '';
+            state.ownedSkins.forEach(sid => {
+                const div = document.createElement('div');
+                div.className = `retro-border p-2 text-center cursor-pointer ${state.activeSkin === sid ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}`;
+                div.onclick = () => { state.activeSkin = sid; localStorage.setItem('fro_active_skin', sid); renderCollection(); };
+                div.innerHTML = `<div class="text-3xl">${skins[sid].emoji}</div><p class="text-[10px] mt-1">${skins[sid].name}</p>`;
+                grid.appendChild(div);
             });
         }
 
@@ -489,540 +621,82 @@
             const list = document.getElementById('sets-list');
             list.innerHTML = '';
             
-            // Default Set
             const defDiv = document.createElement('div');
-            defDiv.className = `retro-border p-4 flex justify-between items-center ${state.activeSetId === 'default' ? 'bg-cyan-900/40 border-cyan-400' : 'bg-black/40'}`;
-            defDiv.innerHTML = `
-                <div>
-                    <p class="pixel-font text-xs">DEFAULT QUESTIONS</p>
-                    <p class="text-[10px] text-gray-400">5 QUESTIONS</p>
-                </div>
-                <button onclick="setActiveSet('default')" class="retro-button ${state.activeSetId === 'default' ? 'bg-green-500' : ''}">
-                    ${state.activeSetId === 'default' ? 'ACTIVE' : 'SELECT'}
-                </button>
-            `;
+            defDiv.className = `retro-border p-4 flex justify-between items-center ${state.activeSetId === 'default' ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}`;
+            defDiv.innerHTML = `<p class="pixel-font text-xs">DEFAULT QUESTIONS</p><button onclick="setActiveSet('default')" class="retro-button">SELECT</button>`;
             list.appendChild(defDiv);
 
-            state.customSets.forEach(set => {
+            state.customSets.forEach(s => {
                 const div = document.createElement('div');
-                div.className = `retro-border p-4 flex justify-between items-center ${state.activeSetId === set.id ? 'bg-cyan-900/40 border-cyan-400' : 'bg-black/40'}`;
-                div.innerHTML = `
-                    <div>
-                        <p class="pixel-font text-xs">${set.name.toUpperCase()}</p>
-                        <p class="text-[10px] text-gray-400">${set.questions.length} QUESTIONS</p>
-                        <div class="mt-2 flex gap-2">
-                            <button onclick="editSet('${set.id}')" class="text-[8px] text-yellow-400 underline">EDIT</button>
-                            <button onclick="deleteSet('${set.id}')" class="text-[8px] text-red-400 underline">DELETE</button>
-                        </div>
-                    </div>
-                    <button onclick="setActiveSet('${set.id}')" class="retro-button ${state.activeSetId === set.id ? 'bg-green-500' : ''}">
-                        ${state.activeSetId === set.id ? 'ACTIVE' : 'SELECT'}
-                    </button>
-                `;
+                div.className = `retro-border p-4 flex justify-between items-center ${state.activeSetId === s.id ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}`;
+                div.innerHTML = `<p class="pixel-font text-xs">${s.name}</p>
+                    <div class="flex gap-2">
+                        <button onclick="setActiveSet('${s.id}')" class="retro-button">SELECT</button>
+                        <button onclick="deleteSet('${s.id}')" class="retro-button bg-red-500">X</button>
+                    </div>`;
                 list.appendChild(div);
             });
         }
 
-        window.setActiveSet = (id) => {
-            state.activeSetId = id;
-            saveProgress();
-            renderSetsList();
-            updateUI();
-        };
+        window.setActiveSet = (id) => { state.activeSetId = id; localStorage.setItem('fro_active_set', id); renderSetsList(); updateUI(); };
+        window.deleteSet = (id) => { state.customSets = state.customSets.filter(x => x.id !== id); localStorage.setItem('fro_sets', JSON.stringify(state.customSets)); renderSetsList(); };
 
         window.openSetEditor = () => {
-            state.editingSetId = null;
-            document.getElementById('editor-title').innerText = "CREATE NEW SET";
             document.getElementById('set-name-input').value = "";
             document.getElementById('editor-questions-container').innerHTML = '';
             addQuestionToEditor();
             showSection('set-editor');
         };
 
-        window.addQuestionToEditor = (qData = { q: '', a: ['', '', '', ''], c: 0 }) => {
-            const container = document.getElementById('editor-questions-container');
-            const idx = container.children.length;
+        window.addQuestionToEditor = () => {
             const div = document.createElement('div');
-            div.className = "bg-white/5 p-4 border border-white/20 rounded relative";
+            div.className = "p-4 border border-white/20 bg-white/5 rounded";
             div.innerHTML = `
-                <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-500 text-xs font-bold">REMOVE</button>
-                <div class="mb-4">
-                    <label class="block text-[10px] text-gray-400 mb-1">QUESTION ${idx + 1}:</label>
-                    <input type="text" class="retro-input w-full q-text" value="${qData.q}" placeholder="Your question...">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    ${qData.a.map((opt, i) => `
-                        <div>
-                            <label class="block text-[8px] text-gray-500">OPTION ${i+1}:</label>
-                            <div class="flex items-center gap-2">
-                                <input type="radio" name="correct-${idx}" ${qData.c === i ? 'checked' : ''} class="q-correct">
-                                <input type="text" class="retro-input w-full q-opt" value="${opt}" placeholder="Option...">
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
+                <input type="text" class="retro-input w-full q-text mb-2" placeholder="QUESTION">
+                <input type="text" class="retro-input w-full q-ans mb-2" placeholder="CORRECT ANSWER">
+                <input type="text" class="retro-input w-full q-wrong" placeholder="WRONG ANSWER">
             `;
-            container.appendChild(div);
+            document.getElementById('editor-questions-container').appendChild(div);
         };
 
-        window.saveCurrentSet = async () => {
-            if (!state.user) return;
-            const name = document.getElementById('set-name-input').value.trim();
-            if (!name) return;
-
-            const qNodes = document.getElementById('editor-questions-container').children;
+        window.saveCurrentSet = () => {
+            const name = document.getElementById('set-name-input').value || "Unnamed Set";
             const questions = [];
-
-            for (let node of qNodes) {
-                const qText = node.querySelector('.q-text').value.trim();
-                const opts = Array.from(node.querySelectorAll('.q-opt')).map(i => i.value.trim());
-                const correctIdx = Array.from(node.querySelectorAll('.q-correct')).findIndex(r => r.checked);
-
-                if (qText && opts.every(o => o)) {
-                    questions.push({ q: qText, a: opts, c: correctIdx === -1 ? 0 : correctIdx });
-                }
-            }
-
-            if (questions.length === 0) return;
-
-            const setData = { name, questions, updatedAt: Date.now() };
-
-            if (state.editingSetId) {
-                await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'sets', state.editingSetId), setData);
-            } else {
-                await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'sets'), setData);
-            }
-
-            showSection('sets');
-        };
-
-        window.editSet = (id) => {
-            const set = state.customSets.find(s => s.id === id);
-            if (!set) return;
-            state.editingSetId = id;
-            document.getElementById('editor-title').innerText = "EDIT SET";
-            document.getElementById('set-name-input').value = set.name;
-            const container = document.getElementById('editor-questions-container');
-            container.innerHTML = '';
-            set.questions.forEach(q => addQuestionToEditor(q));
-            showSection('set-editor');
-        };
-
-        window.deleteSet = async (id) => {
-            if (confirm("Delete this set?") && state.user) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'sets', id));
-                if (state.activeSetId === id) state.activeSetId = 'default';
-                saveProgress();
-            }
-        };
-
-        // --- COPY CODE FEATURE ---
-        window.copyGameCode = () => {
-            const fullHtml = document.documentElement.outerHTML;
-            // Standard fallback for environment
-            const textArea = document.createElement("textarea");
-            textArea.value = fullHtml;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                const toast = document.getElementById('copy-toast');
-                toast.classList.remove('hidden');
-                setTimeout(() => toast.classList.add('hidden'), 2000);
-            } catch (err) {
-                console.error('Copy failed', err);
-            }
-            document.body.removeChild(textArea);
-        };
-
-        // --- ADMIN SYSTEM ---
-        window.checkAdmin = () => {
-            const code = document.getElementById('admin-code').value;
-            if (code === 'DillonIsAdmin') {
-                enableAdminUI();
-            }
-        };
-
-        function enableAdminUI() {
-            state.isAdmin = true;
-            state.ownedSkins = Object.keys(skins);
-            document.getElementById('admin-controls').classList.remove('hidden');
-            document.getElementById('guest-controls').classList.add('hidden');
-            if (state.user) updatePresence(state.user);
-            startAdminMonitor();
-            renderCollection();
-        }
-
-        window.promoteUser = async (targetUid) => {
-            if (!state.isAdmin) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', targetUid), {
-                isAdmin: true
+            document.querySelectorAll('#editor-questions-container > div').forEach(node => {
+                const q = node.querySelector('.q-text').value;
+                const a = node.querySelector('.q-ans').value;
+                const w = node.querySelector('.q-wrong').value;
+                if(q && a) questions.push({ q, a: [a, w, "Extra Option", "Another Option"], c: 0 });
             });
-        };
-
-        function startAdminMonitor() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'presence'), (snap) => {
-                const list = document.getElementById('admin-user-list');
-                list.innerHTML = '';
-                snap.forEach(d => {
-                    const u = d.data();
-                    const isSelf = u.uid === state.user?.uid;
-                    const status = (Date.now() - u.lastSeen < 60000) ? '🟢' : '🔴';
-                    
-                    const div = document.createElement('div');
-                    div.className = "flex justify-between items-center bg-black/40 p-1 border-l-2 border-cyan-400";
-                    div.innerHTML = `
-                        <div class="overflow-hidden">
-                            <span class="text-[9px]">${status} ${u.uid.slice(0,8)}...</span>
-                            <span class="text-[7px] block text-gray-500">${u.isAdmin ? '[ADMIN]' : '[GUEST]'}</span>
-                        </div>
-                        ${(!u.isAdmin && !isSelf) ? `<button onclick="promoteUser('${u.uid}')" class="bg-yellow-400 text-black text-[8px] px-1 font-bold">PROMOTE</button>` : ''}
-                    `;
-                    list.appendChild(div);
-                });
-            }, (err) => console.log(err));
-        }
-
-        // --- LOBBY SYSTEM ---
-        function generateLobbyCode() {
-            return Math.floor(100000 + Math.random() * 900000).toString();
-        }
-
-        window.startHostLobby = async () => {
-            if (!state.user || !state.tempMode) return;
-            
-            const lobbyId = state.user.uid;
-            const lobbyCode = generateLobbyCode();
-            state.currentLobbyId = lobbyId;
-            const modeToHost = state.tempMode;
-            
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbies', lobbyId), {
-                    host: state.user.uid,
-                    mode: modeToHost,
-                    code: lobbyCode,
-                    status: 'waiting',
-                    playerCount: 1,
-                    createdAt: Date.now()
-                });
-                
-                cancelPrompt();
-                showSection('lobby-room');
-                
-                document.getElementById('lobby-code-display').innerText = lobbyCode;
-                document.getElementById('host-controls-lobby').classList.remove('hidden');
-                document.getElementById('player-controls-lobby').classList.add('hidden');
-                
-                state.currentMode = modeToHost;
-                listenToLobby(lobbyId);
-            } catch (e) {
-                console.error("Lobby creation failed", e);
+            if(questions.length > 0) {
+                state.customSets.push({ id: Date.now().toString(), name, questions });
+                localStorage.setItem('fro_sets', JSON.stringify(state.customSets));
+                showSection('sets');
             }
         };
 
-        window.joinByCode = async () => {
-            const input = document.getElementById('manual-join-code').value.trim();
-            if (input.length !== 6) return;
-            
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'lobbies'), (snap) => {
-                let found = false;
-                snap.forEach(doc => {
-                    if (doc.data().code === input) {
-                        found = true;
-                        joinLobby(doc.id);
-                    }
-                });
-            }, { once: true });
-        };
-
-        window.joinLobby = async (lobbyId) => {
-            if (!state.user) return;
-            try {
-                const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbies', lobbyId));
-                if (snap.exists()) {
-                    const data = snap.data();
-                    state.currentLobbyId = lobbyId;
-                    state.currentMode = data.mode;
-                    
-                    showSection('lobby-room');
-                    document.getElementById('lobby-code-display').innerText = data.code;
-                    document.getElementById('host-controls-lobby').classList.add('hidden');
-                    document.getElementById('player-controls-lobby').classList.remove('hidden');
-                    
-                    listenToLobby(lobbyId);
-                }
-            } catch (e) {
-                console.error("Join failed", e);
-            }
-        };
-
-        function listenToLobby(lobbyId) {
-            if (state.lobbyUnsubscribe) state.lobbyUnsubscribe();
-            
-            state.lobbyUnsubscribe = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'lobbies', lobbyId), (snap) => {
-                if (!snap.exists()) {
-                    showSection('menu');
-                    return;
-                }
-                const data = snap.data();
-                if (data.status === 'playing' && !state.isGameRunning && state.currentSection !== 'game-container') {
-                    startLobbyGame();
-                }
-            });
-        }
-
-        window.beginLobbyGame = async () => {
-            if (!state.user || state.currentLobbyId !== state.user.uid) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbies', state.currentLobbyId), {
-                status: 'playing'
-            });
-            startLobbyGame();
-        };
-
-        function startLobbyGame() {
-            state.score = 0;
-            showSection('game-container');
-            document.getElementById('lobby-info').innerText = `ROOM: ${document.getElementById('lobby-code-display').innerText}`;
-            document.getElementById('lobby-info').classList.remove('hidden');
-            
-            if (state.currentMode === 'classic') {
-                showQuiz();
-            } else if (state.currentMode === 'jeopardy') {
-                showSection('jeopardy-container');
-            } else {
-                initGame();
-            }
-        }
-
-        function syncLobbies() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'lobbies'), (snap) => {
-                const list = document.getElementById('lobby-list');
-                list.innerHTML = '';
-                if (snap.empty) {
-                    list.innerHTML = '<p class="text-center text-gray-400 text-xs">NO PUBLIC LOBBIES FOUND</p>';
-                    return;
-                }
-                snap.forEach(doc => {
-                    const lobby = doc.data();
-                    if (Date.now() - lobby.createdAt > 3600000) {
-                        deleteDoc(doc.ref);
-                        return;
-                    }
-                    if (lobby.status !== 'waiting') return;
-
-                    const div = document.createElement('div');
-                    div.className = 'retro-border p-3 flex justify-between items-center bg-black/40';
-                    div.innerHTML = `
-                        <div>
-                            <p class="text-xs pixel-font text-yellow-400">${lobby.mode.toUpperCase()}</p>
-                            <p class="text-[8px] text-gray-400">CODE: ${lobby.code}</p>
-                        </div>
-                        <button onclick="joinLobby('${doc.id}')" class="retro-button">JOIN</button>
-                    `;
-                    list.appendChild(div);
-                });
-            }, (err) => {});
-        }
-
-        // --- CORE UI ---
-        window.showSection = (id) => {
-            state.currentSection = id;
-            state.isGameRunning = false;
-            
-            ['menu', 'market', 'collection', 'quiz-container', 'game-container', 'results', 'sets', 'join-screen', 'jeopardy-container', 'lobby-room', 'set-editor'].forEach(s => {
-                const el = document.getElementById(s);
-                if (el) el.classList.add('hidden');
-            });
-            const target = document.getElementById(id);
-            if (target) target.classList.remove('hidden');
-            if (id === 'menu') {
-                updateUI();
-                document.getElementById('lobby-info').classList.add('hidden');
-            }
-            if (id === 'collection') renderCollection();
-            if (id === 'jeopardy-container') initJeopardy();
-        };
-
-        function updateUI() {
-            document.getElementById('coin-display').innerText = state.coins;
-            const setIndicator = document.getElementById('active-set-indicator');
-            
-            if (state.activeSetId === 'default') {
-                setIndicator.innerText = "SET: DEFAULT QUESTIONS";
-            } else {
-                const activeSet = state.customSets.find(s => s.id === state.activeSetId);
-                setIndicator.innerText = `SET: ${activeSet ? activeSet.name.toUpperCase() : 'UNKNOWN'}`;
-            }
-        }
-
-        window.buyPack = (packType, cost) => {
-            const feedback = document.getElementById('pack-feedback');
-            if (state.coins < cost) { feedback.innerText = "NOT ENOUGH COINS!"; return; }
-            const packSkins = Object.keys(skins).filter(k => skins[k].pack === packType);
-            const unowned = packSkins.filter(k => !state.ownedSkins.includes(k));
-            if (unowned.length === 0) { feedback.innerText = "PACK COMPLETE!"; return; }
-            state.coins -= cost;
-            const won = unowned[Math.floor(Math.random() * unowned.length)];
-            state.ownedSkins.push(won);
-            feedback.innerText = `UNLOCKED: ${skins[won].emoji} ${skins[won].name}!`;
-            saveProgress(); updateUI();
-        };
-
-        function renderCollection() {
-            const grid = document.getElementById('skins-grid');
-            grid.innerHTML = '';
-            state.ownedSkins.forEach(sid => {
-                const s = skins[sid];
-                if (!s) return;
-                const div = document.createElement('div');
-                div.className = `retro-border p-2 text-center cursor-pointer ${state.activeSkin === sid ? 'bg-yellow-900/40' : 'bg-black/40'}`;
-                div.innerHTML = `<div class="text-3xl">${s.emoji}</div><div class="text-[8px] mt-1">${s.name}</div>`;
-                div.onclick = () => { state.activeSkin = sid; renderCollection(); saveProgress(); };
-                grid.appendChild(div);
-            });
-        }
-
-        window.promptMode = (mode) => {
-            state.tempMode = mode;
-            document.getElementById('mode-prompt').classList.remove('hidden');
-        };
+        window.promptMode = (m) => { state.tempMode = m; document.getElementById('mode-prompt').classList.remove('hidden'); };
         window.cancelPrompt = () => document.getElementById('mode-prompt').classList.add('hidden');
         window.startSolo = () => {
-            const mode = state.tempMode;
+            state.currentMode = state.tempMode;
             cancelPrompt();
-            state.currentMode = mode;
-            state.score = 0;
-            if (state.currentMode === 'classic') {
-                showQuiz();
-            } else if (state.currentMode === 'jeopardy') {
-                showSection('jeopardy-container');
-            } else {
-                showSection('game-container');
-                initGame();
-            }
+            if (state.currentMode === 'classic') triggerQuiz();
+            else if (state.currentMode === 'jeopardy') showSection('jeopardy-container');
+            else { showSection('game-container'); initGame(); }
         };
 
-        function initJeopardy() {
-            const board = document.getElementById('jeopardy-board');
-            board.innerHTML = '';
-            const cats = ['Category A', 'Category B', 'Category C'];
-            cats.forEach(cat => {
-                const h = document.createElement('div'); h.className = 'text-[10px] text-center mb-2'; h.innerText = cat;
-                board.appendChild(h);
-            });
-            [100, 200, 300].forEach(val => {
-                cats.forEach(() => {
-                    const card = document.createElement('div');
-                    card.className = 'jeopardy-card';
-                    card.innerText = `$${val}`;
-                    card.onclick = () => {
-                        if (!card.classList.contains('used')) {
-                            card.classList.add('used');
-                            state.jeopardyCurrentValue = val;
-                            showQuiz();
-                        }
-                    };
-                    board.appendChild(card);
-                });
-            });
-        }
+        window.copyGameCode = () => {
+            const el = document.createElement('textarea');
+            el.value = document.documentElement.outerHTML;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            document.getElementById('copy-toast').classList.remove('hidden');
+            setTimeout(() => document.getElementById('copy-toast').classList.add('hidden'), 2000);
+        };
 
-        const canvas = document.getElementById('main-canvas');
-        const ctx = canvas.getContext('2d');
-        let player = { x: 200, y: 400, vx: 0, vy: 0 };
-        let entities = [];
-        let frame = 0;
-
-        function initGame() {
-            player = { x: (state.currentMode === 'flappy' ? 50 : 200), y: (state.currentMode === 'flappy' ? 250 : 400), vx: 0, vy: 0 };
-            entities = []; frame = 0; state.isGameRunning = true;
-            requestAnimationFrame(gameLoop);
-        }
-
-        function gameLoop() {
-            if (!state.isGameRunning) return;
-            ctx.clearRect(0, 0, 400, 500);
-            if (state.currentMode === 'racer') {
-                ctx.fillStyle = "#444"; ctx.fillRect(50, 0, 300, 500);
-                if (frame % 60 === 0) entities.push({ x: 70 + Math.random() * 230, y: -50, w: 30, h: 50 });
-                player.x += player.vx; player.x = Math.max(50, Math.min(320, player.x));
-                entities.forEach((e, i) => {
-                    e.y += 5; ctx.fillStyle = "red"; ctx.fillRect(e.x, e.y, e.w, e.h);
-                    if (player.x < e.x + 30 && player.x + 30 > e.x && player.y < e.y + 50 && player.y + 30 > e.y) handleCrash();
-                    if (e.y > 500) { entities.splice(i, 1); state.score++; }
-                });
-            } else if (state.currentMode === 'surf') {
-                ctx.fillStyle = "#0077be"; ctx.fillRect(0, 0, 400, 500);
-                if (frame % 45 === 0) entities.push({ x: Math.random() * 350, y: -50, w: 40, h: 20 });
-                player.x += player.vx; player.x = Math.max(0, Math.min(370, player.x));
-                entities.forEach((e, i) => {
-                    e.y += 6; ctx.fillStyle = "#999"; ctx.fillRect(e.x, e.y, e.w, e.h);
-                    if (player.x < e.x + 40 && player.x + 30 > e.x && player.y < e.y + 20 && player.y + 30 > e.y) handleCrash();
-                    if (e.y > 500) { entities.splice(i, 1); state.score++; }
-                });
-            } else if (state.currentMode === 'flappy') {
-                ctx.fillStyle = "#4ec0ca"; ctx.fillRect(0, 0, 400, 500);
-                player.vy += 0.25; player.y += player.vy;
-                if (frame % 90 === 0) entities.push({ x: 400, top: Math.random() * 200 + 50, gap: 150 });
-                entities.forEach((p, i) => {
-                    p.x -= 3; ctx.fillStyle = "#73bf2e";
-                    ctx.fillRect(p.x, 0, 50, p.top); ctx.fillRect(p.x, p.top + p.gap, 50, 500);
-                    if (player.x + 30 > p.x && player.x < p.x + 50 && (player.y < p.top || player.y + 30 > p.top + p.gap)) handleCrash();
-                    if (p.x === 50) state.score++;
-                });
-                if (player.y > 500 || player.y < 0) handleCrash();
-            }
-            ctx.font = "30px Arial"; ctx.fillText(skins[state.activeSkin]?.emoji || '🐤', player.x, player.y + 25);
-            document.getElementById('game-score').innerText = state.score; frame++; requestAnimationFrame(gameLoop);
-        }
-
-        function handleCrash() { state.isGameRunning = false; showQuiz(); }
-
-        function showQuiz() {
-            showSection('quiz-container');
-            
-            let questions = defaultQuestions;
-            if (state.activeSetId !== 'default') {
-                const activeSet = state.customSets.find(s => s.id === state.activeSetId);
-                if (activeSet && activeSet.questions.length > 0) questions = activeSet.questions;
-            }
-
-            const q = questions[Math.floor(Math.random() * questions.length)];
-            document.getElementById('question-text').innerText = q.q;
-            const grid = document.getElementById('options-grid');
-            grid.innerHTML = '';
-            q.a.forEach((opt, idx) => {
-                const b = document.createElement('button'); b.className = 'retro-button'; b.innerText = opt;
-                b.onclick = () => {
-                    if (idx === q.c) {
-                        const win = state.currentMode === 'jeopardy' ? (state.jeopardyCurrentValue / 10) : 2;
-                        state.coins += win; state.score += 1;
-                        if (state.currentMode === 'classic') {
-                             showQuiz();
-                        } else if (state.currentMode === 'jeopardy') {
-                             showSection('jeopardy-container');
-                        } else {
-                             showSection('game-container'); initGame();
-                        }
-                        saveProgress(); updateUI();
-                    } else { endGame(); }
-                };
-                grid.appendChild(b);
-            });
-        }
-
-        function endGame() {
-            showSection('results');
-            document.getElementById('result-score').innerText = `Score: ${state.score}`;
-            saveProgress();
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') player.vx = -5;
-            if (e.key === 'ArrowRight') player.vx = 5;
-            if (e.key === ' ' || e.key === 'ArrowUp') player.vy = -5;
-        });
-        window.addEventListener('keyup', () => player.vx = 0);
+        // Initialize UI
         showSection('menu');
     </script>
 </body>
