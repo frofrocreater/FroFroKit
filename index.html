@@ -56,6 +56,7 @@
             padding: 8px;
             font-family: 'VT323';
             outline: none;
+            text-align: center;
         }
 
         canvas {
@@ -80,7 +81,6 @@
             pointer-events: none;
         }
 
-        /* Jeopardy Styling */
         .jeopardy-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -110,13 +110,36 @@
             cursor: pointer;
             transition: transform 0.1s;
         }
-        .jeopardy-card:hover { transform: scale(1.02); }
         .jeopardy-card.used {
             background: #000033;
             color: #333;
             border-color: #333;
             cursor: default;
         }
+        .lobby-scroll {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid #fff;
+            background: #000;
+            padding: 5px;
+        }
+        .lobby-user {
+            padding: 8px;
+            border-bottom: 1px dashed #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-ready { background-color: #4ade80; }
+        .status-idle { background-color: #facc15; }
     </style>
 </head>
 <body class="crt">
@@ -125,13 +148,12 @@
         <h1 onclick="adminTap()" class="pixel-font text-3xl mb-2 text-white italic cursor-pointer select-none" style="text-shadow: 4px 4px var(--neon-pink);">FROFROKIT</h1>
         <div class="flex justify-center gap-4 text-xl">
             <span class="text-yellow-400">COINS: <span id="coin-display">50</span></span>
-            <span id="save-status" class="text-[10px] text-green-400 self-center">● STANDALONE</span>
+            <span id="save-status" class="text-[10px] text-green-400 self-center">● ONLINE</span>
         </div>
     </header>
 
     <nav class="flex flex-wrap justify-center gap-2 mb-6 px-2">
         <button onclick="showSection('menu')" class="retro-button">PLAY</button>
-        <button onclick="showSection('join-screen')" class="retro-button bg-cyan-500">JOIN</button>
         <button onclick="showSection('market')" class="retro-button">SHOP</button>
         <button onclick="showSection('collection')" class="retro-button">SKINS</button>
         <button onclick="showSection('sets')" class="retro-button">SETS</button>
@@ -141,26 +163,34 @@
         
         <!-- Main Menu -->
         <section id="menu" class="text-center py-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div class="retro-border p-4 bg-black/50">
-                    <h2 class="pixel-font text-sm mb-4 text-yellow-400">CLASSIC</h2>
-                    <button onclick="promptMode('classic')" class="retro-button">PLAY</button>
+                    <h2 class="pixel-font text-[10px] mb-4 text-yellow-400">CLASSIC</h2>
+                    <button onclick="promptMode('classic')" class="retro-button text-[8px] p-2">PLAY</button>
                 </div>
                 <div class="retro-border p-4 bg-black/50">
-                    <h2 class="pixel-font text-sm mb-4 text-pink-500">FLAPPY</h2>
-                    <button onclick="promptMode('flappy')" class="retro-button">START</button>
+                    <h2 class="pixel-font text-[10px] mb-4 text-pink-500">FLAPPY</h2>
+                    <button onclick="promptMode('flappy')" class="retro-button text-[8px] p-2">START</button>
                 </div>
                 <div class="retro-border p-4 bg-black/50">
-                    <h2 class="pixel-font text-sm mb-4 text-orange-500">RACER</h2>
-                    <button onclick="promptMode('racer')" class="retro-button">RACE</button>
+                    <h2 class="pixel-font text-[10px] mb-4 text-orange-500">RACER</h2>
+                    <button onclick="promptMode('racer')" class="retro-button text-[8px] p-2">RACE</button>
                 </div>
                 <div class="retro-border p-4 bg-black/50">
-                    <h2 class="pixel-font text-sm mb-4 text-blue-400">JEOPARDY</h2>
-                    <button onclick="promptMode('jeopardy')" class="retro-button">QUIZ</button>
+                    <h2 class="pixel-font text-[10px] mb-4 text-blue-400">JEOPARDY</h2>
+                    <button onclick="promptMode('jeopardy')" class="retro-button text-[8px] p-2">QUIZ</button>
                 </div>
                 <div class="retro-border p-4 bg-black/50">
-                    <h2 class="pixel-font text-sm mb-4 text-cyan-300">SURF'S UP</h2>
-                    <button onclick="promptMode('surf')" class="retro-button">SURF</button>
+                    <h2 class="pixel-font text-[10px] mb-4 text-cyan-300">SURF'S UP</h2>
+                    <button onclick="promptMode('surf')" class="retro-button text-[8px] p-2">SURF</button>
+                </div>
+                <div class="retro-border p-4 bg-black/50">
+                    <h2 class="pixel-font text-[10px] mb-4 text-green-400">DINO RUN</h2>
+                    <button onclick="promptMode('dino')" class="retro-button text-[8px] p-2">RUN</button>
+                </div>
+                <div class="retro-border p-4 bg-black/50">
+                    <h2 class="pixel-font text-[10px] mb-4 text-purple-400">STARS</h2>
+                    <button onclick="promptMode('star')" class="retro-button text-[8px] p-2">CATCH</button>
                 </div>
             </div>
             
@@ -168,94 +198,147 @@
                 <div id="active-set-indicator" class="text-cyan-400 pixel-font text-[10px] italic">
                     SET: DEFAULT QUESTIONS
                 </div>
-                <button onclick="copyGameCode()" class="retro-button bg-purple-600 text-white text-[8px] py-2 px-4">COPY ALL GAME CODE</button>
-                <p id="copy-toast" class="text-[10px] text-green-400 hidden">COPIED TO CLIPBOARD!</p>
+                <div id="sub-status" class="hidden text-pink-400 pixel-font text-[10px]">
+                    ⭐ FROFRORESPECT MEMBER ⭐
+                </div>
             </div>
         </section>
 
-        <!-- Admin Dashboard -->
+        <!-- Multiplayer Lobby -->
+        <section id="lobby-screen" class="hidden text-center">
+            <div class="retro-border p-8 bg-black/80 max-w-md mx-auto">
+                <h2 class="pixel-font text-sm text-yellow-400 mb-6">MULTIPLAYER LOBBY</h2>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-black border-2 border-white p-4">
+                        <p class="text-[8px] text-gray-400 mb-2">ROOM CODE</p>
+                        <p id="room-code-display" class="pixel-font text-lg text-cyan-400 tracking-widest">----</p>
+                    </div>
+                    <div class="bg-black border-2 border-white p-4 flex flex-col justify-center">
+                        <input type="text" id="join-code-input" class="retro-input w-full text-sm mb-1" placeholder="JOIN CODE">
+                        <button onclick="simulateJoin()" class="retro-button py-1 px-1 text-[8px] bg-cyan-500">JOIN</button>
+                    </div>
+                </div>
+                
+                <div class="mb-4 text-left">
+                    <p class="pixel-font text-[8px] mb-2 text-white">PLAYERS IN ROOM:</p>
+                    <div class="lobby-scroll" id="lobby-list">
+                        <!-- Users populated by JS -->
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <button id="lobby-start-btn" onclick="startGameAfterLobby()" class="retro-button w-full bg-green-600">START GAME</button>
+                    <button onclick="showSection('menu')" class="retro-button w-full bg-red-600">EXIT LOBBY</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Panel -->
         <section id="admin-panel" class="hidden">
-            <h2 class="pixel-font text-center text-red-500 mb-6">ADMIN DASHBOARD</h2>
-            <div class="retro-border p-6 bg-black/80 space-y-4">
-                <div>
-                    <p class="text-xs mb-2">ADD COINS:</p>
-                    <button onclick="modifyCoins(100)" class="retro-button bg-yellow-500">+100</button>
-                    <button onclick="modifyCoins(1000)" class="retro-button bg-yellow-600">+1000</button>
-                </div>
-                <div>
-                    <p class="text-xs mb-2">ACTIONS:</p>
-                    <button onclick="unlockAllSkins()" class="retro-button bg-blue-500">UNLOCK ALL SKINS</button>
-                    <button onclick="resetData()" class="retro-button bg-red-600">RESET ALL DATA</button>
-                </div>
+            <h2 class="pixel-font text-center text-red-500 mb-6">ADMIN</h2>
+            <div class="retro-border p-6 bg-black/80 space-y-4 text-center">
+                <button onclick="modifyCoins(1000)" class="retro-button bg-yellow-600">+1000 COINS</button>
+                <button onclick="unlockAllSkins()" class="retro-button bg-blue-500">UNLOCK ALL</button>
+                <button onclick="showSection('menu')" class="retro-button">BACK</button>
             </div>
         </section>
 
-        <!-- Jeopardy Screen -->
+        <!-- Jeopardy -->
         <section id="jeopardy-container" class="hidden">
-            <h2 class="pixel-font text-center text-blue-500 mb-6 text-2xl" style="text-shadow: 2px 2px #fff;">STUDY JEOPARDY</h2>
+            <h2 class="pixel-font text-center text-blue-500 mb-6 text-2xl">STUDY JEOPARDY</h2>
             <div class="jeopardy-grid" id="jeopardy-board">
-                <!-- Headers -->
                 <div class="jeopardy-header pixel-font">TOPIC A</div>
                 <div class="jeopardy-header pixel-font">TOPIC B</div>
                 <div class="jeopardy-header pixel-font">TOPIC C</div>
-                <!-- Rows will be injected by JS -->
             </div>
             <div class="mt-8 text-center">
-                <button onclick="showSection('menu')" class="retro-button bg-red-600 text-white">QUIT BOARD</button>
+                <button onclick="showSection('menu')" class="retro-button bg-red-600 text-white">QUIT</button>
             </div>
         </section>
 
-        <!-- Game Canvas Container -->
+        <!-- Game Canvas -->
         <section id="game-container" class="hidden text-center">
             <div class="mb-2 flex justify-between items-center px-4">
-                <span class="pixel-font text-xs">SCORE: <span id="game-score">0</span></span>
-                <span id="active-skin-display" class="text-xs text-yellow-400">🐤</span>
+                <span class="pixel-font text-xs">P1: <span id="game-score">0</span> <span id="active-skin-display"></span></span>
+                <span id="p2-score-ui" class="pixel-font text-xs hidden text-cyan-400">P2: <span id="game-score-p2">0</span> <span id="p2-skin-display"></span></span>
             </div>
             <canvas id="main-canvas" width="400" height="500" class="mx-auto"></canvas>
-            <div class="mt-4 flex flex-wrap justify-center gap-4">
-                <button onmousedown="handleInput('left', true)" onmouseup="handleInput('left', false)" ontouchstart="event.preventDefault(); handleInput('left', true)" ontouchend="handleInput('left', false)" class="retro-button">LEFT</button>
-                <button onmousedown="handleInput('up', true)" onmouseup="handleInput('up', false)" ontouchstart="event.preventDefault(); handleInput('up', true)" ontouchend="handleInput('up', false)" class="retro-button bg-cyan-400">ACTION / JUMP</button>
-                <button onmousedown="handleInput('right', true)" onmouseup="handleInput('right', false)" ontouchstart="event.preventDefault(); handleInput('right', true)" ontouchend="handleInput('right', false)" class="retro-button">RIGHT</button>
-                <button onclick="showSection('menu')" class="retro-button bg-red-500">QUIT</button>
+            
+            <div id="p1-controls" class="mt-4 flex flex-wrap justify-center gap-2">
+                <div class="text-[8px] pixel-font w-full mb-1 text-pink-400">PLAYER 1</div>
+                <button onmousedown="handleInput('left', true, 0)" onmouseup="handleInput('left', false, 0)" class="retro-button p-2 text-[8px]">LEFT (A)</button>
+                <button onmousedown="handleInput('up', true, 0)" onmouseup="handleInput('up', false, 0)" class="retro-button bg-pink-400 p-2 text-[8px]">JUMP (W)</button>
+                <button onmousedown="handleInput('right', true, 0)" onmouseup="handleInput('right', false, 0)" class="retro-button p-2 text-[8px]">RIGHT (D)</button>
             </div>
-            <p class="mt-2 text-gray-500 text-[10px]">MOBILE: USE BUTTONS | PC: ARROW KEYS & SPACE</p>
+
+            <div id="p2-controls" class="mt-4 flex flex-wrap justify-center gap-2 hidden">
+                <div class="text-[8px] pixel-font w-full mb-1 text-cyan-400">PLAYER 2</div>
+                <button onmousedown="handleInput('left', true, 1)" onmouseup="handleInput('left', false, 1)" class="retro-button p-2 text-[8px]">LEFT (←)</button>
+                <button onmousedown="handleInput('up', true, 1)" onmouseup="handleInput('up', false, 1)" class="retro-button bg-cyan-400 p-2 text-[8px]">JUMP (↑)</button>
+                <button onmousedown="handleInput('right', true, 1)" onmouseup="handleInput('right', false, 1)" class="retro-button p-2 text-[8px]">RIGHT (→)</button>
+            </div>
+
+            <button onclick="showSection('menu')" class="retro-button bg-red-500 mt-6">QUIT</button>
         </section>
 
-        <!-- Quiz Section -->
+        <!-- Quiz -->
         <section id="quiz-container" class="hidden">
             <div class="retro-border p-6 rounded-lg text-center max-w-lg mx-auto bg-black/80">
-                <div id="quiz-type" class="pixel-font text-[10px] mb-4 text-orange-400">POWER UP QUIZ!</div>
+                <div id="quiz-player-turn" class="pixel-font text-[10px] mb-4 text-white">PLAYER 1'S TURN</div>
                 <h3 id="question-text" class="text-2xl mb-8">...</h3>
                 <div id="options-grid" class="grid grid-cols-1 gap-4"></div>
             </div>
         </section>
 
+        <!-- Market -->
         <section id="market" class="hidden">
-            <h2 class="pixel-font text-center text-yellow-400 mb-6">THEME PACKS</h2>
+            <h2 class="pixel-font text-center text-yellow-400 mb-6">THEME SHOP</h2>
+            
+            <div class="retro-border p-6 bg-gradient-to-r from-purple-900 to-indigo-900 mb-8 text-center">
+                <h3 class="pixel-font text-lg text-white mb-2 italic">FROFRORESPECT</h3>
+                <p class="text-xs mb-4 text-purple-200">Unlock the Color Pack & Emperor Status!</p>
+                <div id="sub-btn-container">
+                    <button onclick="joinRespect()" class="retro-button bg-pink-500 text-white">SUB $4.99/mo</button>
+                </div>
+            </div>
+
             <div id="market-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </section>
 
+        <!-- Collection -->
         <section id="collection" class="hidden">
             <h2 class="pixel-font text-center text-pink-400 mb-6">YOUR SKINS</h2>
             <div id="skins-grid" class="grid grid-cols-3 gap-4"></div>
         </section>
 
+        <!-- Sets -->
         <section id="sets" class="hidden">
             <h2 class="pixel-font text-center text-cyan-400 mb-6">STUDY SETS</h2>
-            <div class="mb-8 text-center">
-                <button onclick="openSetEditor()" class="retro-button bg-green-600 text-white">+ CREATE NEW SET</button>
-            </div>
+            <button onclick="openSetEditor()" class="retro-button bg-green-600 w-full mb-4">+ NEW SET</button>
             <div id="sets-list" class="grid gap-4"></div>
         </section>
 
-        <!-- Set Editor Modal -->
+        <!-- Mode Prompt -->
+        <section id="mode-prompt" class="hidden fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4">
+            <div class="retro-border p-8 bg-black text-center">
+                <h2 class="pixel-font text-sm mb-6 text-yellow-400">MODE</h2>
+                <div class="flex flex-col gap-4">
+                    <button onclick="startSolo()" class="retro-button">SOLO PLAY</button>
+                    <button onclick="startLobbyFlow()" class="retro-button bg-cyan-600">MULTIPLAYER</button>
+                    <button onclick="cancelPrompt()" class="text-xs underline text-gray-500">BACK</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Set Editor -->
         <section id="set-editor" class="hidden fixed inset-0 z-[300] bg-black/95 overflow-y-auto p-4">
             <div class="max-w-2xl mx-auto py-10">
                 <div class="retro-border p-6 bg-black">
-                    <h2 class="pixel-font text-sm text-yellow-400 mb-6">CREATE NEW SET</h2>
-                    <input type="text" id="set-name-input" class="retro-input w-full mb-4" placeholder="SET NAME">
+                    <h2 class="pixel-font text-sm text-yellow-400 mb-6">CREATE SET</h2>
+                    <input type="text" id="set-name-input" class="retro-input w-full mb-4" placeholder="NAME">
                     <div id="editor-questions-container" class="space-y-4"></div>
-                    <button onclick="addQuestionToEditor()" class="retro-button w-full mt-4 bg-blue-600">+ ADD QUESTION</button>
+                    <button onclick="addQuestionToEditor()" class="retro-button w-full mt-4">+ ADD</button>
                     <div class="flex gap-4 mt-6">
                         <button onclick="saveCurrentSet()" class="retro-button flex-1 bg-green-500">SAVE</button>
                         <button onclick="showSection('sets')" class="retro-button flex-1">CANCEL</button>
@@ -264,42 +347,28 @@
             </div>
         </section>
 
-        <section id="mode-prompt" class="hidden fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4">
-            <div class="retro-border p-8 bg-black text-center">
-                <h2 class="pixel-font text-sm mb-6 text-yellow-400">CHOOSE MODE</h2>
-                <div class="flex flex-col gap-4">
-                    <button onclick="startSolo()" class="retro-button">SOLO PLAY</button>
-                    <button onclick="startHostLobby()" class="retro-button bg-cyan-600">HOST ROOM</button>
-                    <button onclick="cancelPrompt()" class="text-xs underline text-gray-500">BACK</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="join-screen" class="hidden text-center">
-            <div class="retro-border p-6 bg-black/60 mb-8">
-                <h2 class="pixel-font text-sm text-yellow-400 mb-4">ENTER ROOM CODE</h2>
-                <input type="text" id="manual-join-code" maxlength="6" class="retro-input w-32 text-center text-lg mb-4">
-                <button onclick="alert('Lobby feature requires Cloud mode. Try Solo Play!')" class="retro-button w-full">JOIN LOBBY</button>
-            </div>
-            <button onclick="showSection('menu')" class="retro-button">BACK</button>
-        </section>
-
     </main>
 
     <script>
-        // --- GLOBAL STATE ---
         let state = {
             coins: parseInt(localStorage.getItem('fro_coins')) || 50,
             ownedSkins: JSON.parse(localStorage.getItem('fro_skins')) || ['default'],
             activeSkin: localStorage.getItem('fro_active_skin') || 'default',
+            p2Skin: 'racer',
+            isSubscribed: localStorage.getItem('fro_sub') === 'true',
             score: 0,
+            p2Score: 0,
             currentMode: '',
+            isMulti: false,
             isGameRunning: false,
             tempMode: null,
             customSets: JSON.parse(localStorage.getItem('fro_sets') || '[]'),
             activeSetId: localStorage.getItem('fro_active_set') || 'default',
             adminTaps: 0,
-            jeopardyUsed: []
+            jeopardyUsed: [],
+            quizTurn: 0,
+            roomCode: '----',
+            lobbyPlayers: []
         };
 
         const skins = {
@@ -307,21 +376,109 @@
             'racer': { emoji: '🏎️', name: 'Speedy', pack: 'Starter' },
             'ufo': { emoji: '🛸', name: 'Invader', pack: 'Space' },
             'alien': { emoji: '👽', name: 'Alien', pack: 'Space' },
+            'rocket': { emoji: '🚀', name: 'Rocket', pack: 'Space' },
             'fox': { emoji: '🦊', name: 'Fox', pack: 'Nature' },
             'mushroom': { emoji: '🍄', name: 'Shroom', pack: 'Nature' },
-            'surfer': { emoji: '🏄', name: 'Surfer', pack: 'Beach' }
+            'tree': { emoji: '🌲', name: 'Ent', pack: 'Nature' },
+            'surfer': { emoji: '🏄', name: 'Surfer', pack: 'Beach' },
+            'crab': { emoji: '🦀', name: 'Crabby', pack: 'Beach' },
+            'shark': { emoji: '🦈', name: 'Shark', pack: 'Beach' },
+            'ball': { emoji: '⚽', name: 'Striker', pack: 'Sports' },
+            'hoop': { emoji: '🏀', name: 'Dunker', pack: 'Sports' },
+            'trophy': { emoji: '🏆', name: 'Champ', pack: 'Sports' },
+            'red': { emoji: '🟥', name: 'Ruby', pack: 'Color' },
+            'blue': { emoji: '🟦', name: 'Sapphire', pack: 'Color' },
+            'green': { emoji: '🟩', name: 'Emerald', pack: 'Color' },
+            'yellow': { emoji: '🟨', name: 'Topaz', pack: 'Color' },
+            'emperor': { emoji: '👑', name: 'Emperor', pack: 'Mythic' }
         };
+
+        const packs = [
+            { id: 'space', name: 'SPACE PACK', icons: '🚀 👽 🛸', cost: 100 },
+            { id: 'nature', name: 'NATURE PACK', icons: '🌿 🦊 🍄', cost: 100 },
+            { id: 'beach', name: 'BEACH PACK', icons: '🏄 🦀 🦈', cost: 150 },
+            { id: 'sports', name: 'SPORTS PACK', icons: '⚽ 🏀 🏆', cost: 200 }
+        ];
 
         const defaultQuestions = [
             { q: "What is 5 + 7?", a: ["11", "12", "13", "14"], c: 1 },
             { q: "Which planet is the Red Planet?", a: ["Mars", "Venus", "Jupiter", "Saturn"], c: 0 },
             { q: "Capital of France?", a: ["Lyon", "Nice", "Paris", "Marseille"], c: 2 },
-            { q: "Fastest land animal?", a: ["Lion", "Cheetah", "Horse", "Leopard"], c: 1 },
-            { q: "Primary color?", a: ["Green", "Purple", "Red", "Orange"], c: 2 },
             { q: "H2O is common name for?", a: ["Air", "Salt", "Water", "Iron"], c: 2 }
         ];
 
-        // --- NAVIGATION & UI ---
+        function generateRoomCode() {
+            const code = Math.floor(1000 + Math.random() * 9000).toString();
+            state.roomCode = code;
+            document.getElementById('room-code-display').innerText = code;
+            state.lobbyPlayers = [{ name: 'YOU (HOST)', skin: state.activeSkin, ready: true }];
+            populateLobby();
+        }
+
+        function populateLobby() {
+            const list = document.getElementById('lobby-list');
+            list.innerHTML = '';
+            
+            state.lobbyPlayers.forEach(p => {
+                const div = document.createElement('div');
+                div.className = `lobby-user ${p.ready ? 'text-green-400' : 'text-yellow-400'}`;
+                div.innerHTML = `
+                    <span><span class="status-dot ${p.ready ? 'status-ready' : 'status-idle'}"></span> ${p.name}</span>
+                    <span>${skins[p.skin].emoji}</span>
+                `;
+                list.appendChild(div);
+            });
+
+            const startBtn = document.getElementById('lobby-start-btn');
+            if(state.lobbyPlayers.length > 1) {
+                startBtn.disabled = false;
+                startBtn.innerText = "START GAME";
+                startBtn.classList.remove('opacity-50');
+            } else {
+                startBtn.disabled = true;
+                startBtn.innerText = "WAITING FOR PLAYERS...";
+                startBtn.classList.add('opacity-50');
+            }
+        }
+
+        function simulateJoin() {
+            const code = document.getElementById('join-code-input').value;
+            if (code.length === 4) {
+                if(state.lobbyPlayers.length < 2) {
+                    state.lobbyPlayers.push({ name: 'PLAYER 2', skin: 'racer', ready: true });
+                    populateLobby();
+                    alert("Player Joined Room " + code + "!");
+                } else {
+                    alert("Lobby is full!");
+                }
+            } else {
+                alert("Please enter a 4-digit room code.");
+            }
+        }
+
+        function startGameAfterLobby() {
+            if(state.lobbyPlayers.length < 2) return;
+            state.currentMode = state.tempMode;
+            state.isMulti = true;
+            finishPrompt();
+        }
+
+        function joinRespect() {
+            const code = prompt("ENTER SECRET CODE:");
+            if(code === "1543") {
+                state.isSubscribed = true;
+                localStorage.setItem('fro_sub', 'true');
+                const exclusiveSkins = ['red', 'blue', 'green', 'yellow', 'emperor'];
+                state.ownedSkins = [...new Set([...state.ownedSkins, ...exclusiveSkins])];
+                localStorage.setItem('fro_skins', JSON.stringify(state.ownedSkins));
+                alert("FROFRORESPECT UNLOCKED! Enjoy your new skins and status.");
+                updateUI();
+                showSection('menu');
+            } else if (code !== null) {
+                alert("INVALID CODE.");
+            }
+        }
+
         function showSection(id) {
             state.isGameRunning = false;
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
@@ -331,226 +488,227 @@
             if (id === 'sets') renderSetsList();
             if (id === 'market') renderMarket();
             if (id === 'jeopardy-container') initJeopardy();
+            if (id === 'lobby-screen') generateRoomCode();
         }
 
         function updateUI() {
             document.getElementById('coin-display').innerText = state.coins;
             localStorage.setItem('fro_coins', state.coins);
+            
             const indicator = document.getElementById('active-set-indicator');
-            if (state.activeSetId === 'default') {
-                indicator.innerText = "SET: DEFAULT QUESTIONS";
-            } else {
-                const s = state.customSets.find(x => x.id === state.activeSetId);
-                indicator.innerText = `SET: ${s ? s.name.toUpperCase() : 'DEFAULT'}`;
+            const s = state.customSets.find(x => x.id === state.activeSetId);
+            indicator.innerText = `SET: ${state.activeSetId === 'default' ? 'DEFAULT' : (s ? s.name.toUpperCase() : 'DEFAULT')}`;
+            
+            if(state.isSubscribed) {
+                document.getElementById('sub-status').classList.remove('hidden');
+                const subBtnContainer = document.getElementById('sub-btn-container');
+                if(subBtnContainer) subBtnContainer.innerHTML = '<span class="text-yellow-400 pixel-font text-[10px]">⭐ PREMIUM ACTIVE ⭐</span>';
             }
         }
 
-        // --- ADMIN SYSTEM ---
-        function adminTap() {
-            state.adminTaps++;
-            if (state.adminTaps >= 5) {
-                showSection('admin-panel');
-                state.adminTaps = 0;
-            }
-        }
-        function modifyCoins(amt) { state.coins += amt; updateUI(); }
-        function unlockAllSkins() { state.ownedSkins = Object.keys(skins); localStorage.setItem('fro_skins', JSON.stringify(state.ownedSkins)); renderCollection(); }
-        function resetData() { localStorage.clear(); location.reload(); }
-
-        // --- JEOPARDY LOGIC ---
-        function initJeopardy() {
-            const board = document.getElementById('jeopardy-board');
-            // Keep headers
-            const headers = Array.from(board.querySelectorAll('.jeopardy-header'));
-            board.innerHTML = '';
-            headers.forEach(h => board.appendChild(h));
-
-            const values = [100, 200, 300, 400];
-            values.forEach(val => {
-                for(let col=0; col<3; col++) {
-                    const cardId = `j-${val}-${col}`;
-                    const card = document.createElement('div');
-                    card.className = 'jeopardy-card';
-                    if (state.jeopardyUsed.includes(cardId)) {
-                        card.classList.add('used');
-                    }
-                    card.innerText = `$${val}`;
-                    card.onclick = () => {
-                        if (!state.jeopardyUsed.includes(cardId)) {
-                            state.jeopardyUsed.push(cardId);
-                            triggerQuiz(val);
-                        }
-                    };
-                    board.appendChild(card);
-                }
-            });
-        }
-
-        // --- GAME ENGINE ---
         const canvas = document.getElementById('main-canvas');
         const ctx = canvas.getContext('2d');
-        let gameObj = { x: 50, y: 250, v: 0, obstacles: [], frame: 0 };
-        let inputState = { left: false, right: false, up: false };
+        let players = [];
+        let obstacles = [];
+        let items = [];
+        let frame = 0;
 
-        function handleInput(dir, isActive) {
-            if (dir === 'left') inputState.left = isActive;
-            if (dir === 'right') inputState.right = isActive;
-            if (dir === 'up') {
-                inputState.up = isActive;
-                if (isActive) jump();
-            }
+        function handleInput(dir, isActive, pIdx) {
+            if (!players[pIdx]) return;
+            players[pIdx].input[dir] = isActive;
+            if (isActive && dir === 'up') jump(pIdx);
         }
 
         window.addEventListener('keydown', e => {
-            if (e.code === 'ArrowLeft') inputState.left = true;
-            if (e.code === 'ArrowRight') inputState.right = true;
-            if (e.code === 'Space' || e.code === 'ArrowUp') { 
-                if(!inputState.up) jump();
-                inputState.up = true; 
-            }
-        });
-        window.addEventListener('keyup', e => {
-            if (e.code === 'ArrowLeft') inputState.left = false;
-            if (e.code === 'ArrowRight') inputState.right = false;
-            if (e.code === 'Space' || e.code === 'ArrowUp') inputState.up = false;
+            if (e.code === 'KeyA') handleInput('left', true, 0);
+            if (e.code === 'KeyD') handleInput('right', true, 0);
+            if (e.code === 'KeyW') handleInput('up', true, 0);
+            if (e.code === 'ArrowLeft') handleInput('left', true, 1);
+            if (e.code === 'ArrowRight') handleInput('right', true, 1);
+            if (e.code === 'ArrowUp') handleInput('up', true, 1);
         });
 
-        function jump() {
-            if (state.currentMode === 'flappy') gameObj.v = -5.5;
-            if (state.currentMode === 'surf' && gameObj.y >= 430) gameObj.v = -7;
+        window.addEventListener('keyup', e => {
+            if (e.code === 'KeyA') handleInput('left', false, 0);
+            if (e.code === 'KeyD') handleInput('right', false, 0);
+            if (e.code === 'KeyW') handleInput('up', false, 0);
+            if (e.code === 'ArrowLeft') handleInput('left', false, 1);
+            if (e.code === 'ArrowRight') handleInput('right', false, 1);
+            if (e.code === 'ArrowUp') handleInput('up', false, 1);
+        });
+
+        function jump(pIdx) {
+            if ((state.currentMode === 'flappy' || state.currentMode === 'dino') && !players[pIdx].dead) {
+                if (state.currentMode === 'dino') {
+                   if (players[pIdx].y >= 430) players[pIdx].v = -10;
+                } else {
+                   players[pIdx].v = -5.5;
+                }
+            }
+            if (state.currentMode === 'surf' && players[pIdx].y >= 430 && !players[pIdx].dead) players[pIdx].v = -7.5;
         }
 
         function initGame() {
             state.score = 0;
+            state.p2Score = 0;
             state.isGameRunning = true;
-            // Setup initial position based on mode
-            const startX = (state.currentMode === 'racer') ? 180 : 80;
-            const startY = (state.currentMode === 'racer') ? 400 : 250;
-            gameObj = { x: startX, y: startY, v: 0, obstacles: [], frame: 0 };
+            frame = 0;
+            obstacles = [];
+            items = [];
+            
+            players = [{
+                x: (state.currentMode === 'racer' || state.currentMode === 'star') ? 200 : 80,
+                y: (state.currentMode === 'racer' || state.currentMode === 'star') ? 400 : 250,
+                v: 0,
+                skin: state.activeSkin,
+                input: { left: false, right: false, up: false },
+                dead: false,
+                radius: 15
+            }];
+
+            if (state.isMulti) {
+                players.push({
+                    x: (state.currentMode === 'racer' || state.currentMode === 'star') ? 250 : 80,
+                    y: (state.currentMode === 'racer' || state.currentMode === 'star') ? 400 : 250,
+                    v: 0,
+                    skin: state.p2Skin,
+                    input: { left: false, right: false, up: false },
+                    dead: false,
+                    radius: 15
+                });
+                document.getElementById('p2-score-ui').classList.remove('hidden');
+                document.getElementById('p2-controls').classList.remove('hidden');
+                document.getElementById('p2-skin-display').innerText = skins[state.p2Skin].emoji;
+            } else {
+                document.getElementById('p2-score-ui').classList.add('hidden');
+                document.getElementById('p2-controls').classList.add('hidden');
+            }
+
             document.getElementById('active-skin-display').innerText = skins[state.activeSkin].emoji;
             requestAnimationFrame(gameLoop);
         }
 
         function gameLoop() {
             if (!state.isGameRunning) return;
-            
-            // Background
             ctx.fillStyle = "#111";
             ctx.fillRect(0, 0, 400, 500);
-            
-            gameObj.frame++;
-            
-            if (state.currentMode === 'flappy') {
-                // Gravity
-                gameObj.v += 0.25;
-                gameObj.y += gameObj.v;
-                gameObj.x = 80; // Keep bird at fixed X
+            frame++;
 
-                if (gameObj.frame % 90 === 0) {
-                    const gap = 150;
-                    const minH = 50;
-                    const maxH = 500 - gap - 100;
-                    const h = Math.random() * maxH + minH;
-                    gameObj.obstacles.push({ x: 400, h: h, w: 60, gap: gap });
-                }
+            if(state.currentMode === 'flappy') {
+                ctx.fillStyle = "#ff4500";
+                ctx.fillRect(0, 480, 400, 20);
+                if (frame % 100 === 0) obstacles.push({ type: 'pipe', x: 400, h: Math.random() * 200 + 50, w: 50, gap: 160 });
+            }
+            if (state.currentMode === 'dino') {
+                ctx.fillStyle = "#555";
+                ctx.fillRect(0, 460, 400, 40);
+                if (frame % 70 === 0) obstacles.push({ type: 'cactus', x: 400, y: 410, w: 30, h: 50 });
+            }
+            if (state.currentMode === 'star') {
+                if (frame % 40 === 0) items.push({ type: 'star', x: Math.random() * 360 + 20, y: -20, w: 20, h: 20 });
+            }
+            if (state.currentMode === 'racer' && frame % 40 === 0) {
+                obstacles.push({ type: 'car', x: Math.random() * 280 + 60, y: -80, w: 40, h: 70, speed: 4 + (frame/1000) });
+            }
+            if (state.currentMode === 'surf' && frame % 80 === 0) {
+                obstacles.push({ type: 'rock', x: 400, y: 420, w: 40, h: 40 });
+            }
 
-                gameObj.obstacles.forEach((o) => {
+            obstacles.forEach(o => {
+                ctx.fillStyle = o.type === 'pipe' ? "#2ecc71" : o.type === 'car' ? "#e74c3c" : "#bdc3c7";
+                if (o.type === 'pipe') {
                     o.x -= 3;
-                    ctx.fillStyle = "#2ecc71"; 
-                    // Draw Pipes
                     ctx.fillRect(o.x, 0, o.w, o.h);
-                    ctx.fillRect(o.x, o.h + o.gap, o.w, 500 - (o.h + o.gap));
-                    
-                    // Collision Detection (Hitbox)
-                    const pX = gameObj.x;
-                    const pY = gameObj.y;
-                    if (pX + 20 > o.x && pX - 20 < o.x + o.w) {
-                        if (pY - 20 < o.h || pY + 20 > o.h + o.gap) {
-                            triggerQuiz();
-                        }
+                    ctx.fillRect(o.x, o.h + o.gap, o.w, 500);
+                } else if (o.type === 'car') {
+                    o.y += o.speed;
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                } else if (o.type === 'cactus') {
+                    o.x -= 6;
+                    ctx.fillStyle = "#27ae60";
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                } else {
+                    o.x -= 5;
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                }
+            });
+
+            items.forEach((it, i) => {
+                it.y += 4;
+                ctx.font = "20px Arial";
+                ctx.fillText("⭐", it.x, it.y);
+            });
+
+            players.forEach((p, idx) => {
+                if (p.dead) return;
+                if (state.currentMode === 'flappy') { p.v += 0.22; p.y += p.v; if (p.y > 480 || p.y < 0) die(idx); }
+                else if (state.currentMode === 'dino') { 
+                    p.v += 0.5; p.y += p.v; 
+                    if (p.y > 430) { p.y = 430; p.v = 0; }
+                }
+                else if (state.currentMode === 'racer' || state.currentMode === 'star') { 
+                    if (p.input.left && p.x > 30) p.x -= 6; 
+                    if (p.input.right && p.x < 370) p.x += 6; 
+                }
+                else if (state.currentMode === 'surf') { p.v += 0.35; p.y += p.v; if (p.y > 430) { p.y = 430; p.v = 0; } }
+
+                obstacles.forEach(o => {
+                    if (o.type === 'pipe') {
+                        if (p.x + 10 > o.x && p.x - 10 < o.x + o.w) { if (p.y - 10 < o.h || p.y + 10 > o.h + o.gap) die(idx); }
+                    } else if (o.type === 'car') {
+                        if (Math.abs(p.x - (o.x + 20)) < 30 && Math.abs(p.y - (o.y + 35)) < 45) die(idx);
+                    } else if (o.type === 'rock' || o.type === 'cactus') {
+                        if (Math.abs(p.x - o.x) < 30 && Math.abs(p.y - o.y) < 30) die(idx);
                     }
                 });
 
-                if (gameObj.y > 500 || gameObj.y < -50) triggerQuiz();
-            }
-
-            if (state.currentMode === 'racer') {
-                // Draw Road
-                ctx.fillStyle = "#333";
-                ctx.fillRect(50, 0, 300, 500);
-                ctx.strokeStyle = "#fff";
-                ctx.setLineDash([20, 20]);
-                ctx.beginPath(); ctx.moveTo(200, 0); ctx.lineTo(200, 500); ctx.stroke();
-                
-                // Continuous movement logic
-                if (inputState.left && gameObj.x > 60) gameObj.x -= 5;
-                if (inputState.right && gameObj.x < 310) gameObj.x += 5;
-                
-                // Update player vertical position for Racer
-                gameObj.y = 400;
-
-                if (gameObj.frame % 45 === 0) {
-                    gameObj.obstacles.push({ x: Math.random() * 250 + 60, y: -60, w: 40, h: 60, speed: Math.random() * 3 + 4 });
-                }
-                gameObj.obstacles.forEach(o => {
-                    o.y += o.speed;
-                    ctx.fillStyle = "#e74c3c"; // Traffic Red
-                    ctx.fillRect(o.x, o.y, o.w, o.h);
-                    // Collision
-                    if (Math.abs(gameObj.x - o.x) < 35 && Math.abs(gameObj.y - o.y) < 50) triggerQuiz();
+                items.forEach((it, i) => {
+                    if (Math.abs(p.x - it.x) < 30 && Math.abs(p.y - it.y) < 30) {
+                        items.splice(i, 1);
+                        if(idx === 0) state.score += 50;
+                        else state.p2Score += 50;
+                    }
                 });
+
+                ctx.font = "30px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(skins[p.skin].emoji, p.x, p.y);
+            });
+
+            if (state.currentMode !== 'star') {
+                if (!players[0].dead) state.score++;
+                if (state.isMulti && !players[1]?.dead) state.p2Score++;
             }
 
-            if (state.currentMode === 'surf') {
-                // Water Line
-                ctx.fillStyle = "#3498db";
-                ctx.fillRect(0, 450, 400, 50);
-
-                gameObj.v += 0.3;
-                gameObj.y += gameObj.v;
-                if (gameObj.y > 430) { gameObj.y = 430; gameObj.v = 0; }
-                gameObj.x = 80;
-
-                if (gameObj.frame % 70 === 0) {
-                    gameObj.obstacles.push({ x: 400, y: 410, w: 40, h: 40 });
-                }
-                gameObj.obstacles.forEach(o => {
-                    o.x -= 5;
-                    ctx.fillStyle = "#fff"; // White caps
-                    ctx.beginPath();
-                    ctx.moveTo(o.x, o.y + 40);
-                    ctx.lineTo(o.x + 20, o.y);
-                    ctx.lineTo(o.x + 40, o.y + 40);
-                    ctx.fill();
-                    // Collision
-                    if (Math.abs(gameObj.x - o.x) < 30 && Math.abs(gameObj.y - o.y) < 30) triggerQuiz();
-                });
-            }
-
-            // Cleanup off-screen
-            gameObj.obstacles = gameObj.obstacles.filter(o => o.x > -100 && o.y < 600);
-
-            // Draw Player
-            ctx.font = "30px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(skins[state.activeSkin].emoji, gameObj.x, gameObj.y);
-            
-            state.score++;
             document.getElementById('game-score').innerText = state.score;
-            requestAnimationFrame(gameLoop);
+            if (state.isMulti) document.getElementById('game-score-p2').innerText = state.p2Score;
+
+            obstacles = obstacles.filter(o => o.x > -100 && o.y < 600);
+            items = items.filter(it => it.y < 550);
+            
+            if (players.every(p => p.dead) || (state.currentMode === 'star' && frame > 1000)) {
+                state.isGameRunning = false;
+                setTimeout(() => triggerQuiz(), 500);
+            } else {
+                requestAnimationFrame(gameLoop);
+            }
         }
+
+        function die(idx) { players[idx].dead = true; }
 
         function triggerQuiz(reward = 10) {
             state.isGameRunning = false;
             showSection('quiz-container');
-            let pool = (state.activeSetId === 'default') ? defaultQuestions : (state.customSets.find(x => x.id === state.activeSetId)?.questions || defaultQuestions);
+            const pool = (state.activeSetId === 'default') ? defaultQuestions : (state.customSets.find(x => x.id === state.activeSetId)?.questions || defaultQuestions);
             const q = pool[Math.floor(Math.random() * pool.length)];
             
+            state.quizTurn = (state.isMulti && Math.random() > 0.5) ? 1 : 0;
+            document.getElementById('quiz-player-turn').innerText = state.isMulti ? `PLAYER ${state.quizTurn + 1}'S TURN` : "BONUS QUESTION";
             document.getElementById('question-text').innerText = q.q;
+            
             const grid = document.getElementById('options-grid');
             grid.innerHTML = '';
-            
             q.a.forEach((opt, i) => {
                 const btn = document.createElement('button');
                 btn.className = "retro-button";
@@ -559,32 +717,26 @@
                     if (i === q.c) {
                         state.coins += reward;
                         alert(`CORRECT! +${reward} COINS`);
-                    } else {
-                        alert("WRONG! THE ANSWER WAS: " + q.a[q.c]);
-                    }
+                    } else { alert("Wrong Answer!"); }
                     showSection('menu');
                 };
                 grid.appendChild(btn);
             });
         }
 
-        // --- MARKET & COLLECTION HELPERS ---
         function renderMarket() {
             const grid = document.getElementById('market-grid');
             grid.innerHTML = '';
-            const packs = [
-                { id: 'space', name: 'SPACE PACK', icons: '🚀 👽 🪐', cost: 100 },
-                { id: 'nature', name: 'NATURE PACK', icons: '🌿 🦊 🍄', cost: 100 },
-                { id: 'beach', name: 'BEACH PACK', icons: '🏄 🌴 🐚', cost: 150 }
-            ];
             packs.forEach(p => {
+                const isOwned = p.id === 'space' ? state.ownedSkins.includes('ufo') : 
+                               p.id === 'nature' ? state.ownedSkins.includes('fox') :
+                               p.id === 'beach' ? state.ownedSkins.includes('surfer') :
+                               state.ownedSkins.includes('ball');
+
                 const div = document.createElement('div');
                 div.className = "retro-border p-6 text-center bg-black/50";
-                div.innerHTML = `
-                    <p class="pixel-font text-xs text-cyan-400 mb-2">${p.name}</p>
-                    <div class="text-2xl mb-4">${p.icons}</div>
-                    <button onclick="buyPack('${p.id}', ${p.cost})" class="retro-button">${p.cost} 🪙</button>
-                `;
+                div.innerHTML = `<p class="pixel-font text-xs text-cyan-400 mb-2">${p.name}</p><div class="text-2xl mb-4">${p.icons}</div>
+                    <button onclick="buyPack('${p.id}', ${p.cost})" class="retro-button ${isOwned ? 'bg-gray-500' : ''}" ${isOwned ? 'disabled' : ''}>${isOwned ? 'OWNED' : p.cost + ' 🪙'}</button>`;
                 grid.appendChild(div);
             });
         }
@@ -592,17 +744,17 @@
         window.buyPack = (id, cost) => {
             if (state.coins >= cost) {
                 state.coins -= cost;
-                let newSkins = [];
-                if (id === 'space') newSkins = ['ufo', 'alien'];
-                if (id === 'nature') newSkins = ['fox', 'mushroom'];
-                if (id === 'beach') newSkins = ['surfer'];
-                state.ownedSkins = [...new Set([...state.ownedSkins, ...newSkins])];
+                let news = [];
+                if (id === 'space') news = ['ufo', 'alien', 'rocket'];
+                if (id === 'nature') news = ['fox', 'mushroom', 'tree'];
+                if (id === 'beach') news = ['surfer', 'crab', 'shark'];
+                if (id === 'sports') news = ['ball', 'hoop', 'trophy'];
+                state.ownedSkins = [...new Set([...state.ownedSkins, ...news])];
                 localStorage.setItem('fro_skins', JSON.stringify(state.ownedSkins));
                 updateUI();
                 alert("PACK UNLOCKED!");
-            } else {
-                alert("NOT ENOUGH COINS!");
-            }
+                renderMarket();
+            } else alert("NOT ENOUGH COINS!");
         };
 
         function renderCollection() {
@@ -611,7 +763,11 @@
             state.ownedSkins.forEach(sid => {
                 const div = document.createElement('div');
                 div.className = `retro-border p-2 text-center cursor-pointer ${state.activeSkin === sid ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}`;
-                div.onclick = () => { state.activeSkin = sid; localStorage.setItem('fro_active_skin', sid); renderCollection(); };
+                div.onclick = () => {
+                    state.activeSkin = sid;
+                    localStorage.setItem('fro_active_skin', state.activeSkin);
+                    renderCollection();
+                };
                 div.innerHTML = `<div class="text-3xl">${skins[sid].emoji}</div><p class="text-[10px] mt-1">${skins[sid].name}</p>`;
                 grid.appendChild(div);
             });
@@ -619,84 +775,70 @@
 
         function renderSetsList() {
             const list = document.getElementById('sets-list');
-            list.innerHTML = '';
-            
-            const defDiv = document.createElement('div');
-            defDiv.className = `retro-border p-4 flex justify-between items-center ${state.activeSetId === 'default' ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}`;
-            defDiv.innerHTML = `<p class="pixel-font text-xs">DEFAULT QUESTIONS</p><button onclick="setActiveSet('default')" class="retro-button">SELECT</button>`;
-            list.appendChild(defDiv);
-
+            list.innerHTML = `<div class="retro-border p-4 flex justify-between items-center ${state.activeSetId === 'default' ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}">
+                <p class="pixel-font text-xs">DEFAULT</p><button onclick="setActiveSet('default')" class="retro-button">SELECT</button></div>`;
             state.customSets.forEach(s => {
                 const div = document.createElement('div');
                 div.className = `retro-border p-4 flex justify-between items-center ${state.activeSetId === s.id ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}`;
-                div.innerHTML = `<p class="pixel-font text-xs">${s.name}</p>
-                    <div class="flex gap-2">
-                        <button onclick="setActiveSet('${s.id}')" class="retro-button">SELECT</button>
-                        <button onclick="deleteSet('${s.id}')" class="retro-button bg-red-500">X</button>
-                    </div>`;
+                div.innerHTML = `<p class="pixel-font text-xs">${s.name}</p><button onclick="setActiveSet('${s.id}')" class="retro-button">SELECT</button>`;
                 list.appendChild(div);
             });
         }
 
         window.setActiveSet = (id) => { state.activeSetId = id; localStorage.setItem('fro_active_set', id); renderSetsList(); updateUI(); };
-        window.deleteSet = (id) => { state.customSets = state.customSets.filter(x => x.id !== id); localStorage.setItem('fro_sets', JSON.stringify(state.customSets)); renderSetsList(); };
+        window.promptMode = (m) => { state.tempMode = m; document.getElementById('mode-prompt').classList.remove('hidden'); };
+        window.cancelPrompt = () => document.getElementById('mode-prompt').classList.add('hidden');
+        window.startSolo = () => { state.currentMode = state.tempMode; state.isMulti = false; finishPrompt(); };
+        window.startLobbyFlow = () => { cancelPrompt(); showSection('lobby-screen'); };
 
-        window.openSetEditor = () => {
-            document.getElementById('set-name-input').value = "";
-            document.getElementById('editor-questions-container').innerHTML = '';
-            addQuestionToEditor();
-            showSection('set-editor');
-        };
+        function finishPrompt() {
+            cancelPrompt();
+            if (state.currentMode === 'classic') triggerQuiz();
+            else if (state.currentMode === 'jeopardy') showSection('jeopardy-container');
+            else { showSection('game-container'); initGame(); }
+        }
 
-        window.addQuestionToEditor = () => {
-            const div = document.createElement('div');
-            div.className = "p-4 border border-white/20 bg-white/5 rounded";
-            div.innerHTML = `
-                <input type="text" class="retro-input w-full q-text mb-2" placeholder="QUESTION">
-                <input type="text" class="retro-input w-full q-ans mb-2" placeholder="CORRECT ANSWER">
-                <input type="text" class="retro-input w-full q-wrong" placeholder="WRONG ANSWER">
-            `;
-            document.getElementById('editor-questions-container').appendChild(div);
-        };
-
-        window.saveCurrentSet = () => {
-            const name = document.getElementById('set-name-input').value || "Unnamed Set";
-            const questions = [];
-            document.querySelectorAll('#editor-questions-container > div').forEach(node => {
-                const q = node.querySelector('.q-text').value;
-                const a = node.querySelector('.q-ans').value;
-                const w = node.querySelector('.q-wrong').value;
-                if(q && a) questions.push({ q, a: [a, w, "Extra Option", "Another Option"], c: 0 });
+        function initJeopardy() {
+            const board = document.getElementById('jeopardy-board');
+            const hs = board.querySelectorAll('.jeopardy-header');
+            board.innerHTML = ''; hs.forEach(h => board.appendChild(h));
+            [100, 200, 300, 400].forEach(v => {
+                for(let c=0; c<3; c++) {
+                    const id = `j-${v}-${c}`;
+                    const card = document.createElement('div');
+                    card.className = `jeopardy-card ${state.jeopardyUsed.includes(id) ? 'used' : ''}`;
+                    card.innerText = `$${v}`;
+                    card.onclick = () => { if(!state.jeopardyUsed.includes(id)) { state.jeopardyUsed.push(id); triggerQuiz(v); } };
+                    board.appendChild(card);
+                }
             });
-            if(questions.length > 0) {
-                state.customSets.push({ id: Date.now().toString(), name, questions });
+        }
+
+        function adminTap() { state.adminTaps++; if(state.adminTaps >= 5) showSection('admin-panel'); }
+        function modifyCoins(a) { state.coins += a; updateUI(); }
+        function unlockAllSkins() { state.ownedSkins = Object.keys(skins); localStorage.setItem('fro_skins', JSON.stringify(state.ownedSkins)); renderCollection(); }
+
+        window.openSetEditor = () => { document.getElementById('editor-questions-container').innerHTML = ''; addQuestionToEditor(); showSection('set-editor'); };
+        window.addQuestionToEditor = () => {
+            const d = document.createElement('div');
+            d.innerHTML = `<input type="text" class="retro-input w-full q-text mb-1" placeholder="Q"><input type="text" class="retro-input w-full q-ans" placeholder="A">`;
+            document.getElementById('editor-questions-container').appendChild(d);
+        };
+        window.saveCurrentSet = () => {
+            const name = document.getElementById('set-name-input').value || "NEW SET";
+            const qs = [];
+            document.querySelectorAll('#editor-questions-container > div').forEach(n => {
+                const q = n.querySelector('.q-text').value;
+                const a = n.querySelector('.q-ans').value;
+                if(q && a) qs.push({ q, a: [a, "Wrong 1", "Wrong 2", "Wrong 3"], c: 0 });
+            });
+            if(qs.length) {
+                state.customSets.push({ id: Date.now().toString(), name, questions: qs });
                 localStorage.setItem('fro_sets', JSON.stringify(state.customSets));
                 showSection('sets');
             }
         };
 
-        window.promptMode = (m) => { state.tempMode = m; document.getElementById('mode-prompt').classList.remove('hidden'); };
-        window.cancelPrompt = () => document.getElementById('mode-prompt').classList.add('hidden');
-        window.startSolo = () => {
-            state.currentMode = state.tempMode;
-            cancelPrompt();
-            if (state.currentMode === 'classic') triggerQuiz();
-            else if (state.currentMode === 'jeopardy') showSection('jeopardy-container');
-            else { showSection('game-container'); initGame(); }
-        };
-
-        window.copyGameCode = () => {
-            const el = document.createElement('textarea');
-            el.value = document.documentElement.outerHTML;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            document.getElementById('copy-toast').classList.remove('hidden');
-            setTimeout(() => document.getElementById('copy-toast').classList.add('hidden'), 2000);
-        };
-
-        // Initialize UI
         showSection('menu');
     </script>
 </body>
