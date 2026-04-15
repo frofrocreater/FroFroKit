@@ -74,6 +74,14 @@
             box-shadow: none;
         }
 
+        .retro-button:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         .respect-button {
             background: var(--respect-gold);
             color: #000;
@@ -112,16 +120,46 @@
             animation: gold-shimmer 2s infinite;
             color: var(--respect-gold) !important;
         }
+
+        /* Energy Bar Styles */
+        .energy-cell {
+            width: 15px;
+            height: 10px;
+            background: #333;
+            border: 1px solid #555;
+            transition: background 0.3s;
+        }
+        .energy-cell.filled {
+            background: var(--neon-blue);
+            box-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        /* iPad Specific Adjustments */
+        .is-ipad .retro-button {
+            padding: 15px 25px;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body class="crt">
 
     <header class="p-4 text-center">
         <h1 id="logo" class="pixel-font text-3xl mb-2 text-white italic cursor-pointer select-none" style="text-shadow: 4px 4px var(--neon-pink);">FROFROKIT</h1>
+        <div id="device-tag" class="hidden mb-2 text-[10px] text-cyan-400 pixel-font">[[ TABLET MODE DETECTED ]]</div>
         <div class="flex flex-col items-center gap-1">
             <div class="flex justify-center gap-4 text-xl">
                 <span class="text-yellow-400">COINS: <span id="coin-display">50</span></span>
                 <span id="save-status" class="text-[10px] text-gray-400 self-center">● CONNECTING...</span>
+            </div>
+            <!-- Energy System Display -->
+            <div class="flex items-center gap-2 mt-1">
+                <span class="text-[8px] pixel-font text-cyan-400">BRAIN PWR:</span>
+                <div id="energy-bar" class="flex gap-1 border border-gray-600 p-0.5">
+                    <div class="energy-cell"></div>
+                    <div class="energy-cell"></div>
+                    <div class="energy-cell"></div>
+                </div>
+                <span id="energy-timer" class="text-[8px] text-gray-500 font-mono"></span>
             </div>
             <div id="user-id-display" class="text-[8px] text-gray-500 font-mono"></div>
         </div>
@@ -252,9 +290,9 @@
             <canvas id="main-canvas" width="400" height="500" class="mx-auto"></canvas>
             
             <div id="p1-controls" class="mt-4 flex justify-center gap-2">
-                <button onmousedown="handleInput('left', true)" onmouseup="handleInput('left', false)" class="retro-button p-2 text-[8px]">LEFT</button>
-                <button onmousedown="handleInput('up', true)" onmouseup="handleInput('up', false)" class="retro-button bg-pink-400 p-2 text-[8px]">ACTION</button>
-                <button onmousedown="handleInput('right', true)" onmouseup="handleInput('right', false)" class="retro-button p-2 text-[8px]">RIGHT</button>
+                <button onmousedown="handleInput('left', true)" onmouseup="handleInput('left', false)" ontouchstart="handleInput('left', true)" ontouchend="handleInput('left', false)" class="retro-button p-2 text-[8px] min-w-[60px]">LEFT</button>
+                <button onmousedown="handleInput('up', true)" onmouseup="handleInput('up', false)" ontouchstart="handleInput('up', true)" ontouchend="handleInput('up', false)" class="retro-button bg-pink-400 p-2 text-[8px] min-w-[80px]">ACTION</button>
+                <button onmousedown="handleInput('right', true)" onmouseup="handleInput('right', false)" ontouchstart="handleInput('right', true)" ontouchend="handleInput('right', false)" class="retro-button p-2 text-[8px] min-w-[60px]">RIGHT</button>
             </div>
             <button onclick="quitGame()" class="retro-button bg-red-500 mt-6">QUIT</button>
         </section>
@@ -304,7 +342,11 @@
             isRespectMember: false,
             respectExpiry: null,
             isAdmin: false,
-            currentQuestion: null
+            currentQuestion: null,
+            isIPad: false,
+            energy: 3,
+            maxEnergy: 3,
+            lastEnergyRefill: Date.now()
         };
 
         const defaultQuestions = [
@@ -341,7 +383,51 @@
             { id: 'mythic', name: 'MYTHIC PACK', cost: 500, desc: 'Dragon & Phoenix skins!', items: ['dragon', 'phoenix'] }
         ];
 
+        // Energy Refill Logic
+        function updateEnergySystem() {
+            const now = Date.now();
+            const refillInterval = 20000; // 20 seconds for 1 energy = 3 energy per 60 seconds (1 minute)
+            
+            if (state.energy < state.maxEnergy) {
+                const elapsed = now - state.lastEnergyRefill;
+                if (elapsed >= refillInterval) {
+                    state.energy++;
+                    state.lastEnergyRefill = now;
+                }
+                
+                // Show countdown for next refill
+                const remaining = Math.ceil((refillInterval - elapsed) / 1000);
+                document.getElementById('energy-timer').innerText = `+1 in ${remaining}s`;
+            } else {
+                document.getElementById('energy-timer').innerText = "FULL";
+                state.lastEnergyRefill = now;
+            }
+
+            // Update energy bar UI
+            const cells = document.querySelectorAll('.energy-cell');
+            cells.forEach((cell, i) => {
+                if (i < state.energy) cell.classList.add('filled');
+                else cell.classList.remove('filled');
+            });
+        }
+
+        // Run energy check every second
+        setInterval(updateEnergySystem, 1000);
+
+        function detectDevice() {
+            // Modern iPad detection (since they report as Macintosh often)
+            const isIPad = /iPad/.test(navigator.userAgent) || 
+                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            state.isIPad = isIPad;
+            
+            if (isIPad) {
+                document.body.classList.add('is-ipad');
+                document.getElementById('device-tag').classList.remove('hidden');
+            }
+        }
+
         async function initAuth() {
+            detectDevice();
             if (!window.fb) {
                 window.addEventListener('firebase-ready', initAuth);
                 return;
@@ -365,7 +451,6 @@
                             state.respectExpiry = data.respectExpiry || null;
                             state.isAdmin = data.isAdmin || false;
                             
-                            // Check Subscription Expiry
                             if (state.isRespectMember && state.respectExpiry) {
                                 if (Date.now() > state.respectExpiry) {
                                     state.isRespectMember = false;
@@ -406,7 +491,6 @@
             if (state.coins >= cost) {
                 state.coins -= cost;
                 state.isRespectMember = true;
-                // 30 days in ms
                 state.respectExpiry = Date.now() + (30 * 24 * 60 * 60 * 1000);
                 saveProfile();
                 updateUI();
@@ -626,11 +710,23 @@
             document.getElementById('question-text').innerText = q.q;
             const grid = document.getElementById('answer-grid');
             grid.innerHTML = '';
+            
             q.options.forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = "retro-button text-[8px]";
-                btn.innerText = opt;
-                btn.onclick = () => checkAnswer(opt);
+                btn.innerText = state.energy > 0 ? opt : "RECHARGING...";
+                btn.disabled = state.energy <= 0;
+                btn.onclick = () => {
+                    if (state.energy > 0) {
+                        state.energy--;
+                        if (state.energy < state.maxEnergy - 1) {
+                            // Don't reset the timer if it was already counting down
+                        } else {
+                            state.lastEnergyRefill = Date.now();
+                        }
+                        checkAnswer(opt);
+                    }
+                };
                 grid.appendChild(btn);
             });
         }
@@ -647,6 +743,7 @@
             } else {
                 if (state.currentMode === 'jeopardy') state.score = Math.max(0, state.score - 15);
                 alert("WRONG!");
+                nextQuestion(); // Still consume energy for a wrong answer
             }
         }
 
