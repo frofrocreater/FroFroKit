@@ -11,19 +11,24 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, updateDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'frofrokit-v1';
-
-        window.fb = { 
-            db, auth, appId, collection, doc, setDoc, getDoc,
-            onSnapshot, updateDoc, onAuthStateChanged, signInAnonymously,
-            signInWithCustomToken, deleteDoc
-        };
+        // Bug Fix: Safety check for environment variables
+        const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        const firebaseConfig = JSON.parse(configStr);
         
-        window.dispatchEvent(new Event('firebase-ready'));
+        if (firebaseConfig.apiKey) {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'frofrokit-v1';
+
+            window.fb = { 
+                db, auth, appId, collection, doc, setDoc, getDoc,
+                onSnapshot, updateDoc, onAuthStateChanged, signInAnonymously,
+                signInWithCustomToken, deleteDoc
+            };
+            
+            window.dispatchEvent(new Event('firebase-ready'));
+        }
     </script>
     <style>
         :root {
@@ -41,6 +46,9 @@
             overflow-x: hidden;
             margin: 0;
             touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .pixel-font { font-family: 'Press Start 2P', cursive; }
@@ -66,7 +74,6 @@
             font-size: 0.7rem;
             display: inline-block;
             text-align: center;
-            user-select: none;
         }
 
         .retro-button:active {
@@ -121,7 +128,6 @@
             color: var(--respect-gold) !important;
         }
 
-        /* Energy Bar Styles */
         .energy-cell {
             width: 15px;
             height: 10px;
@@ -134,7 +140,6 @@
             box-shadow: 0 0 5px var(--neon-blue);
         }
 
-        /* iPad Specific Adjustments */
         .is-ipad .retro-button {
             padding: 15px 25px;
             font-size: 0.8rem;
@@ -151,7 +156,6 @@
                 <span class="text-yellow-400">COINS: <span id="coin-display">50</span></span>
                 <span id="save-status" class="text-[10px] text-gray-400 self-center">● CONNECTING...</span>
             </div>
-            <!-- Energy System Display -->
             <div class="flex items-center gap-2 mt-1">
                 <span class="text-[8px] pixel-font text-cyan-400">BRAIN PWR:</span>
                 <div id="energy-bar" class="flex gap-1 border border-gray-600 p-0.5">
@@ -290,9 +294,9 @@
             <canvas id="main-canvas" width="400" height="500" class="mx-auto"></canvas>
             
             <div id="p1-controls" class="mt-4 flex justify-center gap-2">
-                <button onmousedown="handleInput('left', true)" onmouseup="handleInput('left', false)" ontouchstart="handleInput('left', true)" ontouchend="handleInput('left', false)" class="retro-button p-2 text-[8px] min-w-[60px]">LEFT</button>
-                <button onmousedown="handleInput('up', true)" onmouseup="handleInput('up', false)" ontouchstart="handleInput('up', true)" ontouchend="handleInput('up', false)" class="retro-button bg-pink-400 p-2 text-[8px] min-w-[80px]">ACTION</button>
-                <button onmousedown="handleInput('right', true)" onmouseup="handleInput('right', false)" ontouchstart="handleInput('right', true)" ontouchend="handleInput('right', false)" class="retro-button p-2 text-[8px] min-w-[60px]">RIGHT</button>
+                <button onmousedown="handleInput('left', true, event)" onmouseup="handleInput('left', false, event)" ontouchstart="handleInput('left', true, event)" ontouchend="handleInput('left', false, event)" class="retro-button p-2 text-[8px] min-w-[60px]">LEFT</button>
+                <button onmousedown="handleInput('up', true, event)" onmouseup="handleInput('up', false, event)" ontouchstart="handleInput('up', true, event)" ontouchend="handleInput('up', false, event)" class="retro-button bg-pink-400 p-2 text-[8px] min-w-[80px]">ACTION</button>
+                <button onmousedown="handleInput('right', true, event)" onmouseup="handleInput('right', false, event)" ontouchstart="handleInput('right', true, event)" ontouchend="handleInput('right', false, event)" class="retro-button p-2 text-[8px] min-w-[60px]">RIGHT</button>
             </div>
             <button onclick="quitGame()" class="retro-button bg-red-500 mt-6">QUIT</button>
         </section>
@@ -383,27 +387,25 @@
             { id: 'mythic', name: 'MYTHIC PACK', cost: 500, desc: 'Dragon & Phoenix skins!', items: ['dragon', 'phoenix'] }
         ];
 
-        // Energy Refill Logic
         function updateEnergySystem() {
             const now = Date.now();
-            const refillInterval = 20000; // 20 seconds for 1 energy = 3 energy per 60 seconds (1 minute)
+            const refillInterval = 20000; 
             
             if (state.energy < state.maxEnergy) {
                 const elapsed = now - state.lastEnergyRefill;
                 if (elapsed >= refillInterval) {
                     state.energy++;
-                    state.lastEnergyRefill = now;
+                    // Bug Fix: Keep tracking the remainder for accurate 20s refills
+                    state.lastEnergyRefill = now - (elapsed % refillInterval);
                 }
                 
-                // Show countdown for next refill
-                const remaining = Math.ceil((refillInterval - elapsed) / 1000);
+                const remaining = Math.ceil((refillInterval - (now - state.lastEnergyRefill)) / 1000);
                 document.getElementById('energy-timer').innerText = `+1 in ${remaining}s`;
             } else {
                 document.getElementById('energy-timer').innerText = "FULL";
                 state.lastEnergyRefill = now;
             }
 
-            // Update energy bar UI
             const cells = document.querySelectorAll('.energy-cell');
             cells.forEach((cell, i) => {
                 if (i < state.energy) cell.classList.add('filled');
@@ -411,11 +413,9 @@
             });
         }
 
-        // Run energy check every second
         setInterval(updateEnergySystem, 1000);
 
         function detectDevice() {
-            // Modern iPad detection (since they report as Macintosh often)
             const isIPad = /iPad/.test(navigator.userAgent) || 
                           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
             state.isIPad = isIPad;
@@ -464,26 +464,29 @@
                     updateUI();
                     document.getElementById('save-status').innerText = "● ONLINE";
                 } else {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
+                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (token) {
+                        await signInWithCustomToken(auth, token);
                     } else { await signInAnonymously(auth); }
                 }
             });
         }
 
         async function saveProfile() {
-            if (!state.user) return;
+            if (!state.user || !window.fb) return;
             const { db, appId, doc, setDoc } = window.fb;
-            await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'profile', 'data'), {
-                coins: state.coins,
-                ownedSkins: state.ownedSkins,
-                activeSkin: state.activeSkin,
-                customSets: state.customSets,
-                activeSetId: state.activeSetId,
-                isRespectMember: state.isRespectMember,
-                respectExpiry: state.respectExpiry,
-                isAdmin: state.isAdmin
-            });
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'profile', 'data'), {
+                    coins: state.coins,
+                    ownedSkins: state.ownedSkins,
+                    activeSkin: state.activeSkin,
+                    customSets: state.customSets,
+                    activeSetId: state.activeSetId,
+                    isRespectMember: state.isRespectMember,
+                    respectExpiry: state.respectExpiry,
+                    isAdmin: state.isAdmin
+                });
+            } catch(e) { console.error("Save failed", e); }
         }
 
         function joinRespect() {
@@ -494,7 +497,7 @@
                 state.respectExpiry = Date.now() + (30 * 24 * 60 * 60 * 1000);
                 saveProfile();
                 updateUI();
-                alert("WELCOME TO FROFRORESPECT! Status active for 30 days.");
+                alert("WELCOME TO FROFRORESPECT!");
             } else { alert("NOT ENOUGH COINS! Need 500."); }
         }
 
@@ -520,6 +523,7 @@
         };
 
         async function createRoom() {
+            if (!window.fb) return;
             const code = Math.random().toString(36).substring(2, 6).toUpperCase();
             state.roomCode = code; state.isHost = true; state.isMultiplayer = true;
             const { db, appId, doc, setDoc } = window.fb;
@@ -534,7 +538,7 @@
 
         async function joinRoom(providedCode) {
             const code = providedCode || document.getElementById('join-code-input').value.toUpperCase();
-            if (!code) return;
+            if (!code || !window.fb) return;
             const { db, appId, doc, setDoc, onSnapshot, collection } = window.fb;
             state.roomCode = code; state.isMultiplayer = true;
             
@@ -586,9 +590,11 @@
         }
 
         async function leaveRoom() {
-            if (state.roomCode && state.user) {
+            if (state.roomCode && state.user && window.fb) {
                 const { db, appId, doc, deleteDoc } = window.fb;
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', state.roomCode, 'players', state.user.uid));
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', state.roomCode, 'players', state.user.uid));
+                } catch(e) {}
             }
             if (roomUnsubscribe) roomUnsubscribe();
             if (playersUnsubscribe) playersUnsubscribe();
@@ -600,16 +606,19 @@
         }
 
         async function startMultiplayerGame() {
+            if (!window.fb) return;
             const { db, appId, doc, updateDoc } = window.fb;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', state.roomCode), { status: 'playing' });
         }
 
         async function syncPosition(x, y, score) {
-            if (!state.isMultiplayer || !state.user || !state.roomCode) return;
+            if (!state.isMultiplayer || !state.user || !state.roomCode || !window.fb) return;
             const { db, appId, doc, updateDoc } = window.fb;
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', state.roomCode, 'players', state.user.uid), {
-                x, y, score, lastUpdate: Date.now()
-            });
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', state.roomCode, 'players', state.user.uid), {
+                    x, y, score, lastUpdate: Date.now()
+                });
+            } catch(e) {}
         }
 
         function showSection(id) {
@@ -620,9 +629,6 @@
             if (id === 'market') renderMarket();
             if (id === 'collection') renderSkins();
             if (id === 'sets') renderSets();
-            if (id === 'admin') {
-                document.getElementById('admin-stats').innerText = `MOD: ${state.currentMode}\nROOM: ${state.roomCode || 'NONE'}\nUSER: ${state.user?.uid}\nRESPECT: ${state.isRespectMember}`;
-            }
         }
 
         function promptMode(m) {
@@ -646,7 +652,8 @@
         let player = { x: 200, y: 400, v: 0, vx: 0, input: {}, size: 30, alive: true };
         let world = { entities: [], frame: 0, wave: 0 };
 
-        function handleInput(dir, active) { 
+        function handleInput(dir, active, event) { 
+            if (event) event.preventDefault();
             player.input[dir] = active; 
             if(active && dir === 'up') performAction(); 
         }
@@ -719,11 +726,6 @@
                 btn.onclick = () => {
                     if (state.energy > 0) {
                         state.energy--;
-                        if (state.energy < state.maxEnergy - 1) {
-                            // Don't reset the timer if it was already counting down
-                        } else {
-                            state.lastEnergyRefill = Date.now();
-                        }
                         checkAnswer(opt);
                     }
                 };
@@ -742,8 +744,7 @@
                 nextQuestion();
             } else {
                 if (state.currentMode === 'jeopardy') state.score = Math.max(0, state.score - 15);
-                alert("WRONG!");
-                nextQuestion(); // Still consume energy for a wrong answer
+                nextQuestion(); 
             }
         }
 
@@ -783,15 +784,11 @@
 
         function updatePhysics() {
             if (state.currentMode === 'classic' || state.currentMode === 'jeopardy') return;
-            
             player.v += 0.4;
             player.y += player.v;
-            
             if (player.input.left) player.x -= 5;
             if (player.input.right) player.x += 5;
-            
             player.x = Math.max(20, Math.min(380, player.x));
-            
             if (state.currentMode !== 'flappy' && player.y > 400) {
                 player.y = 400;
                 player.v = 0;
@@ -824,10 +821,7 @@
             world.entities.forEach((e, i) => {
                 if (state.currentMode === 'flappy' || state.currentMode === 'surf') e.x -= 3;
                 if (state.currentMode === 'racer') e.y += 5;
-                
-                let dx = player.x - e.x;
-                let dy = player.y - e.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
+                let dist = Math.sqrt((player.x - e.x)**2 + (player.y - e.y)**2);
 
                 if (e.type === 'pipe') {
                     if (player.x > e.x && player.x < e.x + 50) {
@@ -839,7 +833,6 @@
                     if (e.type === 'coin') { world.entities.splice(i, 1); state.score += 5; state.coins += 2; }
                 }
             });
-            
             world.entities = world.entities.filter(e => e.x > -100 && e.y < 600);
             document.getElementById('game-score').innerText = state.score;
         }
@@ -861,7 +854,6 @@
                     ctx.fillRect(e.x - 20, e.y - 20, 40, 40);
                 }
             });
-
             if (state.currentMode === 'surf') {
                 ctx.beginPath();
                 ctx.strokeStyle = "#00ffff";
@@ -881,11 +873,8 @@
                 ctx.globalAlpha = 0.5;
                 ctx.font = "25px Arial";
                 ctx.fillText(skins[p.skin]?.emoji || '❓', p.x, p.y);
-                ctx.font = "8px Arial";
-                ctx.fillText(p.name, p.x, p.y - 25);
                 ctx.globalAlpha = 1.0;
             });
-
             if(state.isRespectMember) {
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = "gold";
@@ -900,13 +889,13 @@
             const grid = document.getElementById('market-grid');
             grid.innerHTML = '';
             packs.forEach(p => {
-                const alreadyOwnedAll = p.items.every(item => state.ownedSkins.includes(item));
+                const owned = p.items.every(item => state.ownedSkins.includes(item));
                 const div = document.createElement('div');
                 div.className = "retro-border p-4 bg-black/50 text-center";
                 div.innerHTML = `
                     <p class="pixel-font text-[10px] text-cyan-400">${p.name}</p>
                     <p class="text-[8px] my-2 text-gray-400">${p.desc}</p>
-                    <button onclick="buyPack('${p.id}', ${p.cost})" class="retro-button ${alreadyOwnedAll ? 'bg-gray-400' : ''}">${alreadyOwnedAll ? 'OWNED' : p.cost + ' 🪙'}</button>
+                    <button onclick="buyPack('${p.id}', ${p.cost})" class="retro-button ${owned ? 'bg-gray-400' : ''}">${owned ? 'OWNED' : p.cost + ' 🪙'}</button>
                 `;
                 grid.appendChild(div);
             });
@@ -966,11 +955,6 @@
         function buyPack(id, cost) {
             if(state.coins >= cost) {
                 const pack = packs.find(p => p.id === id);
-                const newSkins = pack.items.filter(item => !state.ownedSkins.includes(item));
-                if (newSkins.length === 0) {
-                    alert("Already own all items in this pack!");
-                    return;
-                }
                 state.coins -= cost;
                 state.ownedSkins = [...new Set([...state.ownedSkins, ...pack.items])];
                 saveProfile(); updateUI(); renderMarket();
@@ -987,22 +971,14 @@
 
         function updateUI() {
             document.getElementById('coin-display').innerText = state.coins;
-            const subInfo = document.getElementById('sub-renewal-info');
             if(state.isRespectMember) {
                 document.getElementById('sub-status').classList.remove('hidden');
                 document.getElementById('join-respect-btn').classList.add('hidden');
                 document.getElementById('logo').classList.add('is-member');
-                
-                if (state.respectExpiry) {
-                    const daysLeft = Math.ceil((state.respectExpiry - Date.now()) / (1000 * 60 * 60 * 24));
-                    subInfo.classList.remove('hidden');
-                    subInfo.innerText = `EXPIRES IN ${daysLeft} DAYS`;
-                }
             } else {
                 document.getElementById('sub-status').classList.add('hidden');
                 document.getElementById('join-respect-btn').classList.remove('hidden');
                 document.getElementById('logo').classList.remove('is-member');
-                subInfo.classList.add('hidden');
             }
             if(state.isAdmin) document.getElementById('admin-nav-btn').classList.remove('hidden');
         }
@@ -1010,6 +986,7 @@
         function quitGame() {
             state.isGameRunning = false;
             document.getElementById('question-area').classList.add('hidden');
+            if (state.isMultiplayer) leaveRoom();
             showSection('menu');
         }
 
