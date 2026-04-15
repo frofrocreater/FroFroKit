@@ -6,12 +6,32 @@
     <title>FroFroKit - Retro Learning</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'frofrokit-v1';
+
+        window.fb = { 
+            db, auth, appId, collection, doc, setDoc, getDoc,
+            onSnapshot, updateDoc, onAuthStateChanged, signInAnonymously,
+            signInWithCustomToken
+        };
+        
+        window.dispatchEvent(new Event('firebase-ready'));
+    </script>
     <style>
         :root {
             --neon-pink: #ff00ff;
             --neon-blue: #00ffff;
             --neon-yellow: #ffff00;
             --retro-bg: #1a1a2e;
+            --respect-gold: #ffd700;
         }
 
         body {
@@ -28,6 +48,11 @@
         .retro-border {
             border: 4px solid white;
             box-shadow: 4px 4px 0px var(--neon-pink), 8px 8px 0px var(--neon-blue);
+        }
+
+        .respect-border {
+            border: 4px solid var(--respect-gold);
+            box-shadow: 4px 4px 0px #b8860b, 0px 0px 15px var(--respect-gold);
         }
 
         .retro-button {
@@ -49,14 +74,10 @@
             box-shadow: none;
         }
 
-        .retro-input {
-            background: #000;
-            border: 2px solid #fff;
-            color: #fff;
-            padding: 8px;
-            font-family: 'VT323';
-            outline: none;
-            text-align: center;
+        .respect-button {
+            background: var(--respect-gold);
+            color: #000;
+            box-shadow: 0 0 10px var(--respect-gold);
         }
 
         canvas {
@@ -81,86 +102,40 @@
             pointer-events: none;
         }
 
-        .jeopardy-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            background: #000;
-            padding: 10px;
-            border: 4px solid #fff;
+        @keyframes gold-shimmer {
+            0% { filter: brightness(1); }
+            50% { filter: brightness(1.5) drop-shadow(0 0 5px gold); }
+            100% { filter: brightness(1); }
         }
-        .jeopardy-header {
-            background: #060ce9;
-            color: white;
-            text-align: center;
-            padding: 10px 5px;
-            font-size: 10px;
-            border: 2px solid #fff;
+
+        .is-member {
+            animation: gold-shimmer 2s infinite;
+            color: var(--respect-gold) !important;
         }
-        .jeopardy-card {
-            background: #060ce9;
-            border: 2px solid #ffcc00;
-            color: #ffcc00;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 18px;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .jeopardy-card.used {
-            background: #000033;
-            color: #333;
-            border-color: #333;
-            cursor: default;
-        }
-        .lobby-scroll {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 2px solid #fff;
-            background: #000;
-            padding: 5px;
-        }
-        .lobby-user {
-            padding: 8px;
-            border-bottom: 1px dashed #444;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-        }
-        .status-dot {
-            height: 8px;
-            width: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-        .status-ready { background-color: #4ade80; }
-        .status-idle { background-color: #facc15; }
     </style>
 </head>
 <body class="crt">
 
     <header class="p-4 text-center">
-        <h1 onclick="adminTap()" class="pixel-font text-3xl mb-2 text-white italic cursor-pointer select-none" style="text-shadow: 4px 4px var(--neon-pink);">FROFROKIT</h1>
-        <div class="flex justify-center gap-4 text-xl">
-            <span class="text-yellow-400">COINS: <span id="coin-display">50</span></span>
-            <span id="save-status" class="text-[10px] text-green-400 self-center">● ONLINE</span>
+        <h1 id="logo" class="pixel-font text-3xl mb-2 text-white italic cursor-pointer select-none" style="text-shadow: 4px 4px var(--neon-pink);">FROFROKIT</h1>
+        <div class="flex flex-col items-center gap-1">
+            <div class="flex justify-center gap-4 text-xl">
+                <span class="text-yellow-400">COINS: <span id="coin-display">50</span></span>
+                <span id="save-status" class="text-[10px] text-gray-400 self-center">● CONNECTING...</span>
+            </div>
+            <div id="user-id-display" class="text-[8px] text-gray-500 font-mono"></div>
         </div>
     </header>
 
-    <nav class="flex flex-wrap justify-center gap-2 mb-6 px-2">
+    <nav id="main-nav" class="flex flex-wrap justify-center gap-2 mb-6 px-2">
         <button onclick="showSection('menu')" class="retro-button">PLAY</button>
         <button onclick="showSection('market')" class="retro-button">SHOP</button>
         <button onclick="showSection('collection')" class="retro-button">SKINS</button>
         <button onclick="showSection('sets')" class="retro-button">SETS</button>
+        <button id="admin-nav-btn" onclick="showSection('admin')" class="retro-button bg-red-600 text-white hidden">ADMIN</button>
     </nav>
 
     <main class="max-w-4xl mx-auto p-4">
-        
         <!-- Main Menu -->
         <section id="menu" class="text-center py-6">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -171,6 +146,10 @@
                 <div class="retro-border p-4 bg-black/50">
                     <h2 class="pixel-font text-[10px] mb-4 text-pink-500">FLAPPY</h2>
                     <button onclick="promptMode('flappy')" class="retro-button text-[8px] p-2">START</button>
+                </div>
+                <div class="retro-border p-4 bg-black/50 border-green-400">
+                    <h2 class="pixel-font text-[10px] mb-4 text-green-400">CRAFT</h2>
+                    <button onclick="promptMode('craft')" class="retro-button text-[8px] p-2">BUILD</button>
                 </div>
                 <div class="retro-border p-4 bg-black/50">
                     <h2 class="pixel-font text-[10px] mb-4 text-orange-500">RACER</h2>
@@ -184,166 +163,122 @@
                     <h2 class="pixel-font text-[10px] mb-4 text-cyan-300">SURF'S UP</h2>
                     <button onclick="promptMode('surf')" class="retro-button text-[8px] p-2">SURF</button>
                 </div>
-                <div class="retro-border p-4 bg-black/50">
-                    <h2 class="pixel-font text-[10px] mb-4 text-green-400">DINO RUN</h2>
-                    <button onclick="promptMode('dino')" class="retro-button text-[8px] p-2">RUN</button>
-                </div>
-                <div class="retro-border p-4 bg-black/50">
-                    <h2 class="pixel-font text-[10px] mb-4 text-purple-400">STARS</h2>
-                    <button onclick="promptMode('star')" class="retro-button text-[8px] p-2">CATCH</button>
-                </div>
             </div>
             
             <div class="mt-10 flex flex-col items-center gap-4">
-                <div id="active-set-indicator" class="text-cyan-400 pixel-font text-[10px] italic">
-                    SET: DEFAULT QUESTIONS
+                <div id="active-set-indicator" class="text-cyan-400 pixel-font text-[10px] italic">SET: DEFAULT</div>
+                <div id="sub-status" class="hidden text-pink-400 pixel-font text-[10px]">⭐ FROFRORESPECT MEMBER ⭐</div>
+                <button id="join-respect-btn" onclick="joinRespect()" class="retro-button respect-button text-[8px]">JOIN FROFRORESPECT (500 🪙)</button>
+            </div>
+        </section>
+
+        <!-- Admin Dashboard -->
+        <section id="admin" class="hidden">
+            <h2 class="pixel-font text-center text-red-500 mb-6">ADMIN CONSOLE</h2>
+            <div class="grid gap-4">
+                <div class="retro-border p-4 bg-black/80 border-red-500">
+                    <p class="pixel-font text-[10px] mb-2">ECONOMY OVERRIDE</p>
+                    <div class="flex gap-2">
+                        <button onclick="adminAddCoins(100)" class="retro-button bg-gray-800 text-white text-[8px]">+100 COINS</button>
+                        <button onclick="adminAddCoins(1000)" class="retro-button bg-gray-800 text-white text-[8px]">+1k COINS</button>
+                        <button onclick="adminResetCoins()" class="retro-button bg-red-800 text-white text-[8px]">RESET</button>
+                    </div>
                 </div>
-                <div id="sub-status" class="hidden text-pink-400 pixel-font text-[10px]">
-                    ⭐ FROFRORESPECT MEMBER ⭐
+                <div class="retro-border p-4 bg-black/80 border-red-500">
+                    <p class="pixel-font text-[10px] mb-2">USER STATUS</p>
+                    <button onclick="adminToggleRespect()" class="retro-button bg-yellow-600 text-[8px]">TOGGLE RESPECT STATUS</button>
+                </div>
+                <div class="retro-border p-4 bg-black/80 border-red-500">
+                    <p class="pixel-font text-[10px] mb-2">SYSTEM INFO</p>
+                    <div class="text-[10px] font-mono text-green-400" id="admin-stats"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Multiplayer Mode Choice -->
+        <section id="mode-prompt" class="hidden fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4">
+            <div class="retro-border p-8 bg-black text-center max-w-sm w-full">
+                <h2 class="pixel-font text-sm mb-6 text-yellow-400" id="prompt-title">SELECT MODE</h2>
+                <div class="flex flex-col gap-4">
+                    <button onclick="startSolo()" class="retro-button">SOLO PLAY</button>
+                    <button onclick="showMultiplayerLobby()" class="retro-button bg-cyan-500">MULTIPLAYER</button>
+                    <button onclick="cancelPrompt()" class="text-xs underline text-gray-500 mt-2">BACK</button>
                 </div>
             </div>
         </section>
 
         <!-- Multiplayer Lobby -->
-        <section id="lobby-screen" class="hidden text-center">
-            <div class="retro-border p-8 bg-black/80 max-w-md mx-auto">
-                <h2 class="pixel-font text-sm text-yellow-400 mb-6">MULTIPLAYER LOBBY</h2>
-                
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-black border-2 border-white p-4">
-                        <p class="text-[8px] text-gray-400 mb-2">ROOM CODE</p>
-                        <p id="room-code-display" class="pixel-font text-lg text-cyan-400 tracking-widest">----</p>
+        <section id="lobby-ui" class="hidden fixed inset-0 z-[250] bg-black flex items-center justify-center p-4">
+            <div class="retro-border p-8 bg-black text-center w-full max-w-md">
+                <h2 class="pixel-font text-sm mb-6 text-cyan-400">MULTIPLAYER LOBBY</h2>
+                <div id="lobby-creation" class="space-y-6">
+                    <div>
+                        <p class="text-[10px] mb-2">CREATE NEW ROOM</p>
+                        <button onclick="createRoom()" class="retro-button w-full">GENERATE CODE</button>
                     </div>
-                    <div class="bg-black border-2 border-white p-4 flex flex-col justify-center">
-                        <input type="text" id="join-code-input" class="retro-input w-full text-sm mb-1" placeholder="JOIN CODE">
-                        <button onclick="simulateJoin()" class="retro-button py-1 px-1 text-[8px] bg-cyan-500">JOIN</button>
-                    </div>
-                </div>
-                
-                <div class="mb-4 text-left">
-                    <p class="pixel-font text-[8px] mb-2 text-white">PLAYERS IN ROOM:</p>
-                    <div class="lobby-scroll" id="lobby-list">
-                        <!-- Users populated by JS -->
+                    <div class="border-t border-gray-700 pt-4">
+                        <p class="text-[10px] mb-2">JOIN WITH CODE</p>
+                        <input type="text" id="join-code-input" class="w-full bg-black border-2 border-white p-2 text-center text-xl mb-2" placeholder="XXXX">
+                        <button onclick="joinRoom()" class="retro-button w-full bg-green-500">JOIN ROOM</button>
                     </div>
                 </div>
-
-                <div class="space-y-4">
-                    <button id="lobby-start-btn" onclick="startGameAfterLobby()" class="retro-button w-full bg-green-600">START GAME</button>
-                    <button onclick="showSection('menu')" class="retro-button w-full bg-red-600">EXIT LOBBY</button>
+                <div id="lobby-waiting" class="hidden">
+                    <p class="text-yellow-400 pixel-font text-[12px] mb-4">ROOM CODE: <span id="active-room-code" class="text-white text-xl">----</span></p>
+                    <div id="player-list" class="space-y-2 mb-6 text-left"></div>
+                    <button id="start-multi-btn" onclick="startMultiplayerGame()" class="retro-button w-full bg-pink-500 hidden">START GAME</button>
+                    <p id="wait-msg" class="text-[10px] animate-pulse">WAITING FOR HOST...</p>
                 </div>
+                <button onclick="cancelPrompt(); document.getElementById('lobby-ui').classList.add('hidden');" class="text-xs underline text-gray-500 mt-6 block mx-auto">LEAVE</button>
             </div>
         </section>
 
-        <!-- Admin Panel -->
-        <section id="admin-panel" class="hidden">
-            <h2 class="pixel-font text-center text-red-500 mb-6">ADMIN</h2>
-            <div class="retro-border p-6 bg-black/80 space-y-4 text-center">
-                <button onclick="modifyCoins(1000)" class="retro-button bg-yellow-600">+1000 COINS</button>
-                <button onclick="unlockAllSkins()" class="retro-button bg-blue-500">UNLOCK ALL</button>
-                <button onclick="showSection('menu')" class="retro-button">BACK</button>
-            </div>
-        </section>
-
-        <!-- Jeopardy -->
-        <section id="jeopardy-container" class="hidden">
-            <h2 class="pixel-font text-center text-blue-500 mb-6 text-2xl">STUDY JEOPARDY</h2>
-            <div class="jeopardy-grid" id="jeopardy-board">
-                <div class="jeopardy-header pixel-font">TOPIC A</div>
-                <div class="jeopardy-header pixel-font">TOPIC B</div>
-                <div class="jeopardy-header pixel-font">TOPIC C</div>
-            </div>
-            <div class="mt-8 text-center">
-                <button onclick="showSection('menu')" class="retro-button bg-red-600 text-white">QUIT</button>
-            </div>
-        </section>
-
-        <!-- Game Canvas -->
+        <!-- Game Container -->
         <section id="game-container" class="hidden text-center">
             <div class="mb-2 flex justify-between items-center px-4">
-                <span class="pixel-font text-xs">P1: <span id="game-score">0</span> <span id="active-skin-display"></span></span>
-                <span id="p2-score-ui" class="pixel-font text-xs hidden text-cyan-400">P2: <span id="game-score-p2">0</span> <span id="p2-skin-display"></span></span>
+                <div class="flex items-center gap-4">
+                    <span class="pixel-font text-xs">P1: <span id="game-score">0</span></span>
+                    <span id="multiplier-badge" class="hidden text-[10px] text-yellow-400 bg-black p-1 border border-yellow-400">2x BONUS</span>
+                </div>
+                <div id="multi-players-ui" class="flex gap-4"></div>
             </div>
+            
+            <div id="question-area" class="hidden mb-4 p-4 retro-border bg-black/80">
+                <p id="question-text" class="pixel-font text-[10px] mb-4 text-cyan-400">LOADING QUESTION...</p>
+                <div id="answer-grid" class="grid grid-cols-2 gap-2"></div>
+            </div>
+
             <canvas id="main-canvas" width="400" height="500" class="mx-auto"></canvas>
             
-            <div id="p1-controls" class="mt-4 flex flex-wrap justify-center gap-2">
-                <div class="text-[8px] pixel-font w-full mb-1 text-pink-400">PLAYER 1</div>
-                <button onmousedown="handleInput('left', true, 0)" onmouseup="handleInput('left', false, 0)" class="retro-button p-2 text-[8px]">LEFT (A)</button>
-                <button onmousedown="handleInput('up', true, 0)" onmouseup="handleInput('up', false, 0)" class="retro-button bg-pink-400 p-2 text-[8px]">JUMP (W)</button>
-                <button onmousedown="handleInput('right', true, 0)" onmouseup="handleInput('right', false, 0)" class="retro-button p-2 text-[8px]">RIGHT (D)</button>
+            <div id="p1-controls" class="mt-4 flex justify-center gap-2">
+                <button onmousedown="handleInput('left', true)" onmouseup="handleInput('left', false)" class="retro-button p-2 text-[8px]">LEFT</button>
+                <button onmousedown="handleInput('up', true)" onmouseup="handleInput('up', false)" class="retro-button bg-pink-400 p-2 text-[8px]">JUMP</button>
+                <button onmousedown="handleInput('right', true)" onmouseup="handleInput('right', false)" class="retro-button p-2 text-[8px]">RIGHT</button>
             </div>
-
-            <div id="p2-controls" class="mt-4 flex flex-wrap justify-center gap-2 hidden">
-                <div class="text-[8px] pixel-font w-full mb-1 text-cyan-400">PLAYER 2</div>
-                <button onmousedown="handleInput('left', true, 1)" onmouseup="handleInput('left', false, 1)" class="retro-button p-2 text-[8px]">LEFT (←)</button>
-                <button onmousedown="handleInput('up', true, 1)" onmouseup="handleInput('up', false, 1)" class="retro-button bg-cyan-400 p-2 text-[8px]">JUMP (↑)</button>
-                <button onmousedown="handleInput('right', true, 1)" onmouseup="handleInput('right', false, 1)" class="retro-button p-2 text-[8px]">RIGHT (→)</button>
-            </div>
-
-            <button onclick="showSection('menu')" class="retro-button bg-red-500 mt-6">QUIT</button>
-        </section>
-
-        <!-- Quiz -->
-        <section id="quiz-container" class="hidden">
-            <div class="retro-border p-6 rounded-lg text-center max-w-lg mx-auto bg-black/80">
-                <div id="quiz-player-turn" class="pixel-font text-[10px] mb-4 text-white">PLAYER 1'S TURN</div>
-                <h3 id="question-text" class="text-2xl mb-8">...</h3>
-                <div id="options-grid" class="grid grid-cols-1 gap-4"></div>
-            </div>
+            <button onclick="quitGame()" class="retro-button bg-red-500 mt-6">QUIT</button>
         </section>
 
         <!-- Market -->
         <section id="market" class="hidden">
             <h2 class="pixel-font text-center text-yellow-400 mb-6">THEME SHOP</h2>
-            
-            <div class="retro-border p-6 bg-gradient-to-r from-purple-900 to-indigo-900 mb-8 text-center">
-                <h3 class="pixel-font text-lg text-white mb-2 italic">FROFRORESPECT</h3>
-                <p class="text-xs mb-4 text-purple-200">Unlock the Color Pack & Emperor Status!</p>
-                <div id="sub-btn-container">
-                    <button onclick="joinRespect()" class="retro-button bg-pink-500 text-white">SUB $4.99/mo</button>
-                </div>
-            </div>
-
             <div id="market-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </section>
 
-        <!-- Collection -->
+        <!-- Skins -->
         <section id="collection" class="hidden">
-            <h2 class="pixel-font text-center text-pink-400 mb-6">YOUR SKINS</h2>
+            <h2 class="pixel-font text-center text-pink-400 mb-6">SKINS</h2>
             <div id="skins-grid" class="grid grid-cols-3 gap-4"></div>
         </section>
 
         <!-- Sets -->
         <section id="sets" class="hidden">
             <h2 class="pixel-font text-center text-cyan-400 mb-6">STUDY SETS</h2>
-            <button onclick="openSetEditor()" class="retro-button bg-green-600 w-full mb-4">+ NEW SET</button>
-            <div id="sets-list" class="grid gap-4"></div>
-        </section>
-
-        <!-- Mode Prompt -->
-        <section id="mode-prompt" class="hidden fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4">
-            <div class="retro-border p-8 bg-black text-center">
-                <h2 class="pixel-font text-sm mb-6 text-yellow-400">MODE</h2>
-                <div class="flex flex-col gap-4">
-                    <button onclick="startSolo()" class="retro-button">SOLO PLAY</button>
-                    <button onclick="startLobbyFlow()" class="retro-button bg-cyan-600">MULTIPLAYER</button>
-                    <button onclick="cancelPrompt()" class="text-xs underline text-gray-500">BACK</button>
+            <div class="flex flex-col gap-4">
+                <div id="active-set-status" class="retro-border p-4 bg-black/40 text-center">
+                    <p class="text-[10px]">CURRENT SET</p>
+                    <p id="current-set-name" class="pixel-font text-xs text-yellow-400">DEFAULT</p>
                 </div>
-            </div>
-        </section>
-
-        <!-- Set Editor -->
-        <section id="set-editor" class="hidden fixed inset-0 z-[300] bg-black/95 overflow-y-auto p-4">
-            <div class="max-w-2xl mx-auto py-10">
-                <div class="retro-border p-6 bg-black">
-                    <h2 class="pixel-font text-sm text-yellow-400 mb-6">CREATE SET</h2>
-                    <input type="text" id="set-name-input" class="retro-input w-full mb-4" placeholder="NAME">
-                    <div id="editor-questions-container" class="space-y-4"></div>
-                    <button onclick="addQuestionToEditor()" class="retro-button w-full mt-4">+ ADD</button>
-                    <div class="flex gap-4 mt-6">
-                        <button onclick="saveCurrentSet()" class="retro-button flex-1 bg-green-500">SAVE</button>
-                        <button onclick="showSection('sets')" class="retro-button flex-1">CANCEL</button>
-                    </div>
-                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="sets-list"></div>
+                <button onclick="createNewSet()" class="retro-button bg-green-500">+ CREATE NEW SET</button>
             </div>
         </section>
 
@@ -351,132 +286,216 @@
 
     <script>
         let state = {
-            coins: parseInt(localStorage.getItem('fro_coins')) || 50,
-            ownedSkins: JSON.parse(localStorage.getItem('fro_skins')) || ['default'],
-            activeSkin: localStorage.getItem('fro_active_skin') || 'default',
-            p2Skin: 'racer',
-            isSubscribed: localStorage.getItem('fro_sub') === 'true',
+            user: null,
+            coins: 50,
+            ownedSkins: ['default'],
+            activeSkin: 'default',
             score: 0,
-            p2Score: 0,
             currentMode: '',
-            isMulti: false,
             isGameRunning: false,
-            tempMode: null,
-            customSets: JSON.parse(localStorage.getItem('fro_sets') || '[]'),
-            activeSetId: localStorage.getItem('fro_active_set') || 'default',
-            adminTaps: 0,
-            jeopardyUsed: [],
-            quizTurn: 0,
-            roomCode: '----',
-            lobbyPlayers: []
+            isMultiplayer: false,
+            roomCode: null,
+            isHost: false,
+            players: {},
+            customSets: [],
+            activeSetId: 'default',
+            isRespectMember: false,
+            isAdmin: false,
+            currentQuestion: null
         };
 
+        const defaultQuestions = [
+            { q: "What is 2 + 2?", a: "4", options: ["3", "4", "5", "6"] },
+            { q: "Color of the sky?", a: "Blue", options: ["Red", "Green", "Blue", "Pink"] },
+            { q: "Capital of France?", a: "Paris", options: ["London", "Berlin", "Paris", "Rome"] },
+            { q: "Frogs eat...?", a: "Insects", options: ["Pizza", "Insects", "Grass", "Candy"] }
+        ];
+
         const skins = {
-            'default': { emoji: '🐤', name: 'Chick', pack: 'Starter' },
-            'racer': { emoji: '🏎️', name: 'Speedy', pack: 'Starter' },
-            'ufo': { emoji: '🛸', name: 'Invader', pack: 'Space' },
-            'alien': { emoji: '👽', name: 'Alien', pack: 'Space' },
-            'rocket': { emoji: '🚀', name: 'Rocket', pack: 'Space' },
-            'fox': { emoji: '🦊', name: 'Fox', pack: 'Nature' },
-            'mushroom': { emoji: '🍄', name: 'Shroom', pack: 'Nature' },
-            'tree': { emoji: '🌲', name: 'Ent', pack: 'Nature' },
-            'surfer': { emoji: '🏄', name: 'Surfer', pack: 'Beach' },
-            'crab': { emoji: '🦀', name: 'Crabby', pack: 'Beach' },
-            'shark': { emoji: '🦈', name: 'Shark', pack: 'Beach' },
-            'ball': { emoji: '⚽', name: 'Striker', pack: 'Sports' },
-            'hoop': { emoji: '🏀', name: 'Dunker', pack: 'Sports' },
-            'trophy': { emoji: '🏆', name: 'Champ', pack: 'Sports' },
-            'red': { emoji: '🟥', name: 'Ruby', pack: 'Color' },
-            'blue': { emoji: '🟦', name: 'Sapphire', pack: 'Color' },
-            'green': { emoji: '🟩', name: 'Emerald', pack: 'Color' },
-            'yellow': { emoji: '🟨', name: 'Topaz', pack: 'Color' },
-            'emperor': { emoji: '👑', name: 'Emperor', pack: 'Mythic' }
+            'default': { emoji: '🐤', name: 'Chick' },
+            'racer': { emoji: '🏎️', name: 'Speedy' },
+            'super': { emoji: '🐸', name: 'Super Toad', pack: 'classic' },
+            'ufo': { emoji: '🛸', name: 'Invader', pack: 'space' },
+            'astro': { emoji: '👨‍🚀', name: 'Astronaut', pack: 'space' },
+            'moon': { emoji: '🐰', name: 'Moon Hopper', pack: 'space' },
+            'dj': { emoji: '🎧', name: 'DJ Frog', pack: 'music' },
+            'pro': { emoji: '🦎', name: 'Professor', pack: 'science' },
+            'knight': { emoji: '🛡️', name: 'Knight', pack: 'history' },
+            'dragon': { emoji: '🐲', name: 'Dragon', pack: 'mythic' },
+            'mystery': { emoji: '❓', name: 'Mystery Frog', cost: 300 },
+            'crown': { emoji: '👑', name: 'Crown Frog', respectOnly: true },
+            'diamond': { emoji: '💎', name: 'Diamond Chick', respectOnly: true }
         };
 
         const packs = [
-            { id: 'space', name: 'SPACE PACK', icons: '🚀 👽 🛸', cost: 100 },
-            { id: 'nature', name: 'NATURE PACK', icons: '🌿 🦊 🍄', cost: 100 },
-            { id: 'beach', name: 'BEACH PACK', icons: '🏄 🦀 🦈', cost: 150 },
-            { id: 'sports', name: 'SPORTS PACK', icons: '⚽ 🏀 🏆', cost: 200 }
+            { id: 'space', name: 'SPACE PACK', cost: 100, desc: 'Astronaut & Moon Hopper! (LIMITED)', items: ['astro', 'ufo', 'moon'] },
+            { id: 'music', name: 'MUSIC PACK', cost: 150, desc: 'DJ Frog & Neon UI', items: ['dj'] },
+            { id: 'science', name: 'SCIENCE PACK', cost: 200, desc: 'Professor Newt & Labs', items: ['pro'] },
+            { id: 'history', name: 'HISTORY PACK', cost: 250, desc: 'Knight Toad & Castle', items: ['knight'] },
+            { id: 'mythic', name: 'MYTHIC PACK', cost: 500, desc: 'Dragon skins & Golden UI', items: ['dragon'] }
         ];
 
-        const defaultQuestions = [
-            { q: "What is 5 + 7?", a: ["11", "12", "13", "14"], c: 1 },
-            { q: "Which planet is the Red Planet?", a: ["Mars", "Venus", "Jupiter", "Saturn"], c: 0 },
-            { q: "Capital of France?", a: ["Lyon", "Nice", "Paris", "Marseille"], c: 2 },
-            { q: "H2O is common name for?", a: ["Air", "Salt", "Water", "Iron"], c: 2 }
-        ];
+        async function initAuth() {
+            if (!window.fb) {
+                window.addEventListener('firebase-ready', initAuth);
+                return;
+            }
 
-        function generateRoomCode() {
-            const code = Math.floor(1000 + Math.random() * 9000).toString();
-            state.roomCode = code;
-            document.getElementById('room-code-display').innerText = code;
-            state.lobbyPlayers = [{ name: 'YOU (HOST)', skin: state.activeSkin, ready: true }];
-            populateLobby();
+            const { auth, db, appId, doc, setDoc, getDoc, onAuthStateChanged, signInAnonymously, signInWithCustomToken } = window.fb;
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    state.user = user;
+                    document.getElementById('user-id-display').innerText = `UID: ${user.uid}`;
+                    
+                    const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+                    try {
+                        const snap = await getDoc(userRef);
+                        if (snap.exists()) {
+                            const data = snap.data();
+                            state.coins = data.coins ?? 50;
+                            state.ownedSkins = data.ownedSkins || ['default'];
+                            state.activeSkin = data.activeSkin || 'default';
+                            state.customSets = data.customSets || [];
+                            state.activeSetId = data.activeSetId || 'default';
+                            state.isRespectMember = data.isRespectMember || false;
+                            state.isAdmin = data.isAdmin || false;
+                        } else {
+                            await setDoc(userRef, { coins: 50, ownedSkins: ['default'], customSets: [], activeSetId: 'default', isRespectMember: false, isAdmin: false });
+                        }
+                    } catch (e) { console.error("Storage error:", e); }
+                    
+                    updateUI();
+                    document.getElementById('save-status').innerText = "● ONLINE";
+                } else {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else { await signInAnonymously(auth); }
+                }
+            });
         }
 
-        function populateLobby() {
-            const list = document.getElementById('lobby-list');
-            list.innerHTML = '';
-            
-            state.lobbyPlayers.forEach(p => {
-                const div = document.createElement('div');
-                div.className = `lobby-user ${p.ready ? 'text-green-400' : 'text-yellow-400'}`;
-                div.innerHTML = `
-                    <span><span class="status-dot ${p.ready ? 'status-ready' : 'status-idle'}"></span> ${p.name}</span>
-                    <span>${skins[p.skin].emoji}</span>
-                `;
-                list.appendChild(div);
+        async function saveProfile() {
+            if (!state.user) return;
+            const { db, appId, doc, setDoc } = window.fb;
+            await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'profile', 'data'), {
+                coins: state.coins,
+                ownedSkins: state.ownedSkins,
+                activeSkin: state.activeSkin,
+                customSets: state.customSets,
+                activeSetId: state.activeSetId,
+                isRespectMember: state.isRespectMember,
+                isAdmin: state.isAdmin
+            });
+        }
+
+        // --- FroFroRespect Logic ---
+        function joinRespect() {
+            if (state.coins >= 500) {
+                state.coins -= 500;
+                state.isRespectMember = true;
+                saveProfile();
+                updateUI();
+                alert("WELCOME TO FROFRORESPECT!");
+            } else {
+                alert("NOT ENOUGH COINS!");
+            }
+        }
+
+        // --- Admin Logic ---
+        function adminAddCoins(amt) {
+            state.coins += amt;
+            updateUI();
+            saveProfile();
+        }
+        function adminResetCoins() {
+            state.coins = 50;
+            updateUI();
+            saveProfile();
+        }
+        function adminToggleRespect() {
+            state.isRespectMember = !state.isRespectMember;
+            updateUI();
+            saveProfile();
+        }
+        let clickCount = 0;
+        document.getElementById('logo').onclick = () => {
+            clickCount++;
+            if(clickCount >= 5) {
+                state.isAdmin = true;
+                document.getElementById('admin-nav-btn').classList.remove('hidden');
+                alert("ADMIN MODE ENABLED");
+                clickCount = 0;
+                saveProfile();
+            }
+        };
+
+        async function createRoom() {
+            const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+            state.roomCode = code;
+            state.isHost = true;
+            state.isMultiplayer = true;
+            const { db, appId, doc, setDoc } = window.fb;
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), {
+                host: state.user.uid,
+                status: 'waiting',
+                mode: state.currentMode,
+                createdAt: Date.now()
+            });
+            joinRoom(code);
+        }
+
+        async function joinRoom(providedCode) {
+            const code = providedCode || document.getElementById('join-code-input').value.toUpperCase();
+            if (!code) return;
+            const { db, appId, doc, setDoc, onSnapshot, collection } = window.fb;
+            state.roomCode = code;
+            state.isMultiplayer = true;
+
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code, 'players', state.user.uid), {
+                name: skins[state.activeSkin].name,
+                skin: state.activeSkin,
+                x: 200, y: 100, score: 0,
+                lastUpdate: Date.now()
             });
 
-            const startBtn = document.getElementById('lobby-start-btn');
-            if(state.lobbyPlayers.length > 1) {
-                startBtn.disabled = false;
-                startBtn.innerText = "START GAME";
-                startBtn.classList.remove('opacity-50');
-            } else {
-                startBtn.disabled = true;
-                startBtn.innerText = "WAITING FOR PLAYERS...";
-                startBtn.classList.add('opacity-50');
-            }
+            document.getElementById('lobby-creation').classList.add('hidden');
+            document.getElementById('lobby-waiting').classList.remove('hidden');
+            document.getElementById('active-room-code').innerText = code;
+
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), (snap) => {
+                const data = snap.data();
+                if (!data) return;
+                if (data.status === 'playing' && !state.isGameRunning) startSolo();
+                if (state.isHost) document.getElementById('start-multi-btn').classList.remove('hidden');
+            }, (err) => console.error(err));
+
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', code, 'players'), (snap) => {
+                const list = document.getElementById('player-list');
+                list.innerHTML = '';
+                state.players = {};
+                snap.forEach(docSnap => {
+                    const p = docSnap.data();
+                    state.players[docSnap.id] = p;
+                    const el = document.createElement('div');
+                    el.className = "text-[10px]";
+                    el.innerText = `> ${p.name} ${docSnap.id === state.user.uid ? '(YOU)' : ''}`;
+                    list.appendChild(el);
+                });
+            }, (err) => console.error(err));
         }
 
-        function simulateJoin() {
-            const code = document.getElementById('join-code-input').value;
-            if (code.length === 4) {
-                if(state.lobbyPlayers.length < 2) {
-                    state.lobbyPlayers.push({ name: 'PLAYER 2', skin: 'racer', ready: true });
-                    populateLobby();
-                    alert("Player Joined Room " + code + "!");
-                } else {
-                    alert("Lobby is full!");
-                }
-            } else {
-                alert("Please enter a 4-digit room code.");
-            }
+        async function startMultiplayerGame() {
+            const { db, appId, doc, updateDoc } = window.fb;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', state.roomCode), { status: 'playing' });
         }
 
-        function startGameAfterLobby() {
-            if(state.lobbyPlayers.length < 2) return;
-            state.currentMode = state.tempMode;
-            state.isMulti = true;
-            finishPrompt();
-        }
-
-        function joinRespect() {
-            const code = prompt("ENTER SECRET CODE:");
-            if(code === "1543") {
-                state.isSubscribed = true;
-                localStorage.setItem('fro_sub', 'true');
-                const exclusiveSkins = ['red', 'blue', 'green', 'yellow', 'emperor'];
-                state.ownedSkins = [...new Set([...state.ownedSkins, ...exclusiveSkins])];
-                localStorage.setItem('fro_skins', JSON.stringify(state.ownedSkins));
-                alert("FROFRORESPECT UNLOCKED! Enjoy your new skins and status.");
-                updateUI();
-                showSection('menu');
-            } else if (code !== null) {
-                alert("INVALID CODE.");
-            }
+        async function syncPosition(x, y, score) {
+            if (!state.isMultiplayer || !state.user || !state.roomCode) return;
+            const { db, appId, doc, updateDoc } = window.fb;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', state.roomCode, 'players', state.user.uid), {
+                x, y, score, lastUpdate: Date.now()
+            });
         }
 
         function showSection(id) {
@@ -484,362 +503,267 @@
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
             if (id === 'menu') updateUI();
-            if (id === 'collection') renderCollection();
-            if (id === 'sets') renderSetsList();
             if (id === 'market') renderMarket();
-            if (id === 'jeopardy-container') initJeopardy();
-            if (id === 'lobby-screen') generateRoomCode();
+            if (id === 'collection') renderSkins();
+            if (id === 'sets') renderSets();
+            if (id === 'admin') {
+                document.getElementById('admin-stats').innerText = `MOD: ${state.currentMode}\nROOM: ${state.roomCode || 'NONE'}\nUSER: ${state.user?.uid}\nRESPECT: ${state.isRespectMember}`;
+            }
         }
 
-        function updateUI() {
-            document.getElementById('coin-display').innerText = state.coins;
-            localStorage.setItem('fro_coins', state.coins);
-            
-            const indicator = document.getElementById('active-set-indicator');
-            const s = state.customSets.find(x => x.id === state.activeSetId);
-            indicator.innerText = `SET: ${state.activeSetId === 'default' ? 'DEFAULT' : (s ? s.name.toUpperCase() : 'DEFAULT')}`;
-            
-            if(state.isSubscribed) {
-                document.getElementById('sub-status').classList.remove('hidden');
-                const subBtnContainer = document.getElementById('sub-btn-container');
-                if(subBtnContainer) subBtnContainer.innerHTML = '<span class="text-yellow-400 pixel-font text-[10px]">⭐ PREMIUM ACTIVE ⭐</span>';
-            }
+        function promptMode(m) {
+            state.currentMode = m;
+            document.getElementById('prompt-title').innerText = m.toUpperCase();
+            document.getElementById('mode-prompt').classList.remove('hidden');
+        }
+
+        function cancelPrompt() { document.getElementById('mode-prompt').classList.add('hidden'); }
+        function showMultiplayerLobby() { cancelPrompt(); document.getElementById('lobby-ui').classList.remove('hidden'); }
+        function startSolo() {
+            cancelPrompt();
+            document.getElementById('lobby-ui').classList.add('hidden');
+            showSection('game-container');
+            initGame();
         }
 
         const canvas = document.getElementById('main-canvas');
         const ctx = canvas.getContext('2d');
-        let players = [];
-        let obstacles = [];
-        let items = [];
-        let frame = 0;
+        let player = { x: 200, y: 400, v: 0, input: {} };
 
-        function handleInput(dir, isActive, pIdx) {
-            if (!players[pIdx]) return;
-            players[pIdx].input[dir] = isActive;
-            if (isActive && dir === 'up') jump(pIdx);
+        function handleInput(dir, active) { 
+            player.input[dir] = active; 
+            if(active && dir === 'up' && state.currentMode !== 'classic') jump(); 
         }
-
-        window.addEventListener('keydown', e => {
-            if (e.code === 'KeyA') handleInput('left', true, 0);
-            if (e.code === 'KeyD') handleInput('right', true, 0);
-            if (e.code === 'KeyW') handleInput('up', true, 0);
-            if (e.code === 'ArrowLeft') handleInput('left', true, 1);
-            if (e.code === 'ArrowRight') handleInput('right', true, 1);
-            if (e.code === 'ArrowUp') handleInput('up', true, 1);
-        });
-
-        window.addEventListener('keyup', e => {
-            if (e.code === 'KeyA') handleInput('left', false, 0);
-            if (e.code === 'KeyD') handleInput('right', false, 0);
-            if (e.code === 'KeyW') handleInput('up', false, 0);
-            if (e.code === 'ArrowLeft') handleInput('left', false, 1);
-            if (e.code === 'ArrowRight') handleInput('right', false, 1);
-            if (e.code === 'ArrowUp') handleInput('up', false, 1);
-        });
-
-        function jump(pIdx) {
-            if ((state.currentMode === 'flappy' || state.currentMode === 'dino') && !players[pIdx].dead) {
-                if (state.currentMode === 'dino') {
-                   if (players[pIdx].y >= 430) players[pIdx].v = -10;
-                } else {
-                   players[pIdx].v = -5.5;
-                }
-            }
-            if (state.currentMode === 'surf' && players[pIdx].y >= 430 && !players[pIdx].dead) players[pIdx].v = -7.5;
+        
+        function jump() { 
+            const gravity = (state.activeSkin === 'astro' || state.activeSkin === 'ufo' || state.activeSkin === 'moon') ? -6 : -10;
+            if(player.v === 0) player.v = gravity; 
         }
 
         function initGame() {
-            state.score = 0;
-            state.p2Score = 0;
             state.isGameRunning = true;
-            frame = 0;
-            obstacles = [];
-            items = [];
+            state.score = 0;
+            document.getElementById('game-score').innerText = "0";
             
-            players = [{
-                x: (state.currentMode === 'racer' || state.currentMode === 'star') ? 200 : 80,
-                y: (state.currentMode === 'racer' || state.currentMode === 'star') ? 400 : 250,
-                v: 0,
-                skin: state.activeSkin,
-                input: { left: false, right: false, up: false },
-                dead: false,
-                radius: 15
-            }];
-
-            if (state.isMulti) {
-                players.push({
-                    x: (state.currentMode === 'racer' || state.currentMode === 'star') ? 250 : 80,
-                    y: (state.currentMode === 'racer' || state.currentMode === 'star') ? 400 : 250,
-                    v: 0,
-                    skin: state.p2Skin,
-                    input: { left: false, right: false, up: false },
-                    dead: false,
-                    radius: 15
-                });
-                document.getElementById('p2-score-ui').classList.remove('hidden');
-                document.getElementById('p2-controls').classList.remove('hidden');
-                document.getElementById('p2-skin-display').innerText = skins[state.p2Skin].emoji;
+            if (state.currentMode === 'classic') {
+                document.getElementById('question-area').classList.remove('hidden');
+                document.getElementById('p1-controls').classList.add('hidden');
+                nextQuestion();
             } else {
-                document.getElementById('p2-score-ui').classList.add('hidden');
-                document.getElementById('p2-controls').classList.add('hidden');
+                document.getElementById('question-area').classList.add('hidden');
+                document.getElementById('p1-controls').classList.remove('hidden');
+                player.x = 200; player.y = 100; player.v = 0;
             }
-
-            document.getElementById('active-skin-display').innerText = skins[state.activeSkin].emoji;
             requestAnimationFrame(gameLoop);
         }
 
-        function gameLoop() {
-            if (!state.isGameRunning) return;
-            ctx.fillStyle = "#111";
-            ctx.fillRect(0, 0, 400, 500);
-            frame++;
-
-            if(state.currentMode === 'flappy') {
-                ctx.fillStyle = "#ff4500";
-                ctx.fillRect(0, 480, 400, 20);
-                if (frame % 100 === 0) obstacles.push({ type: 'pipe', x: 400, h: Math.random() * 200 + 50, w: 50, gap: 160 });
-            }
-            if (state.currentMode === 'dino') {
-                ctx.fillStyle = "#555";
-                ctx.fillRect(0, 460, 400, 40);
-                if (frame % 70 === 0) obstacles.push({ type: 'cactus', x: 400, y: 410, w: 30, h: 50 });
-            }
-            if (state.currentMode === 'star') {
-                if (frame % 40 === 0) items.push({ type: 'star', x: Math.random() * 360 + 20, y: -20, w: 20, h: 20 });
-            }
-            if (state.currentMode === 'racer' && frame % 40 === 0) {
-                obstacles.push({ type: 'car', x: Math.random() * 280 + 60, y: -80, w: 40, h: 70, speed: 4 + (frame/1000) });
-            }
-            if (state.currentMode === 'surf' && frame % 80 === 0) {
-                obstacles.push({ type: 'rock', x: 400, y: 420, w: 40, h: 40 });
-            }
-
-            obstacles.forEach(o => {
-                ctx.fillStyle = o.type === 'pipe' ? "#2ecc71" : o.type === 'car' ? "#e74c3c" : "#bdc3c7";
-                if (o.type === 'pipe') {
-                    o.x -= 3;
-                    ctx.fillRect(o.x, 0, o.w, o.h);
-                    ctx.fillRect(o.x, o.h + o.gap, o.w, 500);
-                } else if (o.type === 'car') {
-                    o.y += o.speed;
-                    ctx.fillRect(o.x, o.y, o.w, o.h);
-                } else if (o.type === 'cactus') {
-                    o.x -= 6;
-                    ctx.fillStyle = "#27ae60";
-                    ctx.fillRect(o.x, o.y, o.w, o.h);
-                } else {
-                    o.x -= 5;
-                    ctx.fillRect(o.x, o.y, o.w, o.h);
-                }
-            });
-
-            items.forEach((it, i) => {
-                it.y += 4;
-                ctx.font = "20px Arial";
-                ctx.fillText("⭐", it.x, it.y);
-            });
-
-            players.forEach((p, idx) => {
-                if (p.dead) return;
-                if (state.currentMode === 'flappy') { p.v += 0.22; p.y += p.v; if (p.y > 480 || p.y < 0) die(idx); }
-                else if (state.currentMode === 'dino') { 
-                    p.v += 0.5; p.y += p.v; 
-                    if (p.y > 430) { p.y = 430; p.v = 0; }
-                }
-                else if (state.currentMode === 'racer' || state.currentMode === 'star') { 
-                    if (p.input.left && p.x > 30) p.x -= 6; 
-                    if (p.input.right && p.x < 370) p.x += 6; 
-                }
-                else if (state.currentMode === 'surf') { p.v += 0.35; p.y += p.v; if (p.y > 430) { p.y = 430; p.v = 0; } }
-
-                obstacles.forEach(o => {
-                    if (o.type === 'pipe') {
-                        if (p.x + 10 > o.x && p.x - 10 < o.x + o.w) { if (p.y - 10 < o.h || p.y + 10 > o.h + o.gap) die(idx); }
-                    } else if (o.type === 'car') {
-                        if (Math.abs(p.x - (o.x + 20)) < 30 && Math.abs(p.y - (o.y + 35)) < 45) die(idx);
-                    } else if (o.type === 'rock' || o.type === 'cactus') {
-                        if (Math.abs(p.x - o.x) < 30 && Math.abs(p.y - o.y) < 30) die(idx);
-                    }
-                });
-
-                items.forEach((it, i) => {
-                    if (Math.abs(p.x - it.x) < 30 && Math.abs(p.y - it.y) < 30) {
-                        items.splice(i, 1);
-                        if(idx === 0) state.score += 50;
-                        else state.p2Score += 50;
-                    }
-                });
-
-                ctx.font = "30px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(skins[p.skin].emoji, p.x, p.y);
-            });
-
-            if (state.currentMode !== 'star') {
-                if (!players[0].dead) state.score++;
-                if (state.isMulti && !players[1]?.dead) state.p2Score++;
-            }
-
-            document.getElementById('game-score').innerText = state.score;
-            if (state.isMulti) document.getElementById('game-score-p2').innerText = state.p2Score;
-
-            obstacles = obstacles.filter(o => o.x > -100 && o.y < 600);
-            items = items.filter(it => it.y < 550);
+        function nextQuestion() {
+            const set = state.activeSetId === 'default' ? defaultQuestions : (state.customSets.find(s => s.id === state.activeSetId)?.questions || defaultQuestions);
+            const q = set[Math.floor(Math.random() * set.length)];
+            state.currentQuestion = q;
             
-            if (players.every(p => p.dead) || (state.currentMode === 'star' && frame > 1000)) {
-                state.isGameRunning = false;
-                setTimeout(() => triggerQuiz(), 500);
+            document.getElementById('question-text').innerText = q.q;
+            const grid = document.getElementById('answer-grid');
+            grid.innerHTML = '';
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "retro-button text-[8px]";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt);
+                grid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(val) {
+            if (val === state.currentQuestion.a) {
+                const gain = state.isRespectMember ? 10 : 5;
+                state.score += 10;
+                state.coins += gain;
+                document.getElementById('game-score').innerText = state.score;
+                document.getElementById('coin-display').innerText = state.coins;
+                saveProfile();
+                nextQuestion();
             } else {
-                requestAnimationFrame(gameLoop);
+                alert("WRONG! TRY AGAIN.");
             }
         }
 
-        function die(idx) { players[idx].dead = true; }
+        function gameLoop() {
+            if(!state.isGameRunning) return;
+            ctx.fillStyle = "#1a1a2e";
+            ctx.fillRect(0, 0, 400, 500);
 
-        function triggerQuiz(reward = 10) {
-            state.isGameRunning = false;
-            showSection('quiz-container');
-            const pool = (state.activeSetId === 'default') ? defaultQuestions : (state.customSets.find(x => x.id === state.activeSetId)?.questions || defaultQuestions);
-            const q = pool[Math.floor(Math.random() * pool.length)];
-            
-            state.quizTurn = (state.isMulti && Math.random() > 0.5) ? 1 : 0;
-            document.getElementById('quiz-player-turn').innerText = state.isMulti ? `PLAYER ${state.quizTurn + 1}'S TURN` : "BONUS QUESTION";
-            document.getElementById('question-text').innerText = q.q;
-            
-            const grid = document.getElementById('options-grid');
-            grid.innerHTML = '';
-            q.a.forEach((opt, i) => {
-                const btn = document.createElement('button');
-                btn.className = "retro-button";
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    if (i === q.c) {
-                        state.coins += reward;
-                        alert(`CORRECT! +${reward} COINS`);
-                    } else { alert("Wrong Answer!"); }
-                    showSection('menu');
-                };
-                grid.appendChild(btn);
+            // Classic is visual only (static character)
+            if (state.currentMode !== 'classic') {
+                player.v += 0.5;
+                player.y += player.v;
+                if(player.input.left) player.x -= 4;
+                if(player.input.right) player.x += 4;
+                if(player.y > 400) { player.y = 400; player.v = 0; }
+            } else {
+                player.x = 200; player.y = 400;
+            }
+
+            if(state.isMultiplayer) syncPosition(player.x, player.y, state.score);
+
+            Object.keys(state.players).forEach(id => {
+                if(id === state.user?.uid) return;
+                const p = state.players[id];
+                ctx.globalAlpha = 0.6;
+                ctx.font = "30px Arial";
+                ctx.fillText(skins[p.skin]?.emoji || '❓', p.x, p.y);
+                ctx.globalAlpha = 1.0;
             });
+
+            if(state.isRespectMember) {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "gold";
+            }
+            ctx.font = "30px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(skins[state.activeSkin].emoji, player.x, player.y);
+            ctx.shadowBlur = 0;
+
+            requestAnimationFrame(gameLoop);
         }
 
         function renderMarket() {
             const grid = document.getElementById('market-grid');
             grid.innerHTML = '';
             packs.forEach(p => {
-                const isOwned = p.id === 'space' ? state.ownedSkins.includes('ufo') : 
-                               p.id === 'nature' ? state.ownedSkins.includes('fox') :
-                               p.id === 'beach' ? state.ownedSkins.includes('surfer') :
-                               state.ownedSkins.includes('ball');
-
                 const div = document.createElement('div');
-                div.className = "retro-border p-6 text-center bg-black/50";
-                div.innerHTML = `<p class="pixel-font text-xs text-cyan-400 mb-2">${p.name}</p><div class="text-2xl mb-4">${p.icons}</div>
-                    <button onclick="buyPack('${p.id}', ${p.cost})" class="retro-button ${isOwned ? 'bg-gray-500' : ''}" ${isOwned ? 'disabled' : ''}>${isOwned ? 'OWNED' : p.cost + ' 🪙'}</button>`;
+                div.className = "retro-border p-4 bg-black/50 text-center";
+                div.innerHTML = `
+                    <p class="pixel-font text-[10px] ${p.id==='space'?'text-cyan-400':''}">${p.name}</p>
+                    <p class="text-[8px] my-2 text-gray-400">${p.desc}</p>
+                    <button onclick="buyPack('${p.id}', ${p.cost})" class="retro-button">${p.cost} 🪙</button>
+                `;
                 grid.appendChild(div);
             });
-        }
-
-        window.buyPack = (id, cost) => {
-            if (state.coins >= cost) {
-                state.coins -= cost;
-                let news = [];
-                if (id === 'space') news = ['ufo', 'alien', 'rocket'];
-                if (id === 'nature') news = ['fox', 'mushroom', 'tree'];
-                if (id === 'beach') news = ['surfer', 'crab', 'shark'];
-                if (id === 'sports') news = ['ball', 'hoop', 'trophy'];
-                state.ownedSkins = [...new Set([...state.ownedSkins, ...news])];
-                localStorage.setItem('fro_skins', JSON.stringify(state.ownedSkins));
-                updateUI();
-                alert("PACK UNLOCKED!");
-                renderMarket();
-            } else alert("NOT ENOUGH COINS!");
-        };
-
-        function renderCollection() {
-            const grid = document.getElementById('skins-grid');
-            grid.innerHTML = '';
-            state.ownedSkins.forEach(sid => {
-                const div = document.createElement('div');
-                div.className = `retro-border p-2 text-center cursor-pointer ${state.activeSkin === sid ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}`;
-                div.onclick = () => {
-                    state.activeSkin = sid;
-                    localStorage.setItem('fro_active_skin', state.activeSkin);
-                    renderCollection();
-                };
-                div.innerHTML = `<div class="text-3xl">${skins[sid].emoji}</div><p class="text-[10px] mt-1">${skins[sid].name}</p>`;
-                grid.appendChild(div);
-            });
-        }
-
-        function renderSetsList() {
-            const list = document.getElementById('sets-list');
-            list.innerHTML = `<div class="retro-border p-4 flex justify-between items-center ${state.activeSetId === 'default' ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}">
-                <p class="pixel-font text-xs">DEFAULT</p><button onclick="setActiveSet('default')" class="retro-button">SELECT</button></div>`;
-            state.customSets.forEach(s => {
-                const div = document.createElement('div');
-                div.className = `retro-border p-4 flex justify-between items-center ${state.activeSetId === s.id ? 'bg-cyan-900 border-yellow-400' : 'bg-black/40'}`;
-                div.innerHTML = `<p class="pixel-font text-xs">${s.name}</p><button onclick="setActiveSet('${s.id}')" class="retro-button">SELECT</button>`;
-                list.appendChild(div);
-            });
-        }
-
-        window.setActiveSet = (id) => { state.activeSetId = id; localStorage.setItem('fro_active_set', id); renderSetsList(); updateUI(); };
-        window.promptMode = (m) => { state.tempMode = m; document.getElementById('mode-prompt').classList.remove('hidden'); };
-        window.cancelPrompt = () => document.getElementById('mode-prompt').classList.add('hidden');
-        window.startSolo = () => { state.currentMode = state.tempMode; state.isMulti = false; finishPrompt(); };
-        window.startLobbyFlow = () => { cancelPrompt(); showSection('lobby-screen'); };
-
-        function finishPrompt() {
-            cancelPrompt();
-            if (state.currentMode === 'classic') triggerQuiz();
-            else if (state.currentMode === 'jeopardy') showSection('jeopardy-container');
-            else { showSection('game-container'); initGame(); }
-        }
-
-        function initJeopardy() {
-            const board = document.getElementById('jeopardy-board');
-            const hs = board.querySelectorAll('.jeopardy-header');
-            board.innerHTML = ''; hs.forEach(h => board.appendChild(h));
-            [100, 200, 300, 400].forEach(v => {
-                for(let c=0; c<3; c++) {
-                    const id = `j-${v}-${c}`;
-                    const card = document.createElement('div');
-                    card.className = `jeopardy-card ${state.jeopardyUsed.includes(id) ? 'used' : ''}`;
-                    card.innerText = `$${v}`;
-                    card.onclick = () => { if(!state.jeopardyUsed.includes(id)) { state.jeopardyUsed.push(id); triggerQuiz(v); } };
-                    board.appendChild(card);
+            Object.keys(skins).forEach(key => {
+                if(skins[key].cost && !state.ownedSkins.includes(key)) {
+                    const div = document.createElement('div');
+                    div.className = "retro-border p-4 bg-black/50 text-center border-pink-400";
+                    div.innerHTML = `
+                        <p class="pixel-font text-[10px] text-pink-400">${skins[key].name}</p>
+                        <div class="text-3xl my-2">${skins[key].emoji}</div>
+                        <button onclick="buySkin('${key}', ${skins[key].cost})" class="retro-button">${skins[key].cost} 🪙</button>
+                    `;
+                    grid.appendChild(div);
                 }
             });
         }
 
-        function adminTap() { state.adminTaps++; if(state.adminTaps >= 5) showSection('admin-panel'); }
-        function modifyCoins(a) { state.coins += a; updateUI(); }
-        function unlockAllSkins() { state.ownedSkins = Object.keys(skins); localStorage.setItem('fro_skins', JSON.stringify(state.ownedSkins)); renderCollection(); }
-
-        window.openSetEditor = () => { document.getElementById('editor-questions-container').innerHTML = ''; addQuestionToEditor(); showSection('set-editor'); };
-        window.addQuestionToEditor = () => {
-            const d = document.createElement('div');
-            d.innerHTML = `<input type="text" class="retro-input w-full q-text mb-1" placeholder="Q"><input type="text" class="retro-input w-full q-ans" placeholder="A">`;
-            document.getElementById('editor-questions-container').appendChild(d);
-        };
-        window.saveCurrentSet = () => {
-            const name = document.getElementById('set-name-input').value || "NEW SET";
-            const qs = [];
-            document.querySelectorAll('#editor-questions-container > div').forEach(n => {
-                const q = n.querySelector('.q-text').value;
-                const a = n.querySelector('.q-ans').value;
-                if(q && a) qs.push({ q, a: [a, "Wrong 1", "Wrong 2", "Wrong 3"], c: 0 });
+        function renderSkins() {
+            const grid = document.getElementById('skins-grid');
+            grid.innerHTML = '';
+            state.ownedSkins.forEach(skinId => {
+                const s = skins[skinId];
+                if (!s) return;
+                const div = document.createElement('div');
+                div.className = `retro-border p-2 bg-black/50 text-center cursor-pointer ${state.activeSkin === skinId ? 'border-yellow-400' : ''}`;
+                div.onclick = () => { state.activeSkin = skinId; saveProfile(); renderSkins(); };
+                div.innerHTML = `<div class="text-2xl">${s.emoji}</div><p class="text-[8px] mt-1">${s.name}</p>`;
+                grid.appendChild(div);
             });
-            if(qs.length) {
-                state.customSets.push({ id: Date.now().toString(), name, questions: qs });
-                localStorage.setItem('fro_sets', JSON.stringify(state.customSets));
-                showSection('sets');
-            }
-        };
+            Object.keys(skins).forEach(id => {
+                if(skins[id].respectOnly && !state.isRespectMember) {
+                    const div = document.createElement('div');
+                    div.className = `retro-border p-2 bg-black/80 text-center opacity-50 border-gray-600 grayscale`;
+                    div.innerHTML = `<div class="text-2xl">🔒</div><p class="text-[8px] mt-1">RESPECT ONLY</p>`;
+                    grid.appendChild(div);
+                } else if(skins[id].respectOnly && state.isRespectMember && !state.ownedSkins.includes(id)) {
+                    state.ownedSkins.push(id);
+                    renderSkins();
+                }
+            });
+        }
 
-        showSection('menu');
+        function renderSets() {
+            const list = document.getElementById('sets-list');
+            list.innerHTML = '';
+            document.getElementById('current-set-name').innerText = state.activeSetId.toUpperCase();
+            
+            const defaultSet = { id: 'default', name: 'Standard Set' };
+            [defaultSet, ...state.customSets].forEach(set => {
+                const div = document.createElement('div');
+                div.className = `retro-border p-3 bg-black/60 flex justify-between items-center ${state.activeSetId === set.id ? 'border-yellow-400' : ''}`;
+                div.innerHTML = `
+                    <span class="pixel-font text-[10px]">${set.name}</span>
+                    <button onclick="selectSet('${set.id}')" class="retro-button text-[8px]">${state.activeSetId === set.id ? 'ACTIVE' : 'SELECT'}</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function selectSet(id) {
+            state.activeSetId = id;
+            saveProfile();
+            renderSets();
+            document.getElementById('active-set-indicator').innerText = `SET: ${id.toUpperCase()}`;
+        }
+
+        function createNewSet() {
+            const name = prompt("Name your new set:");
+            if(name) {
+                const newSet = { 
+                    id: 'set_' + Date.now(), 
+                    name: name,
+                    questions: [...defaultQuestions] 
+                };
+                state.customSets.push(newSet);
+                saveProfile();
+                renderSets();
+            }
+        }
+
+        function buyPack(id, cost) {
+            if(state.coins >= cost) {
+                state.coins -= cost;
+                const pack = packs.find(p => p.id === id);
+                state.ownedSkins = [...new Set([...state.ownedSkins, ...pack.items])];
+                saveProfile();
+                updateUI();
+                renderMarket();
+            } else { alert("Not enough coins!"); }
+        }
+
+        function buySkin(key, cost) {
+            if(state.coins >= cost) {
+                state.coins -= cost;
+                state.ownedSkins.push(key);
+                saveProfile();
+                updateUI();
+                renderMarket();
+            } else { alert("Not enough coins!"); }
+        }
+
+        function updateUI() {
+            document.getElementById('coin-display').innerText = state.coins;
+            if(state.isRespectMember) {
+                document.getElementById('sub-status').classList.remove('hidden');
+                document.getElementById('join-respect-btn').classList.add('hidden');
+                document.getElementById('multiplier-badge').classList.remove('hidden');
+                document.getElementById('logo').classList.add('is-member');
+            } else {
+                document.getElementById('sub-status').classList.add('hidden');
+                document.getElementById('join-respect-btn').classList.remove('hidden');
+                document.getElementById('multiplier-badge').classList.add('hidden');
+                document.getElementById('logo').classList.remove('is-member');
+            }
+            if(state.isAdmin) {
+                document.getElementById('admin-nav-btn').classList.remove('hidden');
+            }
+        }
+
+        function quitGame() {
+            state.isGameRunning = false;
+            state.isMultiplayer = false;
+            document.getElementById('question-area').classList.add('hidden');
+            showSection('menu');
+        }
+
+        window.onload = initAuth;
     </script>
 </body>
 </html>
