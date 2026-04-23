@@ -90,19 +90,29 @@
             font-size: 2rem;
             color: #facc15;
         }
+
+        .core-badge {
+            color: #a78bfa;
+            font-size: 0.5rem;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col">
 
     <nav id="top-nav" class="nav-bar w-full p-4 flex flex-wrap justify-between items-center z-[100]">
         <div id="logo-btn" onclick="handleLogoClick()" class="text-xl text-yellow-400 italic mr-4 cursor-pointer select-none">FroFroKit</div>
-        <div class="flex gap-2 mt-2 md:mt-0">
+        <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
             <button onclick="showScreen('home-screen')" class="pixel-btn bg-blue-600">Home</button>
             <button onclick="showScreen('market-screen')" class="pixel-btn bg-pink-600">Market</button>
             <button onclick="showScreen('editor-screen')" class="pixel-btn bg-green-600">Create</button>
             <button onclick="showScreen('core-screen')" class="pixel-btn bg-purple-600">CORE</button>
+            <a href="https://frofrocreater.github.io/FroFroChat/" target="_blank" class="pixel-btn bg-yellow-600 no-underline text-white">Other</a>
         </div>
-        <div class="text-[10px] text-yellow-400 mt-2 md:mt-0">Coins: <span id="nav-coin-count">0</span></div>
+        <div class="flex flex-col items-end">
+            <div class="text-[10px] text-yellow-400">Coins: <span id="nav-coin-count">0</span></div>
+            <div id="core-multiplier-tag" class="text-[8px] text-purple-400 hidden">CORE Multiplier: 1.5x</div>
+        </div>
     </nav>
 
     <!-- HOME SCREEN -->
@@ -128,6 +138,11 @@
                 <span class="text-4xl mb-4">⛏️</span>
                 <h3 class="text-sm mb-4">2D Craft</h3>
                 <button onclick="preStart('craft')" class="pixel-btn w-full bg-emerald-500">Play</button>
+            </div>
+            <div class="pixel-border bg-cyan-900 p-6 flex flex-col items-center text-center">
+                <span class="text-4xl mb-4">🏄</span>
+                <h3 class="text-sm mb-4">Surf's Up</h3>
+                <button onclick="preStart('surfing')" class="pixel-btn w-full bg-cyan-500">Play</button>
             </div>
             <div id="td-card" class="pixel-border bg-purple-900 p-6 flex flex-col items-center text-center opacity-50">
                 <span class="text-4xl mb-4">🛡️</span>
@@ -195,14 +210,19 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
             <div class="pixel-border bg-indigo-900 p-6">
-                <h3 class="text-sm mb-4">Custom Background</h3>
-                <div class="grid grid-cols-3 gap-2">
+                <h3 class="text-sm mb-4">Customization</h3>
+                <p class="text-[8px] mb-2 text-indigo-300">Background Color:</p>
+                <div class="grid grid-cols-3 gap-2 mb-4">
                     <div onclick="setBackground('#1a1a2e')" class="w-full h-8 border-2 border-white bg-[#1a1a2e] cursor-pointer"></div>
                     <div onclick="setBackground('#2e1a1a')" class="w-full h-8 border-2 border-white bg-[#2e1a1a] cursor-pointer"></div>
                     <div onclick="setBackground('#1a2e23')" class="w-full h-8 border-2 border-white bg-[#1a2e23] cursor-pointer"></div>
                     <div onclick="setBackground('#2e2b1a')" class="w-full h-8 border-2 border-white bg-[#2e2b1a] cursor-pointer"></div>
                     <div onclick="setBackground('#000000')" class="w-full h-8 border-2 border-white bg-[#000000] cursor-pointer"></div>
                     <div onclick="setBackground('#1e1e3f')" class="w-full h-8 border-2 border-white bg-[#1e1e3f] cursor-pointer"></div>
+                </div>
+                <div id="admin-tools" class="hidden border-t-2 border-white pt-4 mt-2">
+                    <h4 class="text-[10px] text-pink-400 mb-2">Admin Panel</h4>
+                    <button id="god-mode-btn" onclick="toggleGodMode()" class="pixel-btn bg-pink-600 w-full">God Mode: OFF</button>
                 </div>
             </div>
             <div class="pixel-border bg-indigo-900 p-6 flex flex-col items-center">
@@ -211,6 +231,7 @@
                     <li>Unlock Tower Defense Mode</li>
                     <li>Exclusive Core Blooks Pack</li>
                     <li>Custom Background Colors</li>
+                    <li><b>Coin Magnet:</b> 1.5x Multiplier</li>
                     <li>Special Profile Glow</li>
                 </ul>
                 <button id="buy-core-btn" onclick="buyCore()" class="pixel-btn bg-purple-500 w-full">Join Core (500 Coins)</button>
@@ -236,11 +257,12 @@
 
     <!-- GAMEPLAY AREA -->
     <div id="game-container" class="hidden absolute inset-0 z-[200] bg-black">
-        <div id="hud" class="absolute top-4 left-4 z-40 flex gap-4">
+        <div id="hud" class="absolute top-4 left-4 z-40 flex flex-wrap gap-2">
             <div class="bg-black/80 border-2 border-white px-3 py-1 text-[8px]">SCORE: <span id="score-val">0</span></div>
             <div class="bg-black/80 border-2 border-white px-3 py-1 text-[8px]">COINS: <span id="coins-earned">0</span></div>
             <div id="td-lives" class="hidden bg-black/80 border-2 border-white px-3 py-1 text-[8px]">LIVES: <span id="lives-val">10</span></div>
             <div id="td-wave" class="hidden bg-black/80 border-2 border-white px-3 py-1 text-[8px]">WAVE: <span id="wave-val">1</span></div>
+            <div id="god-mode-indicator" class="hidden bg-pink-600 border-2 border-white px-3 py-1 text-[8px]">GOD MODE</div>
         </div>
         <button onclick="quitGame()" class="absolute top-4 right-4 z-40 pixel-btn bg-red-600 !p-2">X</button>
 
@@ -248,15 +270,15 @@
 
         <div id="touch-controls" class="hidden absolute bottom-5 left-0 right-0 p-4 flex justify-between pointer-events-none">
             <div class="flex flex-col gap-2 pointer-events-auto">
-                <div class="flex justify-center"><button class="touch-btn" id="t-up">▲</button></div>
+                <div class="flex justify-center"><button class="touch-btn p-4 bg-white/20 pixel-border" id="t-up">▲</button></div>
                 <div class="flex gap-2">
-                    <button class="touch-btn" id="t-left">◀</button>
-                    <button class="touch-btn" id="t-down">▼</button>
-                    <button class="touch-btn" id="t-right">▶</button>
+                    <button class="touch-btn p-4 bg-white/20 pixel-border" id="t-left">◀</button>
+                    <button class="touch-btn p-4 bg-white/20 pixel-border" id="t-down">▼</button>
+                    <button class="touch-btn p-4 bg-white/20 pixel-border" id="t-right">▶</button>
                 </div>
             </div>
             <div class="flex flex-col gap-2 justify-end pointer-events-auto">
-                <button class="touch-btn" id="t-action">⚒️</button>
+                <button class="touch-btn p-4 bg-white/20 pixel-border" id="t-action">⚒️</button>
             </div>
         </div>
 
@@ -283,7 +305,10 @@
             { q: "2 + 2?", a: ["4", "3", "22", "5"], c: 0 },
             { q: "Blue + Yellow?", a: ["Green", "Purple", "Orange", "Red"], c: 0 },
             { q: "What is the primary color?", a: ["Red", "Orange", "Green", "Purple"], c: 0 },
-            { q: "How many legs does a spider have?", a: ["8", "6", "4", "10"], c: 0 }
+            { q: "How many legs does a spider have?", a: ["8", "6", "4", "10"], c: 0 },
+            { q: "Which animal says 'Meow'?", a: ["Cat", "Dog", "Bird", "Cow"], c: 0 },
+            { q: "Sun is a...?", a: ["Star", "Planet", "Moon", "Comet"], c: 0 },
+            { q: "Opposite of Cold?", a: ["Hot", "Fast", "Big", "Dry"], c: 0 }
         ];
         
         const packs = [
@@ -300,15 +325,17 @@
         let inventory = JSON.parse(localStorage.getItem('frofro_inventory')) || ["🐥"];
         let isCore = localStorage.getItem('frofro_core') === 'true';
         let isAdmin = false;
+        let isGodMode = false;
         let activeBlook = inventory[0];
         let customQuestions = JSON.parse(localStorage.getItem('frofro_custom')) || [];
         
         let logoClickCount = 0;
         let pendingGameMode = '';
+        let surfStreakQuestions = 0;
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        let gameMode = '', score = 0, coinsInSession = 0, isDead = false, frame = 0, animId, lives = 10, wave = 1;
+        let gameMode = '', score = 0, coinsInSession = 0, isDead = false, frame = 0, animId, lives = 10, waveCount = 1;
         let currentWaveEnemies = 0;
         let waveActive = false;
         
@@ -322,7 +349,6 @@
         let towers = [];
         let world = []; 
 
-        // MULTIPLAYER LOGIC
         function preStart(mode) {
             pendingGameMode = mode;
             document.getElementById('mode-modal').classList.remove('hidden');
@@ -346,7 +372,6 @@
         function joinLobby() {
             const codeInput = document.getElementById('join-code-input').value;
             if (codeInput.length === 6) {
-                // Mock join
                 startGame(pendingGameMode);
             }
         }
@@ -367,7 +392,15 @@
                 });
             });
             document.getElementById('logo-btn').classList.add('admin-glow');
+            document.getElementById('admin-tools').classList.remove('hidden');
             updateStats();
+        }
+
+        function toggleGodMode() {
+            isGodMode = !isGodMode;
+            document.getElementById('god-mode-btn').innerText = `God Mode: ${isGodMode ? 'ON' : 'OFF'}`;
+            document.getElementById('god-mode-btn').classList.toggle('bg-green-600', isGodMode);
+            document.getElementById('god-mode-btn').classList.toggle('bg-pink-600', !isGodMode);
         }
 
         function buyCore() {
@@ -415,6 +448,11 @@
                 document.getElementById('td-card').classList.remove('opacity-50');
                 document.getElementById('td-lock').classList.add('hidden');
                 document.getElementById('td-play-btn').disabled = false;
+                document.getElementById('core-multiplier-tag').classList.remove('hidden');
+            }
+
+            if (isAdmin) {
+                document.getElementById('admin-tools').classList.remove('hidden');
             }
 
             renderMarket();
@@ -433,8 +471,8 @@
                 card.innerHTML = `
                     <span class="text-4xl mb-2">${p.icon}</span>
                     <h3 class="text-[10px] mb-2">${p.name}</h3>
-                    <button onclick="buyPack('${p.id}', ${p.cost})" class="pixel-btn bg-yellow-500 text-black w-full" ${p.cost === 0 ? 'disabled' : ''}>
-                        ${p.cost === 0 ? 'Free' : p.cost + ' Coins'}
+                    <button onclick="buyPack('${p.id}', ${p.cost})" class="pixel-btn bg-yellow-500 text-black w-full" ${p.cost === 0 && p.id !== 'core' ? 'disabled' : ''}>
+                        ${p.id === 'core' ? 'Included' : (p.cost === 0 ? 'Free' : p.cost + ' Coins')}
                     </button>`;
                 grid.appendChild(card);
             });
@@ -458,7 +496,7 @@
 
         function startGame(mode) {
             gameMode = mode;
-            score = 0; coinsInSession = 0; isDead = false; frame = 0; lives = 10; wave = 1;
+            score = 0; coinsInSession = 0; isDead = false; frame = 0; lives = 10; waveCount = 1;
             currentWaveEnemies = 0; waveActive = false;
             obstacles = []; enemies = []; towers = [];
             showScreen('game-container');
@@ -467,6 +505,7 @@
             document.getElementById('touch-controls').classList.toggle('hidden', mode === 'classic' || mode === 'td');
             document.getElementById('td-lives').classList.toggle('hidden', mode !== 'td');
             document.getElementById('td-wave').classList.toggle('hidden', mode !== 'td');
+            document.getElementById('god-mode-indicator').classList.toggle('hidden', !isGodMode);
             
             if (mode === 'racing') {
                 player = { x: canvas.width/2 - 20, y: canvas.height - 100, w: 40, h: 40 };
@@ -475,10 +514,13 @@
                 world = [];
             } else if (mode === 'flappy') {
                 player = { x: 50, y: canvas.height/2, w: 40, h: 40, velY: 0 };
+            } else if (mode === 'surfing') {
+                player = { x: 100, y: canvas.height/2, w: 40, h: 40 };
+                surfStreakQuestions = 0;
             } else if (mode === 'td') {
                 lives = 10;
                 document.getElementById('lives-val').innerText = lives;
-                document.getElementById('wave-val').innerText = wave;
+                document.getElementById('wave-val').innerText = waveCount;
                 showQuestion("Start Round 1");
             }
             
@@ -500,9 +542,16 @@
             else if (gameMode === 'craft') updateCraft();
             else if (gameMode === 'flappy') updateFlappy();
             else if (gameMode === 'td') updateTD();
+            else if (gameMode === 'surfing') updateSurfing();
 
             frame++;
             animId = requestAnimationFrame(loop);
+        }
+
+        function addCoins(amount) {
+            let multiplier = (isCore || isAdmin) ? 1.5 : 1;
+            coinsInSession += Math.floor(amount * multiplier);
+            updateHud();
         }
 
         function updateRacing() {
@@ -521,11 +570,46 @@
             obstacles.forEach((o, i) => {
                 o.y += 10;
                 ctx.font = "50px Arial"; ctx.fillText(o.type, o.x, o.y + 50);
-                if (player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) die();
-                if (o.y > canvas.height) { obstacles.splice(i, 1); score++; coinsInSession += 1; updateHud(); }
+                if (!isGodMode && player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) die();
+                if (o.y > canvas.height) { obstacles.splice(i, 1); score++; addCoins(1); }
             });
 
             ctx.font = "40px Arial"; ctx.fillText(activeBlook, player.x, player.y + 35);
+        }
+
+        function updateSurfing() {
+            ctx.fillStyle = "#0077be"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            // Draw Foam
+            ctx.fillStyle = "#ffffff55";
+            for(let i=0; i<10; i++){
+                ctx.fillRect((frame*5 + i*200) % canvas.width, 0, 50, canvas.height);
+            }
+
+            if (keys['ArrowUp'] || keys['KeyW'] || touchStates['t-up']) player.y -= 7;
+            if (keys['ArrowDown'] || keys['KeyS'] || touchStates['t-down']) player.y += 7;
+            player.y = Math.max(0, Math.min(canvas.height - player.h, player.y));
+            
+            if (frame % 50 === 0) {
+                obstacles.push({ x: canvas.width, y: Math.random()*(canvas.height-100), w: 80, h: 100, type: '🌊' });
+            }
+            
+            obstacles.forEach((o, i) => {
+                o.x -= 8;
+                ctx.font = "60px Arial"; ctx.fillText(o.type, o.x, o.y + 70);
+                if (!isGodMode && player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) {
+                    isDead = true;
+                    cancelAnimationFrame(animId);
+                    surfStreakQuestions = 2; // Requires 2 answers
+                    showQuestion("Surfer Wipeout! (1/2)");
+                }
+                if (o.x < -100) { obstacles.splice(i, 1); score += 5; addCoins(2); }
+            });
+
+            ctx.font = "40px Arial"; ctx.save(); 
+            ctx.translate(player.x, player.y);
+            ctx.rotate(Math.sin(frame*0.1)*0.2);
+            ctx.fillText("🏄", 0, 30);
+            ctx.restore();
         }
 
         function updateCraft() {
@@ -555,27 +639,26 @@
             obstacles.forEach((o, i) => {
                 o.x -= 5;
                 ctx.fillStyle = "#4ecc71"; ctx.fillRect(o.x, 0, 60, o.h); ctx.fillRect(o.x, o.h+200, 60, canvas.height);
-                if (player.x + 30 > o.x && player.x < o.x+60 && (player.y < o.h || player.y+30 > o.h+200)) die();
-                if (!o.passed && o.x < player.x) { o.passed = true; score++; coinsInSession += 2; updateHud(); }
+                if (!isGodMode && player.x + 30 > o.x && player.x < o.x+60 && (player.y < o.h || player.y+30 > o.h+200)) die();
+                if (!o.passed && o.x < player.x) { o.passed = true; score++; addCoins(2); }
             });
-            if (player.y > canvas.height || player.y < 0) die();
+            if (!isGodMode && (player.y > canvas.height || player.y < 0)) die();
             ctx.font = "40px Arial"; ctx.fillText(activeBlook, player.x, player.y + 35);
         }
 
         function updateTD() {
             ctx.strokeStyle = "#444"; ctx.lineWidth = 40; ctx.beginPath(); ctx.moveTo(0, canvas.height/2); ctx.lineTo(canvas.width, canvas.height/2); ctx.stroke();
             
-            // Wave management
-            if (waveActive && frame % 60 === 0 && currentWaveEnemies < wave * 3) {
-                enemies.push({ x: -20, y: canvas.height/2, hp: 2 + wave });
+            if (waveActive && frame % 60 === 0 && currentWaveEnemies < waveCount * 3) {
+                enemies.push({ x: -20, y: canvas.height/2, hp: 2 + waveCount });
                 currentWaveEnemies++;
             }
 
-            if (waveActive && enemies.length === 0 && currentWaveEnemies >= wave * 3) {
+            if (waveActive && enemies.length === 0 && currentWaveEnemies >= waveCount * 3) {
                 waveActive = false;
-                wave++;
-                document.getElementById('wave-val').innerText = wave;
-                showQuestion(`Round ${wave} Prep`);
+                waveCount++;
+                document.getElementById('wave-val').innerText = waveCount;
+                showQuestion(`Round ${waveCount} Prep`);
             }
 
             canvas.onclick = (e) => {
@@ -589,10 +672,11 @@
             };
 
             enemies.forEach((e, i) => {
-                e.x += 2 + (wave * 0.2);
+                e.x += 2 + (waveCount * 0.2);
                 ctx.font = "30px Arial"; ctx.fillText("👾", e.x - 15, e.y + 10);
                 if (e.x > canvas.width) {
-                    enemies.splice(i, 1); lives--; 
+                    enemies.splice(i, 1); 
+                    if (!isGodMode) lives--; 
                     document.getElementById('lives-val').innerText = lives;
                     if (lives <= 0) die();
                 }
@@ -608,8 +692,7 @@
                         ctx.strokeStyle = "yellow"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(t.x, t.y); ctx.lineTo(target.x, target.y); ctx.stroke();
                         if (target.hp <= 0) { 
                             enemies = enemies.filter(en => en !== target);
-                            coinsInSession += 5; 
-                            updateHud(); 
+                            addCoins(5);
                         }
                     }
                 }
@@ -636,15 +719,26 @@
                 b.className = "pixel-btn"; b.innerText = opt;
                 b.onclick = () => {
                     if (idx === q.c) {
-                        score += 10; coinsInSession += (gameMode === 'td' ? 30 : 5); updateHud();
+                        score += 10; addCoins(gameMode === 'td' ? 30 : 5);
                         document.getElementById('question-modal').classList.add('hidden');
-                        if (gameMode === 'classic') showQuestion();
-                        else if (gameMode === 'td') {
+                        
+                        if (surfStreakQuestions > 0) {
+                            surfStreakQuestions--;
+                            if (surfStreakQuestions > 0) {
+                                showQuestion("Surfer Wipeout! (2/2)");
+                            } else {
+                                isDead = false;
+                                loop(); // Resume surfing
+                            }
+                        } else if (gameMode === 'classic') {
+                            showQuestion();
+                        } else if (gameMode === 'td') {
                             waveActive = true;
                             currentWaveEnemies = 0;
                             isDead = false;
                         } else {
                             isDead = false;
+                            loop();
                         }
                     } else endGame();
                 };
