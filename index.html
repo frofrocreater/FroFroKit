@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FroFroKit | Ultra Hub</title>
+    
+    <!-- PWA / Installable Metadata -->
+    <meta name="theme-color" content="#ff0000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" id="pwa-manifest">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -33,7 +40,6 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Advanced Pack Effects */
         .card-glow { transition: all 0.5s ease; }
         .rarity-common { border-color: #444; color: #888; }
         .rarity-rare { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); color: #3b82f6; }
@@ -77,6 +83,9 @@
             </div>
         </div>
         <div class="flex items-center space-x-4">
+            <div id="install-prompt" class="hidden">
+                 <button onclick="installPWA()" class="bg-zinc-800 text-white text-[10px] font-black px-4 py-2 rounded-lg border border-white/10 hover:bg-zinc-700 transition uppercase tracking-widest">Install App</button>
+            </div>
             <div class="bg-zinc-900 px-4 py-2 rounded-xl border border-white/10 flex items-center space-x-3">
                 <i class="fas fa-gem text-blue-400"></i>
                 <span id="nav-score" class="font-mono font-bold text-white text-sm">1000</span>
@@ -108,7 +117,7 @@
                 <!-- ARCADE ROW -->
                 <div>
                     <div class="flex justify-between items-end mb-8">
-                        <h3 class="text-3xl font-black italic uppercase italic tracking-tighter"><i class="fas fa-joystick mr-3 text-red-600"></i>The Arcade</h3>
+                        <h3 class="text-3xl font-black italic uppercase tracking-tighter"><i class="fas fa-joystick mr-3 text-red-600"></i>The Arcade</h3>
                         <a href="#" onclick="showSection('arcade')" class="text-xs font-bold text-gray-500 hover:text-white uppercase tracking-widest">View All</a>
                     </div>
                     <div class="flex space-x-6 overflow-x-auto no-scrollbar pb-6">
@@ -151,20 +160,45 @@
                 <div>
                     <h3 class="text-3xl font-black italic uppercase tracking-tighter mb-8"><i class="fas fa-tv mr-3 text-red-600"></i>Trending Now</h3>
                     <div id="video-feed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        <!-- Seed Videos -->
-                        <div class="group cursor-pointer" onclick="playVideo('https://www.w3schools.com/html/mov_bbb.mp4', 'Bunny Time')">
-                            <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden relative border border-white/5 group-hover:border-red-600 transition">
+                        <!-- Video Item 1 -->
+                        <div class="group cursor-pointer" onclick="playVideo('https://www.w3schools.com/html/mov_bbb.mp4', 'Big Buck Bunny')">
+                            <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden relative border border-white/5 group-hover:border-red-600 transition shadow-lg">
                                 <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover opacity-50">
                                 <div class="absolute inset-0 flex items-center justify-center"><i class="fas fa-play text-4xl group-hover:scale-125 transition"></i></div>
+                                <div class="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-bold">0:32</div>
                             </div>
-                            <h4 class="mt-4 font-bold uppercase text-xs tracking-tighter text-gray-400">Official Promo • 2m ago</h4>
+                            <h4 class="mt-4 font-bold uppercase text-[11px] tracking-tighter text-white">Big Buck Bunny Remastered</h4>
+                            <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Official Media • 5k views</p>
                         </div>
-                        <div class="group cursor-pointer" onclick="playVideo('https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', 'Nature Bloom')">
-                            <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden relative border border-white/5 group-hover:border-red-600 transition">
+                        <!-- Video Item 2 -->
+                        <div class="group cursor-pointer" onclick="playVideo('https://www.w3schools.com/html/movie.mp4', 'Ocean Life')">
+                            <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden relative border border-white/5 group-hover:border-red-600 transition shadow-lg">
+                                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover opacity-50">
+                                <div class="absolute inset-0 flex items-center justify-center"><i class="fas fa-play text-4xl group-hover:scale-125 transition"></i></div>
+                                <div class="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-bold">0:12</div>
+                            </div>
+                            <h4 class="mt-4 font-bold uppercase text-[11px] tracking-tighter text-white">Serene Waves: 4K Gameplay</h4>
+                            <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">FroFro Gaming • 12k views</p>
+                        </div>
+                         <!-- Video Item 3 -->
+                         <div class="group cursor-pointer" onclick="playVideo('https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', 'Nature Bloom')">
+                            <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden relative border border-white/5 group-hover:border-red-600 transition shadow-lg">
                                 <img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover opacity-50">
                                 <div class="absolute inset-0 flex items-center justify-center"><i class="fas fa-play text-4xl group-hover:scale-125 transition"></i></div>
+                                <div class="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-bold">0:05</div>
                             </div>
-                            <h4 class="mt-4 font-bold uppercase text-xs tracking-tighter text-gray-400">Calm Vibes • 15m ago</h4>
+                            <h4 class="mt-4 font-bold uppercase text-[11px] tracking-tighter text-white">Nature Bloom Teaser</h4>
+                            <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Cinematic • 1k views</p>
+                        </div>
+                        <!-- Video Item 4 -->
+                        <div class="group cursor-pointer" onclick="playVideo('https://www.w3schools.com/html/mov_bbb.mp4', 'Epic Win')">
+                            <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden relative border border-white/5 group-hover:border-red-600 transition shadow-lg">
+                                <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover opacity-50">
+                                <div class="absolute inset-0 flex items-center justify-center"><i class="fas fa-play text-4xl group-hover:scale-125 transition"></i></div>
+                                <div class="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-bold">0:32</div>
+                            </div>
+                            <h4 class="mt-4 font-bold uppercase text-[11px] tracking-tighter text-white">Top 10 Arcade Moments</h4>
+                            <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Daily Recap • 45k views</p>
                         </div>
                     </div>
                 </div>
@@ -179,7 +213,6 @@
                     <button onclick="showSection('home')" class="bg-zinc-800 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest border border-white/10">Quit Game</button>
                 </div>
                 <div id="game-viewport" class="aspect-video bg-black rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative">
-                    
                     <!-- Dino Run -->
                     <div id="dinorun-container" class="hidden h-full bg-[#f7f7f7] relative">
                         <canvas id="dino-canvas" class="w-full h-full"></canvas>
@@ -194,7 +227,7 @@
                         <div id="player-bot" class="absolute left-20 bottom-20 text-6xl select-none z-10">🚀</div>
                         <div id="jetpack-obstacles"></div>
                         <div id="jetpack-overlay" class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
-                            <h3 class="text-5xl font-black mb-4 uppercase italic">Jetpack Dash</h3>
+                            <h3 class="text-5xl font-black mb-4 uppercase italic text-center">Jetpack Dash</h3>
                             <p class="mb-8 text-gray-300">Hold SPACE or CLICK to fly!</p>
                             <button onclick="startJetpack()" class="bg-purple-600 px-12 py-4 rounded-full font-black text-sm uppercase tracking-widest">Ignition</button>
                         </div>
@@ -205,14 +238,13 @@
                         <div id="surfer" class="absolute bottom-20 left-1/2 -translate-x-1/2 text-7xl select-none z-10">🏄</div>
                         <div id="surf-obstacles"></div>
                         <div id="surf-overlay" class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
-                            <h3 class="text-5xl font-black mb-8 uppercase italic">Surf's Up</h3>
+                            <h3 class="text-5xl font-black mb-8 uppercase italic text-center">Surf's Up</h3>
                             <button onclick="startSurfing()" class="bg-blue-600 px-12 py-4 rounded-full font-black">Ride Wave</button>
                         </div>
                     </div>
                     
                     <iframe id="game-iframe" class="hidden w-full h-full border-none"></iframe>
 
-                    <!-- Touch Controls (Mobile) -->
                     <div id="touch-controls" class="hidden absolute bottom-8 left-0 right-0 px-8 flex justify-between z-20 pointer-events-none">
                         <div class="touch-btn pointer-events-auto" id="btn-left"><i class="fas fa-chevron-left"></i></div>
                         <div class="touch-btn pointer-events-auto" id="btn-action"><i class="fas fa-bolt"></i></div>
@@ -245,8 +277,8 @@
     <!-- POST MODAL -->
     <div id="post-modal" class="fixed inset-0 bg-black/95 z-[100] hidden flex items-center justify-center p-6">
         <div class="bg-zinc-900 p-12 rounded-[2rem] w-full max-w-xl border border-white/5 shadow-2xl">
-            <h3 class="text-4xl font-black italic uppercase mb-2">Global Feed</h3>
-            <p class="text-gray-500 text-sm mb-10 tracking-wide uppercase">Share your highlights with the world</p>
+            <h3 class="text-4xl font-black italic uppercase mb-2 text-center">Global Feed</h3>
+            <p class="text-gray-500 text-sm mb-10 tracking-wide uppercase text-center">Share your highlights with the world</p>
             <div class="space-y-6">
                 <div class="space-y-2">
                     <label class="text-[10px] font-black uppercase text-gray-500 ml-2">Video Title</label>
@@ -266,11 +298,54 @@
 
     <!-- VIDEO PLAYER -->
     <div id="video-modal" class="fixed inset-0 bg-black z-[110] hidden flex flex-col items-center justify-center">
-        <button onclick="closeVideo()" class="absolute top-10 right-10 text-5xl text-white/20 hover:text-white transition"><i class="fas fa-times"></i></button>
-        <video id="player" controls class="w-full max-w-6xl shadow-2xl bg-black rounded-3xl overflow-hidden"></video>
+        <button onclick="closeVideo()" class="absolute top-10 right-10 z-[120] text-5xl text-white/20 hover:text-white transition"><i class="fas fa-times"></i></button>
+        <video id="player" controls playsinline muted class="w-full max-w-6xl shadow-2xl bg-black rounded-3xl overflow-hidden"></video>
     </div>
 
     <script>
+        // --- PWA SETUP ---
+        // Creating a dynamic F logo SVG blob for the Manifest
+        const createLogoBlob = () => {
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#ff0000" rx="100"/><text x="50%" y="65%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="300" fill="white">F</text></svg>`;
+            return URL.createObjectURL(new Blob([svg], {type: 'image/svg+xml'}));
+        };
+
+        const manifest = {
+            name: "FroFroKit",
+            short_name: "FroFroKit",
+            start_url: ".",
+            display: "standalone",
+            background_color: "#050505",
+            theme_color: "#ff0000",
+            description: "Ultra Arcade Hub and Video Feed",
+            icons: [
+                { src: createLogoBlob(), sizes: "512x512", type: "image/svg+xml", purpose: "any" }
+            ]
+        };
+
+        const manifestString = JSON.stringify(manifest);
+        const manifestBlob = new Blob([manifestString], {type: 'application/json'});
+        document.getElementById('pwa-manifest').setAttribute('href', URL.createObjectURL(manifestBlob));
+
+        // Handling the "Add to Home Screen" prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-prompt').classList.remove('hidden');
+        });
+
+        async function installPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                document.getElementById('install-prompt').classList.add('hidden');
+            }
+            deferredPrompt = null;
+        }
+
+        // --- GAME LOGIC ---
         let score = 1000;
         let isAdmin = false;
         let logoClicks = 0;
@@ -278,7 +353,6 @@
         let gameScore = 0;
         let gameLoopId;
 
-        // Init
         function handleLogoClick() {
             logoClicks++;
             if(logoClicks === 10 && !isAdmin) {
@@ -302,22 +376,21 @@
             document.getElementById('nav-score').innerText = score.toLocaleString();
         }
 
-        // Store Logic
         function renderStore() {
             const grid = document.getElementById('pack-grid');
             grid.innerHTML = '';
             const packs = [
-                {n: "Classic Pack", p: 100, c: "zinc-800", r: "Common"},
-                {n: "Space Box", p: 2500, c: "pink-900", r: "Limited", spec: "space"},
-                {n: "Master Pack", p: 7500, c: "indigo-900", r: "Guaranteed Epic"},
-                {n: "GODLY MYSTERY", p: 25000, c: "emerald-950", r: "???"}
+                {n: "Classic Pack", p: 100, r: "Common"},
+                {n: "Space Box", p: 2500, r: "Limited"},
+                {n: "Master Pack", p: 7500, r: "Guaranteed Epic"},
+                {n: "GODLY MYSTERY", p: 25000, r: "???"}
             ];
             packs.forEach(p => {
                 const el = document.createElement('div');
                 el.className = `bg-zinc-900/50 border border-white/5 p-12 rounded-[2.5rem] flex flex-col items-center hover:scale-105 transition-all cursor-pointer group`;
                 el.innerHTML = `
                     <div class="text-7xl mb-6 group-hover:scale-110 transition">${p.n.includes('Space') ? '🚀' : p.n.includes('GODLY') ? '💎' : '📦'}</div>
-                    <h4 class="text-xl font-black uppercase italic italic">${p.n}</h4>
+                    <h4 class="text-xl font-black uppercase italic">${p.n}</h4>
                     <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-2 mb-8">${p.r}</p>
                     <button onclick="buyPack('${p.n}', ${p.p})" class="w-full py-4 rounded-2xl bg-white text-black font-black uppercase text-[10px] tracking-widest group-hover:bg-red-600 group-hover:text-white transition">Buy for ${p.p}</button>
                 `;
@@ -359,7 +432,6 @@
             setTimeout(() => document.getElementById('reveal-modal').classList.add('hidden'), 500);
         }
 
-        // Games Logic
         function playGame(game) {
             showSection('game');
             document.getElementById('game-title').innerText = game;
@@ -382,7 +454,6 @@
             clearInterval(window.gameTick);
         }
 
-        // Dino Run Logic
         function startDino() {
             isRunning = true; gameScore = 0;
             const canvas = document.getElementById('dino-canvas');
@@ -397,45 +468,34 @@
             function loop() {
                 if(!isRunning) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Ground
                 ctx.strokeStyle = "#ddd"; ctx.beginPath(); ctx.moveTo(0, 270); ctx.lineTo(800, 270); ctx.stroke();
-                
-                // Dino
                 dino.dy += 0.8; dino.y += dino.dy;
                 if(dino.y > dino.ground) { dino.y = dino.ground; dino.dy = 0; }
                 ctx.font = "40px Arial"; ctx.fillText("🦖", dino.x, dino.y);
-
-                // Obs
                 if(counter % 100 === 0) obstacles.push({ x: 800, w: 30, h: 40 });
-                obstacles.forEach((o, i) => {
+                obstacles.forEach((o) => {
                     o.x -= 7;
                     ctx.fillText("🌵", o.x, 230);
                     if(dino.x < o.x + 30 && dino.x + 40 > o.x && dino.y > 190) {
                         isRunning = false; endGame('Dino Extinct', 'dino');
                     }
                 });
-                
                 obstacles = obstacles.filter(o => o.x > -50);
                 gameScore++; counter++;
                 gameLoopId = requestAnimationFrame(loop);
             }
-
             window.onkeydown = (e) => { if(e.key === ' ' && dino.y === dino.ground) dino.dy = dino.jump; };
             document.getElementById('btn-action').onclick = () => { if(dino.y === dino.ground) dino.dy = dino.jump; };
             loop();
         }
 
-        // Jetpack Logic
         function startJetpack() {
             isRunning = true; gameScore = 0;
             const bot = document.getElementById('player-bot');
             const obsContainer = document.getElementById('jetpack-obstacles');
             document.getElementById('jetpack-overlay').classList.add('hidden');
             obsContainer.innerHTML = '';
-            
             let botY = 200; let botV = 0; let isThrusting = false;
-            
             window.gameTick = setInterval(() => {
                 if(!isRunning) return;
                 gameScore++;
@@ -444,7 +504,6 @@
                 if(botY < 0) botY = 0;
                 if(botY > 400) { isRunning = false; endGame('Crashed!', 'jetpack'); }
                 bot.style.top = botY + 'px';
-
                 if(gameScore % 20 === 0) {
                     const obs = document.createElement('div');
                     obs.className = "absolute text-4xl transition-all duration-[1500ms] linear";
@@ -455,7 +514,6 @@
                     setTimeout(() => obs.style.right = "110%", 50);
                     setTimeout(() => obs.remove(), 1600);
                 }
-                
                 const bRect = bot.getBoundingClientRect();
                 document.querySelectorAll('#jetpack-obstacles div').forEach(o => {
                     const oRect = o.getBoundingClientRect();
@@ -464,14 +522,14 @@
                     }
                 });
             }, 30);
-
             window.onkeydown = (e) => { if(e.key === ' ') isThrusting = true; };
             window.onkeyup = (e) => { if(e.key === ' ') isThrusting = false; };
             document.getElementById('btn-action').onmousedown = () => isThrusting = true;
             document.getElementById('btn-action').onmouseup = () => isThrusting = false;
+            document.getElementById('btn-action').ontouchstart = () => isThrusting = true;
+            document.getElementById('btn-action').ontouchend = () => isThrusting = false;
         }
 
-        // Surf Logic
         let surferX = 50;
         function startSurfing() {
             isRunning = true; gameScore = 0;
@@ -510,15 +568,15 @@
             const overlay = document.getElementById(type + '-overlay');
             overlay.classList.remove('hidden');
             overlay.innerHTML = `
-                <h3 class="text-4xl font-black mb-2">${msg}</h3>
-                <p class="text-gray-400 mb-8 uppercase tracking-widest">Score: ${gameScore} | Gems: +${reward}</p>
-                <button onclick="playGame('${type === 'dino' ? 'dinorun' : type}')" class="bg-white text-black px-12 py-3 rounded-full font-black uppercase text-xs">Retry</button>
+                <h3 class="text-4xl font-black mb-2 text-center">${msg}</h3>
+                <p class="text-gray-400 mb-8 uppercase tracking-widest text-center">Score: ${gameScore} | Gems: +${reward}</p>
+                <button onclick="playGame('${type === 'dino' ? 'dinorun' : type}')" class="bg-white text-black px-12 py-4 rounded-full font-black uppercase text-xs">Retry</button>
             `;
         }
 
-        // Community Videos
         function openUploadModal() { document.getElementById('post-modal').classList.remove('hidden'); }
         function closeUploadModal() { document.getElementById('post-modal').classList.add('hidden'); }
+        
         function createPost() {
             const title = document.getElementById('post-title').value;
             const url = document.getElementById('post-url').value;
@@ -528,20 +586,39 @@
             div.className = "group cursor-pointer";
             div.onclick = () => playVideo(url, title);
             div.innerHTML = `
-                <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden relative border border-red-600/30 group-hover:border-red-600 transition">
+                <div class="aspect-video bg-zinc-900 rounded-2xl overflow-hidden relative border border-red-600/30 group-hover:border-red-600 transition shadow-lg">
                     <div class="absolute inset-0 flex items-center justify-center"><i class="fas fa-play text-4xl"></i></div>
+                    <div class="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-bold">LIVE</div>
                 </div>
-                <h4 class="mt-4 font-bold uppercase text-xs tracking-tighter text-red-500">Global Upload • Just Now</h4>
+                <h4 class="mt-4 font-bold uppercase text-[11px] tracking-tighter text-red-500">${title}</h4>
+                <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Community Post • Just Now</p>
             `;
             feed.prepend(div);
             closeUploadModal();
         }
+
         function playVideo(url, title) {
-            const v = document.getElementById('player'); v.src = url;
+            const v = document.getElementById('player');
+            v.muted = false;
+            v.src = url;
+            v.load();
             document.getElementById('video-modal').classList.remove('hidden');
-            v.play();
+            
+            const playPromise = v.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    v.muted = true;
+                    v.play();
+                });
+            }
         }
-        function closeVideo() { document.getElementById('player').pause(); document.getElementById('video-modal').classList.add('hidden'); }
+
+        function closeVideo() { 
+            const v = document.getElementById('player');
+            v.pause(); 
+            v.src = "";
+            document.getElementById('video-modal').classList.add('hidden'); 
+        }
 
         updateUI();
     </script>
