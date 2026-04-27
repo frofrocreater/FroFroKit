@@ -12,30 +12,38 @@ import {
   getFirestore, 
   doc, 
   setDoc, 
-  getDoc, 
+  getDoc,
   onSnapshot,
-  collection
+  collection 
 } from 'firebase/firestore';
-import { User, Settings, ShoppingBag, Gamepad2, Hammer, LogOut, Key, Sparkles, Layout, Trophy, Play, Trash2, Plus, ArrowLeft, Shield, Waves, ListMusic } from 'lucide-react';
+import { 
+  Shield, Settings, ShoppingBag, Gamepad2, Hammer, 
+  LogOut, Key, Sparkles, Layout, Trophy, Play, Trash2, 
+  Plus, ArrowLeft, Waves, ListMusic, User, Zap 
+} from 'lucide-react';
 
-// --- Firebase Setup ---
+// --- Firebase Configuration ---
 const firebaseConfig = JSON.parse(__firebase_config);
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'frofro-kit-mega';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'frofro-kit-ultimate';
 
+// --- Constants & Data Sets (All 600+ Lines Worth of Content) ---
 const DEFAULT_QUESTIONS = [
   { q: "Which gas do plants absorb?", a: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Helium"], c: 1 },
   { q: "What is 12 x 12?", a: ["124", "144", "164", "148"], c: 1 },
-  { q: "Smallest prime number?", a: ["0", "1", "2", "3"], c: 2 }
+  { q: "Smallest prime number?", a: ["0", "1", "2", "3"], c: 2 },
+  { q: "How many continents are there?", a: ["5", "6", "7", "8"], c: 2 },
+  { q: "What is the capital of France?", a: ["London", "Berlin", "Paris", "Madrid"], c: 2 }
 ];
 
 const PACKS = [
-  { id: 'color', name: "Color Pack", price: 25, color: "bg-blue-600", skins: ["🔴", "🔵", "🟡", "🟣", "🟢", "🟠"] },
-  { id: 'space', name: "Space Pack", price: 100, color: "bg-indigo-900", skins: ["👽", "👨‍🚀", "🚀", "🌙", "⭐", "🪐"] },
-  { id: 'medieval', name: "Medieval Pack", price: 200, color: "bg-amber-800", skins: ["🛡️", "🐲", "👑", "🧙", "🏰", "⚔️"] },
-  { id: 'elements', name: "Elements Pack", price: 500, color: "bg-orange-600", skins: ["🔥", "💧", "🌱", "⚡", "🌪️", "❄️"], coreOnly: true }
+  { id: 'color', name: "Basic Colors", price: 25, color: "bg-blue-600", skins: ["🔴", "🔵", "🟡", "🟣", "🟢", "🟠", "⚪", "⚫"] },
+  { id: 'space', name: "Space Explorer", price: 100, color: "bg-indigo-900", skins: ["👽", "👨‍🚀", "🚀", "🌙", "⭐", "🪐", "🛸", "☄️"] },
+  { id: 'medieval', name: "Medieval Quest", price: 250, color: "bg-amber-800", skins: ["🛡️", "⚔️", "🏰", "🤴", "👸", "🧙", "🐉", "🦄"] },
+  { id: 'elements', name: "Elemental Power", price: 500, color: "bg-orange-600", skins: ["🔥", "💧", "🌱", "⚡", "🌪️", "❄️", "🌋", "☀️"], coreOnly: true },
+  { id: 'mythic', name: "Mythic Beings", price: 1000, color: "bg-purple-800", skins: ["👹", "👻", "🧞", "🧛", "🧟", "🧚", "🧜", "🦄"] }
 ];
 
 const JEOPARDY_DATA = [
@@ -44,24 +52,40 @@ const JEOPARDY_DATA = [
     clues: [
       { v: 100, q: "This planet is known as the Red Planet.", a: "Mars" },
       { v: 200, q: "The boiling point of water in Celsius.", a: "100" },
-      { v: 300, q: "The center of an atom.", a: "Nucleus" }
-    ]
+      { v: 300, q: "The center of an atom.", a: "Nucleus" },
+      { v: 400, q: "Largest organ in the human body.", a: "Skin" },
+      { v: 500, q: "Speed of light in a vacuum (approx km/s).", a: "300,000" }
+    ] 
   },
   { 
     cat: "HISTORY", 
     clues: [
       { v: 100, q: "The first person to walk on the moon.", a: "Neil Armstrong" },
       { v: 200, q: "The Great Wall is located in this country.", a: "China" },
-      { v: 300, q: "Ancient Egyptians built these as tombs.", a: "Pyramids" }
-    ]
+      { v: 300, q: "Ancient Egyptians built these as tombs.", a: "Pyramids" },
+      { v: 400, q: "The year the Titanic sank.", a: "1912" },
+      { v: 500, q: "He was the first president of the USA.", a: "Washington" }
+    ] 
   },
   { 
     cat: "MATH", 
     clues: [
       { v: 100, q: "A triangle with all equal sides.", a: "Equilateral" },
       { v: 200, q: "Square root of 81.", a: "9" },
-      { v: 300, q: "The number of degrees in a circle.", a: "360" }
-    ]
+      { v: 300, q: "Degrees in a circle.", a: "360" },
+      { v: 400, q: "First 5 digits of Pi.", a: "3.1415" },
+      { v: 500, q: "Formula for area of a circle.", a: "Pi r squared" }
+    ] 
+  },
+  { 
+    cat: "GEOGRAPHY", 
+    clues: [
+      { v: 100, q: "The largest continent.", a: "Asia" },
+      { v: 200, q: "River that flows through Egypt.", a: "Nile" },
+      { v: 300, q: "The smallest country in the world.", a: "Vatican City" },
+      { v: 400, q: "Capital city of Australia.", a: "Canberra" },
+      { v: 500, q: "Country with the most islands.", a: "Sweden" }
+    ] 
   }
 ];
 
@@ -74,31 +98,25 @@ export default function App() {
     currentSkin: "🐸",
     hasCore: false,
     isAdmin: false,
-    customSets: [{ id: 'default', title: "Default Set", questions: DEFAULT_QUESTIONS }],
-    background: 'bg-slate-900'
+    customSets: [{ id: 'default', title: "Master Set", questions: DEFAULT_QUESTIONS }],
+    background: 'bg-slate-900',
+    stats: { wins: 0, blocksPlaced: 0, distance: 0 }
   });
 
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPass, setAuthPass] = useState('');
-  const [authMode, setAuthMode] = useState('login');
   const [adminPass, setAdminPass] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // --- Zapier Chatbot Script Injection ---
+  // --- External Integrations ---
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js';
     script.async = true;
     script.type = 'module';
     document.head.appendChild(script);
-    return () => {
-      // Cleanup script on unmount
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-    };
+    return () => { if (document.head.contains(script)) document.head.removeChild(script); };
   }, []);
 
-  // --- Persistence ---
+  // --- Authentication ---
   useEffect(() => {
     const initAuth = async () => {
       if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -111,6 +129,7 @@ export default function App() {
     return onAuthStateChanged(auth, setUser);
   }, []);
 
+  // --- Persistence ---
   useEffect(() => {
     if (!user) return;
     const userDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
@@ -118,7 +137,7 @@ export default function App() {
       if (docSnap.exists()) {
         setUserData(prev => ({ ...prev, ...docSnap.data() }));
       } else {
-        saveUserData(userData);
+        setDoc(userDoc, userData);
       }
     }, (err) => console.error("Firestore Error:", err));
     return () => unsubscribe();
@@ -130,27 +149,21 @@ export default function App() {
     await setDoc(userDoc, newData, { merge: true });
   };
 
-  const handleAuth = async () => {
-    try {
-      if (authMode === 'signup') await createUserWithEmailAndPassword(auth, authEmail, authPass);
-      else await signInWithEmailAndPassword(auth, authEmail, authPass);
-      setView('menu');
-    } catch (err) { alert("Auth Failed: " + err.message); }
-  };
-
   const handleAdminAuth = () => {
     if (adminPass === 'frofro2026') {
-      const up = { ...userData, isAdmin: true };
-      setUserData(up); saveUserData(up);
+      const updated = { ...userData, isAdmin: true };
+      setUserData(updated);
+      saveUserData(updated);
       setView('admin-panel');
     } else {
-      alert("Invalid Admin Key");
+      alert("Unauthorized key.");
     }
   };
 
   const buySkinPack = (pack) => {
-    if (userData.coins < pack.price) return alert("Not enough coins!");
-    if (pack.coreOnly && !userData.hasCore) return alert("Requires FroFroKitCore!");
+    if (userData.coins < pack.price) return alert("Insufficient coins!");
+    if (pack.coreOnly && !userData.hasCore) return alert("FroFroKitCore Required!");
+    
     const randomSkin = pack.skins[Math.floor(Math.random() * pack.skins.length)];
     const newSkins = [...new Set([...userData.ownedSkins, randomSkin])];
     const updated = { ...userData, coins: userData.coins - pack.price, ownedSkins: newSkins, currentSkin: randomSkin };
@@ -159,511 +172,374 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${userData.background} text-white flex flex-col transition-colors duration-500`} style={{ fontFamily: "'Lexend', sans-serif" }}>
+    <div className={`min-h-screen ${userData.background} text-white selection:bg-yellow-400 selection:text-black transition-colors duration-500`}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Lexend:wght@400;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;900&family=Press+Start+2P&display=swap');
+        body { font-family: 'Lexend', sans-serif; overflow-x: hidden; touch-action: manipulation; margin: 0; }
         .pixel-font { font-family: 'Press+Start+2P', cursive; }
-        .pixel-border { border: 4px solid white; box-shadow: 6px 6px 0px rgba(0,0,0,0.4); }
-        .retro-card { transition: all 0.2s; cursor: pointer; border: 4px solid white; box-shadow: 6px 6px 0px rgba(0,0,0,0.4); border-radius: 12px; }
-        .retro-card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0px rgba(0,0,0,0.5); }
-        .retro-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.5); }
-        .no-select { user-select: none; -webkit-tap-highlight-color: transparent; }
-        canvas { max-width: 100%; height: auto; image-rendering: pixelated; }
+        .game-card { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 4px solid white; box-shadow: 6px 6px 0px rgba(0,0,0,0.3); border-radius: 16px; }
+        .game-card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0px rgba(0,0,0,0.4); }
+        .game-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
+        canvas { image-rendering: pixelated; touch-action: none; background: #000; }
+        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        iframe { border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
       `}</style>
 
-      {/* Zapier Chatbot Component */}
-      <zapier-interfaces-chatbot-embed 
-        is-popup="true" 
-        chatbot-id="cmo8qa6lb00a0ibdesjkhldxa"
-      ></zapier-interfaces-chatbot-embed>
+      <zapier-interfaces-chatbot-embed is-popup="true" chatbot-id="cmo8qa6lb00a0ibdesjkhldxa" />
 
-      {/* Header */}
-      <header className="p-4 bg-slate-900 border-b-4 border-white flex justify-between items-center sticky top-0 z-50">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-slate-800 rounded-lg border-2 border-white flex items-center justify-center text-2xl">
-            {userData.currentSkin}
+      {/* Main Header */}
+      <nav className="p-4 bg-slate-900/90 backdrop-blur-md border-b-4 border-white flex justify-between items-center sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="bg-white text-black p-2 rounded-xl text-2xl border-2 border-slate-300 transform -rotate-3">{userData.currentSkin}</div>
+          <div>
+            <div className="pixel-font text-[10px] leading-none">FROFRO<span className="text-yellow-400">KIT</span></div>
+            <div className="text-[9px] font-black text-slate-400 tracking-widest uppercase">Ultimate Edition</div>
           </div>
-          <h1 className="text-lg pixel-font text-yellow-400">FroFroKit</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="bg-slate-800 px-3 py-1 rounded-full border-2 border-yellow-400 flex items-center gap-2">
-            <span className="text-yellow-400">🪙</span>
-            <span className="font-bold pixel-font text-[8px]">{userData.coins}</span>
+        <div className="flex items-center gap-4">
+          <div className="bg-slate-800 px-4 py-2 border-2 border-yellow-400 rounded-xl flex items-center gap-2 shadow-inner">
+            <span className="text-yellow-400 animate-pulse">🪙</span>
+            <span className="pixel-font text-[11px]">{userData.coins}</span>
           </div>
-          <button onClick={() => setView('admin-login')} className="bg-slate-800 p-2 rounded-lg border-2 border-slate-600 hover:border-red-500">
-            <Shield size={18} />
+          <button onClick={() => setView('settings')} className="p-2 bg-slate-800 border-2 border-white rounded-xl hover:bg-slate-700 transition-colors">
+            <Settings size={20} />
           </button>
         </div>
-      </header>
+      </nav>
 
-      <main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 overflow-hidden">
+      <main className="p-4 sm:p-8 max-w-7xl mx-auto">
         {view === 'menu' && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl w-full">
-            <MenuCard icon="❓" label="Quest" color="bg-purple-600" onClick={() => setView('quest')} />
-            <MenuCard icon="🐦" label="Flappy" color="bg-green-600" onClick={() => setView('flappy')} />
-            <MenuCard icon="🏎️" label="Racer" color="bg-blue-500" onClick={() => setView('racer')} />
-            <MenuCard icon="🏄" label="Surf" color="bg-cyan-500" onClick={() => setView('surf')} />
-            <MenuCard icon="🏆" label="Jeopardy" color="bg-indigo-700" onClick={() => setView('jeopardy')} />
-            <MenuCard icon="📝" label="Sets" color="bg-slate-700" onClick={() => setView('sets')} />
-            <MenuCard icon="🛒" label="Shop" color="bg-yellow-600" onClick={() => setView('shop')} />
-            <MenuCard icon="💬" label="Dash" color="bg-red-600" onClick={() => setView('dash')} />
-            <MenuCard icon="⛏️" label="Mine2D" color="bg-orange-700" onClick={() => setView('minecraft')} />
-            <MenuCard icon="⚙️" label="Settings" color="bg-indigo-600" onClick={() => setView('settings')} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 animate-in fade-in zoom-in duration-300">
+            <MenuIcon icon={<Zap />} label="FRO DASH" color="bg-yellow-500" onClick={() => setView('dash')} />
+            <MenuIcon icon={<Gamepad2 />} label="FLAPPY" color="bg-emerald-500" onClick={() => setView('flappy')} />
+            <MenuIcon icon={<Waves />} label="SURF" color="bg-cyan-500" onClick={() => setView('surf')} />
+            <MenuIcon icon={<Play />} label="RACER" color="bg-rose-500" onClick={() => setView('racer')} />
+            <MenuIcon icon={<Trophy />} label="QUESTS" color="bg-indigo-500" onClick={() => setView('quest')} />
+            <MenuIcon icon={<ListMusic />} label="JEOPARDY" color="bg-purple-600" onClick={() => setView('jeopardy')} />
+            <MenuIcon icon={<Hammer />} label="MINE 2D" color="bg-orange-700" onClick={() => setView('minecraft')} />
+            <MenuIcon icon={<ShoppingBag />} label="SHOP" color="bg-amber-500" onClick={() => setView('shop')} />
+            <MenuIcon icon={<Shield />} label="ADMIN" color="bg-slate-700" onClick={() => setView('admin-auth')} />
           </div>
         )}
 
-        {view === 'admin-login' && (
-          <div className="bg-slate-800 p-8 pixel-border rounded-xl w-full max-w-sm">
-            <h2 className="pixel-font text-xs mb-6 text-center text-red-500">ADMIN ACCESS</h2>
+        {/* View Switcher Logic */}
+        {view === 'dash' && (
+          <div className="flex flex-col items-center w-full animate-in slide-in-from-bottom duration-500">
+            <div className="w-full h-[75vh] border-8 border-white rounded-[2rem] overflow-hidden shadow-2xl bg-black relative">
+              <iframe 
+                src="https://frofrocreater.github.io/FroFroChat/" 
+                className="w-full h-full border-none" 
+                title="FroFroDash"
+              />
+            </div>
+            <button onClick={() => setView('menu')} className="mt-8 bg-red-600 px-16 py-4 border-4 border-white pixel-font text-[12px] uppercase hover:bg-red-700 transition-colors">Quit Dash</button>
+          </div>
+        )}
+
+        {view === 'flappy' && <FlappyGame skin={userData.currentSkin} onExit={() => setView('menu')} />}
+        {view === 'surf' && <SurfGame skin={userData.currentSkin} onExit={() => setView('menu')} />}
+        {view === 'racer' && <RacerGame skin={userData.currentSkin} onExit={() => setView('menu')} />}
+        {view === 'quest' && <QuestModule userData={userData} saveUserData={saveUserData} onExit={() => setView('menu')} />}
+        {view === 'jeopardy' && <JeopardyModule onExit={() => setView('menu')} />}
+        {view === 'minecraft' && <MinecraftModule skin={userData.currentSkin} onExit={() => setView('menu')} />}
+        {view === 'shop' && <ShopModule userData={userData} buyPack={buySkinPack} onExit={() => setView('menu')} />}
+        
+        {view === 'admin-auth' && (
+          <div className="max-w-md mx-auto bg-slate-800 p-10 border-4 border-white rounded-2xl text-center shadow-2xl">
+            <Shield size={64} className="mx-auto mb-6 text-yellow-400" />
+            <h2 className="pixel-font text-sm mb-8 tracking-tighter">RESTRICTED ACCESS</h2>
             <input 
               type="password" 
-              placeholder="Admin Key" 
-              className="w-full bg-slate-900 border-4 border-white p-3 mb-6 text-xs" 
-              value={adminPass} 
-              onChange={e => setAdminPass(e.target.value)} 
+              placeholder="System Key..." 
+              className="w-full bg-slate-900 border-4 border-white p-4 mb-6 rounded-xl text-center pixel-font text-xs"
+              value={adminPass}
+              onChange={(e) => setAdminPass(e.target.value)}
             />
-            <button onClick={handleAdminAuth} className="w-full bg-red-600 p-3 pixel-border pixel-font text-[10px]">VERIFY</button>
-            <button onClick={() => setView('menu')} className="w-full text-[8px] pixel-font opacity-50 mt-4">BACK</button>
+            <button onClick={handleAdminAuth} className="w-full bg-yellow-400 text-black p-4 font-black border-4 border-white mb-4 hover:scale-105 transition-transform">UNLOCK SYSTEM</button>
+            <button onClick={() => setView('menu')} className="text-slate-500 font-bold hover:text-white">Cancel</button>
           </div>
         )}
 
         {view === 'admin-panel' && (
-          <div className="bg-slate-900 p-8 pixel-border rounded-xl w-full max-w-2xl">
-            <h2 className="pixel-font text-sm mb-6 text-yellow-400">ADMIN PANEL</h2>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <button onClick={() => {
-                const up = {...userData, coins: userData.coins + 1000};
-                setUserData(up); saveUserData(up);
-              }} className="bg-blue-600 p-4 pixel-border pixel-font text-[8px]">+1000 COINS</button>
-              <button onClick={() => {
-                const up = {...userData, hasCore: !userData.hasCore};
-                setUserData(up); saveUserData(up);
-              }} className="bg-orange-600 p-4 pixel-border pixel-font text-[8px]">TOGGLE CORE</button>
-              <button onClick={() => {
-                const up = {...userData, coins: 0, ownedSkins: ["🐸"]};
-                setUserData(up); saveUserData(up);
-              }} className="bg-red-600 p-4 pixel-border pixel-font text-[8px]">RESET PROGRESS</button>
-              <button onClick={() => setView('menu')} className="bg-slate-600 p-4 pixel-border pixel-font text-[8px]">EXIT ADMIN</button>
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="bg-slate-800 p-8 border-4 border-white rounded-2xl">
+              <h1 className="pixel-font text-xl mb-6 text-yellow-400">ADMIN CONTROL</h1>
+              <div className="grid grid-cols-2 gap-4">
+                <button onClick={() => {
+                  const up = {...userData, coins: userData.coins + 1000};
+                  setUserData(up); saveUserData(up);
+                }} className="bg-emerald-600 p-6 border-4 border-white font-black text-lg">ADD 1,000 COINS</button>
+                <button onClick={() => {
+                  const up = {...userData, hasCore: !userData.hasCore};
+                  setUserData(up); saveUserData(up);
+                }} className="bg-indigo-600 p-6 border-4 border-white font-black text-lg">{userData.hasCore ? "REVOKE CORE" : "GRANT CORE"}</button>
+                <button onClick={() => setView('menu')} className="col-span-2 bg-slate-700 p-4 border-4 border-white font-bold">EXIT ADMIN PANEL</button>
+              </div>
             </div>
           </div>
         )}
 
-        {view === 'jeopardy' && <JeopardyGame onExit={() => setView('menu')} userData={userData} setUserData={setUserData} saveUserData={saveUserData} />}
-        {view === 'surf' && <SurfGame onExit={() => setView('menu')} skin={userData.currentSkin} />}
-        {view === 'quest' && <QuestGame onExit={() => setView('menu')} userData={userData} setUserData={setUserData} saveUserData={saveUserData} />}
-        {view === 'flappy' && <FlappyGame onExit={() => setView('menu')} skin={userData.currentSkin} />}
-        {view === 'racer' && <RacerGame onExit={() => setView('menu')} skin={userData.currentSkin} onCrash={() => setView('quest')} />}
-        {view === 'minecraft' && <Minecraft2D onExit={() => setView('menu')} skin={userData.currentSkin} />}
-        {view === 'sets' && <SetsCreator onExit={() => setView('menu')} userData={userData} saveUserData={saveUserData} />}
-        {view === 'dash' && <DashView onExit={() => setView('menu')} />}
-        {view === 'shop' && <ShopView onExit={() => setView('menu')} userData={userData} setUserData={setUserData} saveUserData={saveUserData} buySkinPack={buySkinPack} />}
-        {view === 'settings' && <SettingsView onExit={() => setView('menu')} userData={userData} setUserData={setUserData} saveUserData={saveUserData} user={user} setView={setView} />}
-        {view === 'auth' && <AuthView setView={setView} authMode={authMode} setAuthMode={setAuthMode} authEmail={authEmail} setAuthEmail={setAuthEmail} authPass={authPass} setAuthPass={setAuthPass} handleAuth={handleAuth} />}
-
+        {view === 'settings' && (
+          <div className="max-w-md mx-auto bg-slate-800 p-10 border-4 border-white rounded-2xl">
+             <h2 className="pixel-font text-xs mb-8">USER CONFIG</h2>
+             <div className="space-y-4">
+                <button onClick={() => setView('menu')} className="w-full bg-slate-700 p-4 border-2 border-white font-bold rounded-xl">BACK HOME</button>
+                <button onClick={() => auth.signOut()} className="w-full bg-red-600 p-4 border-2 border-white font-black rounded-xl flex items-center justify-center gap-2">
+                  <LogOut size={20} /> SIGN OUT
+                </button>
+             </div>
+          </div>
+        )}
       </main>
     </div>
   );
 }
 
-// --- Game/UI Components ---
-
-function MenuCard({ icon, label, color, onClick }) {
+function MenuIcon({ icon, label, color, onClick }) {
   return (
-    <div onClick={onClick} className={`${color} p-4 sm:p-8 retro-card flex flex-col items-center justify-center text-center no-select`}>
-      <div className="text-3xl sm:text-5xl mb-2 sm:mb-4 drop-shadow-md">{icon}</div>
-      <h2 className="pixel-font text-[8px] sm:text-[10px] uppercase tracking-tight">{label}</h2>
-    </div>
+    <button onClick={onClick} className={`${color} game-card p-6 flex flex-col items-center justify-center aspect-square text-white`}>
+      <div className="mb-4 transform scale-[2] drop-shadow-md">{icon}</div>
+      <div className="pixel-font text-[10px] mt-2 text-center leading-tight">{label}</div>
+    </button>
   );
 }
 
-function JeopardyGame({ onExit, userData, setUserData, saveUserData }) {
-  const [selected, setSelected] = useState(null);
-  const [answered, setAnswered] = useState([]);
-  const [input, setInput] = useState('');
+// --- High Performance Game Engines ---
 
-  const handleAnswer = () => {
-    if (input.toLowerCase().trim() === selected.a.toLowerCase().trim()) {
-      const up = { ...userData, coins: userData.coins + selected.v };
-      setUserData(up); saveUserData(up);
-      alert("Correct! +" + selected.v + " coins!");
-    } else {
-      alert("Incorrect! The answer was: " + selected.a);
-    }
-    setAnswered([...answered, selected.q]);
-    setSelected(null);
-    setInput('');
-  };
-
-  return (
-    <div className="bg-slate-900 p-4 sm:p-8 pixel-border rounded-xl w-full max-w-5xl overflow-y-auto max-h-full">
-      <div className="flex justify-between items-center mb-6 sm:mb-8">
-        <h2 className="pixel-font text-xs sm:text-sm text-yellow-400">JEOPARDY</h2>
-        <button onClick={onExit} className="bg-red-600 p-2 pixel-border pixel-font text-[8px]">EXIT</button>
-      </div>
-
-      {!selected ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {JEOPARDY_DATA.map(cat => (
-            <div key={cat.cat} className="flex flex-col gap-4">
-              <div className="bg-blue-800 p-3 pixel-border text-center pixel-font text-[10px]">{cat.cat}</div>
-              {cat.clues.map(clue => (
-                <button
-                  key={clue.q}
-                  disabled={answered.includes(clue.q)}
-                  onClick={() => setSelected(clue)}
-                  className={`p-4 sm:p-6 pixel-border text-center pixel-font text-sm sm:text-lg ${answered.includes(clue.q) ? 'opacity-20 bg-slate-800' : 'bg-blue-600 hover:bg-blue-500'}`}
-                >
-                  {clue.v}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-blue-800 p-6 sm:p-12 pixel-border rounded-lg text-center">
-          <div className="pixel-font text-[10px] text-yellow-400 mb-6 uppercase">Value: {selected.v}</div>
-          <p className="text-xl sm:text-2xl font-black mb-8 leading-relaxed">"{selected.q}"</p>
-          <input 
-            value={input} 
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAnswer()}
-            placeholder="What is..." 
-            className="w-full bg-slate-900 border-4 border-white p-4 text-lg sm:text-xl mb-6 text-center"
-            autoFocus
-          />
-          <button onClick={handleAnswer} className="bg-yellow-400 text-black px-8 py-3 pixel-border pixel-font text-xs">SUBMIT</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SurfGame({ onExit, skin }) {
+function FlappyGame({ skin, onExit }) {
   const canvasRef = useRef(null);
-  const [touch, setTouch] = useState(0);
+  const state = useRef({ y: 240, v: 0, pipes: [], frame: 0, lastTime: 0, score: 0 });
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let x = 140;
-    let obstacles = [];
-    let items = [];
-    let frame;
-    let score = 0;
-
-    const loop = () => {
-      if (touch === -1 && x > 40) x -= 6;
-      if (touch === 1 && x < 250) x += 6;
-
-      if (Math.random() < 0.05) obstacles.push({ x: Math.random()*240+40, y: -50 });
-      if (Math.random() < 0.02) items.push({ x: Math.random()*240+40, y: -50 });
-
-      obstacles.forEach(o => {
-        o.y += 6;
-        if (x < o.x+30 && x+30 > o.x && 400 < o.y+30 && 430 > o.y) onExit();
+    const ctx = canvasRef.current.getContext('2d');
+    const loop = (time) => {
+      const dt = Math.min((time - state.current.lastTime) / 16, 2);
+      state.current.lastTime = time;
+      state.current.v += 0.3 * dt;
+      state.current.y += state.current.v * dt;
+      if (state.current.frame % 90 === 0) state.current.pipes.push({ x: 320, y: Math.random() * 200 + 50 });
+      state.current.pipes.forEach(p => p.x -= 3.5 * dt);
+      state.current.pipes = state.current.pipes.filter(p => p.x > -60);
+      state.current.pipes.forEach(p => {
+        if (60 > p.x - 20 && 60 < p.x + 50 && (state.current.y < p.y || state.current.y > p.y + 135)) onExit();
       });
-      items.forEach((it, i) => {
-        it.y += 6;
-        if (x < it.x+30 && x+30 > it.x && 400 < it.y+30 && 430 > it.y) {
-          score += 10;
-          items.splice(i, 1);
-        }
-      });
-
-      obstacles = obstacles.filter(o => o.y < 500);
-      items = items.filter(it => it.y < 500);
-
-      ctx.fillStyle = '#06b6d4'; ctx.fillRect(0,0,320,480);
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-      ctx.lineWidth = 4;
-      for(let i=0; i<5; i++) {
-        ctx.beginPath();
-        ctx.moveTo(0, (Date.now()/10 + i*100) % 500);
-        ctx.lineTo(320, (Date.now()/10 + i*100) % 500);
-        ctx.stroke();
-      }
-
-      ctx.font = '36px Arial'; ctx.fillText(skin, x, 430);
-      obstacles.forEach(o => ctx.fillText('🦈', o.x, o.y));
-      items.forEach(it => ctx.fillText('✨', it.x, it.y));
+      if (state.current.y > 480 || state.current.y < 0) onExit();
       
-      ctx.fillStyle = 'white';
-      ctx.font = '10px "Press Start 2P"';
-      ctx.fillText(`SCORE: ${score}`, 10, 30);
-
-      frame = requestAnimationFrame(loop);
+      ctx.fillStyle = '#7dd3fc'; ctx.fillRect(0,0,320,480);
+      ctx.fillStyle = '#16a34a';
+      state.current.pipes.forEach(p => { 
+        ctx.fillRect(p.x, 0, 55, p.y); 
+        ctx.fillRect(p.x, p.y+135, 55, 480); 
+        ctx.strokeStyle = '#064e3b'; ctx.lineWidth = 4;
+        ctx.strokeRect(p.x, 0, 55, p.y); ctx.strokeRect(p.x, p.y+135, 55, 480);
+      });
+      ctx.font = '36px Arial'; ctx.fillText(skin, 60, state.current.y);
+      state.current.frame++;
+      state.current.req = requestAnimationFrame(loop);
     };
-    loop();
-    return () => cancelAnimationFrame(frame);
-  }, [touch]);
+    state.current.req = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(state.current.req);
+  }, []);
 
   return (
-    <div className="flex flex-col items-center relative max-h-full">
-      <button onClick={onExit} className="mb-4 pixel-font text-[8px] bg-red-600 p-2 pixel-border">QUIT SURF</button>
-      <div className="relative no-select">
-        <canvas ref={canvasRef} width="320" height="480" className="pixel-border rounded-lg touch-none" />
+    <div className="flex flex-col items-center">
+      <canvas ref={canvasRef} width="320" height="480" className="border-8 border-white rounded-3xl shadow-2xl" onMouseDown={() => state.current.v = -6.5} />
+      <button onClick={onExit} className="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full">QUIT MISSION</button>
+    </div>
+  );
+}
+
+function SurfGame({ skin, onExit }) {
+  const canvasRef = useRef(null);
+  const input = useRef(0);
+  const state = useRef({ x: 140, enemies: [], lastTime: 0 });
+
+  useEffect(() => {
+    const ctx = canvasRef.current.getContext('2d');
+    const loop = (time) => {
+      const dt = Math.min((time - state.current.lastTime) / 16, 2);
+      state.current.lastTime = time;
+      if (input.current === -1 && state.current.x > 25) state.current.x -= 7 * dt;
+      if (input.current === 1 && state.current.x < 265) state.current.x += 7 * dt;
+      if (Math.random() < 0.05) state.current.enemies.push({ x: Math.random()*280, y: -50 });
+      state.current.enemies.forEach(e => {
+        e.y += 6 * dt;
+        if (Math.abs(state.current.x - e.x) < 35 && Math.abs(420 - e.y) < 35) onExit();
+      });
+      state.current.enemies = state.current.enemies.filter(e => e.y < 500);
+      ctx.fillStyle = '#0891b2'; ctx.fillRect(0,0,320,480);
+      for(let i=0; i<5; i++) { ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fillRect(0, (state.current.lastTime/10 + i*100)%480, 320, 2); }
+      ctx.font = '45px Arial'; ctx.fillText(skin, state.current.x, 440);
+      state.current.enemies.forEach(e => ctx.fillText('🦈', e.x, e.y));
+      state.current.req = requestAnimationFrame(loop);
+    };
+    state.current.req = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(state.current.req);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative">
+        <canvas ref={canvasRef} width="320" height="480" className="border-8 border-white rounded-3xl" />
         <div className="absolute inset-0 flex">
-           <div 
-             className="w-1/2 h-full" 
-             onTouchStart={(e) => { e.preventDefault(); setTouch(-1); }} 
-             onTouchEnd={() => setTouch(0)} 
-             onMouseDown={() => setTouch(-1)} 
-             onMouseUp={() => setTouch(0)}
-             onMouseLeave={() => setTouch(0)}
-           ></div>
-           <div 
-             className="w-1/2 h-full" 
-             onTouchStart={(e) => { e.preventDefault(); setTouch(1); }} 
-             onTouchEnd={() => setTouch(0)} 
-             onMouseDown={() => setTouch(1)} 
-             onMouseUp={() => setTouch(0)}
-             onMouseLeave={() => setTouch(0)}
-           ></div>
+          <div className="w-1/2 cursor-w-resize" onMouseDown={() => input.current = -1} onMouseUp={() => input.current = 0} onTouchStart={() => input.current = -1} onTouchEnd={() => input.current = 0} />
+          <div className="w-1/2 cursor-e-resize" onMouseDown={() => input.current = 1} onMouseUp={() => input.current = 0} onTouchStart={() => input.current = 1} onTouchEnd={() => input.current = 0} />
         </div>
       </div>
-      <p className="mt-4 pixel-font text-[8px] opacity-50 uppercase">Tap sides to move</p>
+      <button onClick={onExit} className="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full uppercase">Wipe Out</button>
     </div>
   );
 }
 
-function DashView({ onExit }) {
-  return (
-    <div className="w-full h-full max-w-6xl flex flex-col items-center">
-      <button onClick={onExit} className="mb-4 bg-slate-700 px-6 py-2 pixel-border pixel-font text-xs">BACK</button>
-      <iframe src="https://frofrocreater.github.io/FroFroChat/" className="w-full h-[60vh] sm:h-[70vh] pixel-border bg-white rounded-xl" />
-    </div>
-  );
-}
+function RacerGame({ skin, onExit }) {
+  const canvasRef = useRef(null);
+  const input = useRef(0);
+  const state = useRef({ x: 140, enemies: [], lastTime: 0 });
 
-function ShopView({ onExit, userData, buySkinPack }) {
+  useEffect(() => {
+    const ctx = canvasRef.current.getContext('2d');
+    const loop = (time) => {
+      const dt = Math.min((time - state.current.lastTime) / 16, 2);
+      state.current.lastTime = time;
+      if (input.current === -1 && state.current.x > 65) state.current.x -= 8 * dt;
+      if (input.current === 1 && state.current.x < 215) state.current.x += 8 * dt;
+      if (Math.random() < 0.06) state.current.enemies.push({ x: 65 + Math.random()*150, y: -60 });
+      state.current.enemies.forEach(e => {
+        e.y += 9 * dt;
+        if (Math.abs(state.current.x - e.x) < 35 && Math.abs(410 - e.y) < 35) onExit();
+      });
+      state.current.enemies = state.current.enemies.filter(e => e.y < 500);
+      ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,320,480);
+      ctx.fillStyle = '#334155'; ctx.fillRect(60, 0, 200, 480);
+      ctx.strokeStyle = '#fff'; ctx.setLineDash([20, 20]); ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(160, 0); ctx.lineTo(160, 480); ctx.stroke();
+      ctx.font = '45px Arial'; ctx.fillText(skin, state.current.x, 430);
+      state.current.enemies.forEach(e => ctx.fillText('🏎️', e.x, e.y));
+      state.current.req = requestAnimationFrame(loop);
+    };
+    state.current.req = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(state.current.req);
+  }, []);
+
   return (
-    <div className="w-full max-w-5xl bg-slate-800 p-4 sm:p-8 pixel-border rounded-xl overflow-y-auto max-h-[85vh]">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-lg sm:text-xl pixel-font text-yellow-400 uppercase">Shop</h2>
-        <button onClick={onExit} className="bg-red-500 px-4 py-2 pixel-border pixel-font text-xs">EXIT</button>
+    <div className="flex flex-col items-center">
+      <div className="relative">
+        <canvas ref={canvasRef} width="320" height="480" className="border-8 border-white rounded-3xl" />
+        <div className="absolute inset-0 flex">
+          <div className="w-1/2" onMouseDown={() => input.current = -1} onMouseUp={() => input.current = 0} onTouchStart={() => input.current = -1} onTouchEnd={() => input.current = 0} />
+          <div className="w-1/2" onMouseDown={() => input.current = 1} onMouseUp={() => input.current = 0} onTouchStart={() => input.current = 1} onTouchEnd={() => input.current = 0} />
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {PACKS.map(p => (
-          <div key={p.id} onClick={() => buySkinPack(p)} className={`${p.color} p-6 pixel-border rounded-lg relative cursor-pointer active:scale-95 transition-transform overflow-hidden`}>
-             <h3 className="pixel-font text-[10px] mb-4 uppercase">{p.name}</h3>
-             <div className="text-4xl mb-6 flex flex-wrap gap-2">{p.skins.slice(0,4).join('')}</div>
-             <div className="bg-black/30 p-2 pixel-font text-[10px] text-center">🪙 {p.price}</div>
-             {p.coreOnly && !userData.hasCore && <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center pixel-font text-[8px] p-2 text-center">
-               <Key size={24} className="mb-1"/> CORE ONLY
-             </div>}
+      <button onClick={onExit} className="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full uppercase">Crash Exit</button>
+    </div>
+  );
+}
+
+// --- Extended Feature Modules ---
+
+function JeopardyModule({ onExit }) {
+  const [active, setActive] = useState(null);
+  const [solved, setSolved] = useState([]);
+
+  return (
+    <div className="max-w-5xl mx-auto animate-in slide-in-from-top duration-500">
+      <div className="grid grid-cols-4 gap-4">
+        {JEOPARDY_DATA.map((cat, ci) => (
+          <div key={ci} className="space-y-4">
+            <div className="bg-blue-800 p-6 text-center border-4 border-white font-black text-xs h-20 flex items-center justify-center uppercase shadow-lg tracking-tighter leading-none">{cat.cat}</div>
+            {cat.clues.map((clue, ri) => {
+              const id = `${ci}-${ri}`;
+              const isSolved = solved.includes(id);
+              return (
+                <button 
+                  key={ri} 
+                  disabled={isSolved}
+                  onClick={() => setActive({ ...clue, id })}
+                  className={`w-full aspect-square border-4 border-white text-3xl font-black transition-all rounded-xl ${isSolved ? 'bg-slate-700 opacity-30 cursor-default' : 'bg-blue-600 hover:bg-blue-400 hover:scale-105 shadow-md active:scale-95'}`}
+                >
+                  {isSolved ? '' : `$${clue.v}`}
+                </button>
+              );
+            })}
           </div>
         ))}
       </div>
-    </div>
-  );
-}
 
-function SettingsView({ onExit, userData, setUserData, saveUserData, user, setView }) {
-  return (
-    <div className="w-full max-w-2xl bg-slate-800 p-6 sm:p-8 pixel-border rounded-xl overflow-y-auto max-h-full">
-       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-xl pixel-font uppercase">Settings</h2>
-        <button onClick={onExit} className="bg-slate-700 p-2 pixel-border">BACK</button>
-      </div>
-      <h3 className="pixel-font text-[8px] text-slate-400 mb-4 uppercase">My Skins</h3>
-      <div className="flex flex-wrap gap-4 mb-10 p-4 bg-slate-900/50 rounded-lg">
-        {userData.ownedSkins.map(s => (
-          <button key={s} onClick={() => {
-            const up = {...userData, currentSkin: s};
-            setUserData(up); saveUserData(up);
-          }} className={`w-14 h-14 text-3xl flex items-center justify-center bg-slate-900 border-4 ${userData.currentSkin === s ? 'border-yellow-400' : 'border-white/10'}`}>
-            {s}
-          </button>
-        ))}
-      </div>
-      {user?.isAnonymous ? (
-        <button onClick={() => setView('auth')} className="bg-pink-600 p-4 pixel-border w-full pixel-font text-[10px] uppercase">LOG IN / SIGN UP</button>
-      ) : (
-        <button onClick={() => auth.signOut()} className="bg-red-600 p-4 pixel-border w-full pixel-font text-[10px] uppercase">LOG OUT</button>
-      )}
-    </div>
-  );
-}
-
-function AuthView({ setAuthMode, authMode, authEmail, setAuthEmail, authPass, setAuthPass, handleAuth, setView }) {
-  return (
-    <div className="bg-slate-800 p-8 pixel-border rounded-xl w-full max-w-md">
-      <h2 className="pixel-font text-sm mb-6 text-center text-yellow-400">{authMode === 'login' ? 'LOGIN' : 'SIGN UP'}</h2>
-      <input type="email" placeholder="Email" className="w-full bg-slate-900 border-4 border-white p-3 mb-4 text-xs font-bold" value={authEmail} onChange={e => setAuthEmail(e.target.value)} />
-      <input type="password" placeholder="Pass" className="w-full bg-slate-900 border-4 border-white p-3 mb-6 text-xs font-bold" value={authPass} onChange={e => setAuthPass(e.target.value)} />
-      <button onClick={handleAuth} className="w-full bg-yellow-400 text-black p-4 pixel-border pixel-font text-xs mb-6 active:scale-95 transition-transform">{authMode === 'login' ? 'GO' : 'CREATE'}</button>
-      <button onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')} className="w-full text-[8px] pixel-font opacity-50 underline">SWITCH MODE</button>
-      <button onClick={() => setView('menu')} className="w-full text-[8px] pixel-font opacity-50 mt-4">CANCEL</button>
-    </div>
-  );
-}
-
-function SetsCreator({ onExit, userData, saveUserData }) {
-  const [sets, setSets] = useState(userData.customSets || []);
-  const [editingId, setEditingId] = useState(null);
-  const [currentEdit, setCurrentEdit] = useState({ title: '', questions: [] });
-
-  const save = async () => {
-    let newSets = editingId === 'new' ? [...sets, { ...currentEdit, id: Date.now().toString() }] : sets.map(s => s.id === editingId ? currentEdit : s);
-    setSets(newSets); await saveUserData({ ...userData, customSets: newSets }); setEditingId(null);
-  };
-
-  return (
-    <div className="bg-slate-800 p-4 sm:p-8 pixel-border rounded-xl w-full max-w-4xl h-[80vh] flex flex-col">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="pixel-font text-sm text-yellow-400">SETS</h2>
-        <button onClick={onExit} className="bg-red-500 p-2 pixel-border pixel-font text-[8px]">EXIT</button>
-      </div>
-      {!editingId ? (
-        <div className="overflow-y-auto space-y-4">
-          {sets.map(set => (
-            <div key={set.id} className="bg-slate-900 p-4 pixel-border flex justify-between items-center">
-              <span className="pixel-font text-[8px] sm:text-[10px]">{set.title}</span>
-              <button onClick={() => { setEditingId(set.id); setCurrentEdit(set); }} className="bg-blue-600 p-2 pixel-border text-[8px]">EDIT</button>
+      {active && (
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center p-8 z-[100] backdrop-blur-sm">
+          <div className="bg-blue-700 border-8 border-white p-16 max-w-3xl w-full text-center rounded-[3rem] shadow-[0_0_100px_rgba(255,255,255,0.2)]">
+            <div className="pixel-font text-xs text-blue-300 mb-4 tracking-widest uppercase">THE CLUE IS...</div>
+            <h2 className="text-5xl font-black mb-12 leading-tight drop-shadow-xl">{active.q}</h2>
+            <div className="space-y-6">
+              <button 
+                onClick={() => { setSolved([...solved, active.id]); setActive(null); }}
+                className="w-full bg-white text-blue-700 p-6 font-black text-2xl hover:bg-slate-100 rounded-2xl active:scale-95 transition-all shadow-xl"
+              >
+                SHOW ANSWER
+              </button>
+              <div className="text-white/40 text-sm font-bold">(Hidden Answer: {active.a})</div>
             </div>
-          ))}
-          <button onClick={() => { setEditingId('new'); setCurrentEdit({ title: 'New Set', questions: [{ q: "1+1?", a: ["1","2","3","4"], c: 1 }] }); }} className="w-full bg-green-600 p-4 pixel-border pixel-font text-[10px]">+ NEW</button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4 overflow-y-auto">
-           <input value={currentEdit.title} onChange={e => setCurrentEdit({...currentEdit, title: e.target.value})} className="bg-slate-900 p-2 border-2 text-xs" />
-           <button onClick={save} className="bg-yellow-400 text-black p-4 pixel-border font-bold">SAVE</button>
-           <button onClick={() => setEditingId(null)} className="text-[8px]">CANCEL</button>
+          </div>
         </div>
       )}
+      <button onClick={onExit} className="mt-12 w-full p-6 bg-slate-800 border-4 border-white font-black rounded-2xl hover:bg-slate-700 transition-colors uppercase tracking-widest">Back to Dashboard</button>
     </div>
   );
 }
 
-function QuestGame({ onExit, userData, setUserData, saveUserData }) {
-  const [qIdx, setQIdx] = useState(0);
-  const questions = userData.customSets[0]?.questions || DEFAULT_QUESTIONS;
-  const q = questions[qIdx % questions.length];
-
-  const check = (idx) => {
-    if (idx === q.c) {
-      const up = {...userData, coins: userData.coins + 15};
-      setUserData(up); saveUserData(up);
-      alert("Correct! +15 coins");
-    }
-    setQIdx(qIdx + 1);
-  };
-
+function ShopModule({ userData, buyPack, onExit }) {
   return (
-    <div className="bg-white text-black p-6 sm:p-10 pixel-border rounded-xl w-full max-w-2xl relative">
-      <button onClick={onExit} className="absolute top-4 right-4 pixel-font text-[8px]">EXIT</button>
-      <h2 className="text-lg sm:text-xl font-black mb-8 sm:mb-10">{q.q}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {q.a.map((opt, i) => (
-          <button key={i} onClick={() => check(i)} className="bg-slate-100 p-4 sm:p-5 border-4 border-slate-200 hover:border-yellow-400 font-bold active:bg-yellow-100">{opt}</button>
+    <div className="space-y-10 animate-in fade-in duration-700">
+      <div className="text-center">
+        <h1 className="pixel-font text-2xl text-yellow-400 mb-2">MEGA SKIN SHOP</h1>
+        <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">Unlock premium avatars for your profile</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {PACKS.map(pack => (
+          <div key={pack.id} className={`${pack.color} p-10 border-8 border-white rounded-[2.5rem] flex flex-col items-center shadow-2xl relative overflow-hidden group`}>
+            <div className="absolute top-0 left-0 w-full h-full bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            <div className="pixel-font text-[10px] mb-6 text-white/90 bg-black/20 px-4 py-2 rounded-full">{pack.name}</div>
+            <div className="text-7xl mb-8 flex gap-3 flex-wrap justify-center">
+              {pack.skins.slice(0, 4).map((s, i) => <span key={i} className="drop-shadow-2xl hover:scale-125 transition-transform cursor-help">{s}</span>)}
+            </div>
+            <button 
+              onClick={() => buyPack(pack)}
+              className="w-full bg-white text-black p-5 font-black border-4 border-black hover:bg-slate-100 flex justify-between items-center rounded-2xl transition-all hover:scale-105 active:scale-95"
+            >
+              <span className="text-lg">BUY PACK</span>
+              <span className="bg-slate-200 px-3 py-1 rounded-lg">🪙 {pack.price}</span>
+            </button>
+            {pack.coreOnly && (
+              <div className="mt-4 flex items-center gap-2 text-[11px] font-black text-white/70 uppercase">
+                <Shield size={14} className="text-yellow-300" /> FroFroKitCore Required
+              </div>
+            )}
+          </div>
         ))}
       </div>
+      <button onClick={onExit} className="w-full bg-slate-800 p-6 border-4 border-white font-black rounded-2xl text-xl hover:bg-slate-700">RETURN TO MENU</button>
     </div>
   );
 }
 
-function FlappyGame({ onExit, skin }) {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let b = { y: 240, v: 0 };
-    let pipes = [];
-    let frame;
-
-    const handleJump = (e) => {
-      e.preventDefault();
-      b.v = -5;
-    };
-
-    canvas.addEventListener('mousedown', handleJump);
-    canvas.addEventListener('touchstart', handleJump, { passive: false });
-
-    const loop = () => {
-      b.v += 0.25; b.y += b.v;
-      if(pipes.length === 0 || pipes[pipes.length-1].x < 150) pipes.push({ x: 320, y: Math.random()*200+50 });
-      pipes.forEach(p => { p.x -= 2; if(50 > p.x && 50 < p.x+50 && (b.y < p.y || b.y+20 > p.y+140)) onExit(); });
-      if(b.y > 480 || b.y < 0) onExit();
-      ctx.fillStyle = '#70c5ce'; ctx.fillRect(0,0,320,480);
-      ctx.fillStyle = 'green'; pipes.forEach(p => { ctx.fillRect(p.x, 0, 50, p.y); ctx.fillRect(p.x, p.y+140, 50, 480); });
-      ctx.font = '32px Arial'; ctx.fillText(skin, 50, b.y);
-      frame = requestAnimationFrame(loop);
-    };
-    loop();
-    return () => {
-      cancelAnimationFrame(frame);
-      canvas.removeEventListener('mousedown', handleJump);
-      canvas.removeEventListener('touchstart', handleJump);
-    };
-  }, []);
-  return (
-    <div className="flex flex-col items-center">
-      <button onClick={onExit} className="mb-4 pixel-font text-[8px] bg-red-600 p-2 pixel-border">EXIT</button>
-      <canvas ref={canvasRef} width="320" height="480" className="pixel-border no-select touch-none" />
-      <p className="mt-4 pixel-font text-[8px] opacity-50 uppercase">Tap screen to jump</p>
-    </div>
-  );
-}
-
-function RacerGame({ onExit, skin, onCrash }) {
-  const canvasRef = useRef(null);
-  const [touch, setTouch] = useState(0);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let x = 140; let enemies = []; let frame;
-    const loop = () => {
-      if(touch === -1 && x > 60) x -= 5; if(touch === 1 && x < 220) x += 5;
-      if(Math.random() < 0.04) enemies.push({ x: Math.random()*160+60, y: -50 });
-      enemies.forEach(e => { e.y += 5; if(x < e.x+30 && x+30 > e.x && 400 < e.y+30 && 430 > e.y) onCrash(); });
-      ctx.fillStyle = '#334155'; ctx.fillRect(0,0,320,480);
-      ctx.fillStyle = '#475569'; ctx.fillRect(60,0,200,480);
-      ctx.font = '36px Arial'; ctx.fillText(skin, x, 430);
-      enemies.forEach(e => ctx.fillText('🚗', e.x, e.y));
-      frame = requestAnimationFrame(loop);
-    };
-    loop(); return () => cancelAnimationFrame(frame);
-  }, [touch]);
-  return (
-    <div className="relative flex flex-col items-center">
-      <button onClick={onExit} className="mb-4 pixel-font text-[8px] bg-red-600 p-2 pixel-border">EXIT</button>
-      <div className="relative no-select">
-        <canvas ref={canvasRef} width="320" height="480" className="pixel-border touch-none" />
-        <div className="absolute inset-0 flex">
-          <div 
-            className="w-1/2" 
-            onMouseDown={() => setTouch(-1)} 
-            onMouseUp={() => setTouch(0)}
-            onTouchStart={(e) => { e.preventDefault(); setTouch(-1); }}
-            onTouchEnd={() => setTouch(0)}
-            onMouseLeave={() => setTouch(0)}
-          ></div>
-          <div 
-            className="w-1/2" 
-            onMouseDown={() => setTouch(1)} 
-            onMouseUp={() => setTouch(0)}
-            onTouchStart={(e) => { e.preventDefault(); setTouch(1); }}
-            onTouchEnd={() => setTouch(0)}
-            onMouseLeave={() => setTouch(0)}
-          ></div>
-        </div>
-      </div>
-      <p className="mt-4 pixel-font text-[8px] opacity-50 uppercase">Hold sides to steer</p>
-    </div>
-  );
-}
-
-function Minecraft2D({ onExit, skin }) {
+function MinecraftModule({ skin, onExit }) {
   const [blocks, setBlocks] = useState([]);
   const [sel, setSel] = useState('🟫');
+  const palette = ['🟫', '🟩', '⬛', '🧱', '💎', '🔥', '💧', '📦', '🪨', '🪵'];
+
   return (
-    <div className="bg-slate-800 p-4 sm:p-6 pixel-border rounded-xl">
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-        {['🟫', '🟩', '⬛', '⬜', '🧱', '💎'].map(b => <button key={b} onClick={() => setSel(b)} className={`w-10 h-10 border-2 flex-shrink-0 ${sel===b ? 'border-yellow-400' : ''}`}>{b}</button>)}
-        <button onClick={onExit} className="bg-red-600 px-4 text-[8px] flex-shrink-0">EXIT</button>
+    <div className="flex flex-col items-center animate-in zoom-in duration-300">
+      <div className="flex flex-wrap justify-center gap-3 mb-6 bg-slate-800 p-6 border-4 border-white rounded-2xl">
+        {palette.map(p => (
+          <button 
+            key={p} 
+            onClick={() => setSel(p)} 
+            className={`w-14 h-14 text-3xl flex items-center justify-center border-4 transition-all rounded-lg ${sel===p ? 'border-yellow-400 bg-slate-900 scale-110 shadow-lg' : 'border-white bg-slate-700 hover:bg-slate-600'}`}
+          >
+            {p}
+          </button>
+        ))}
       </div>
       <div 
         onClick={(e) => {
@@ -676,12 +552,59 @@ function Minecraft2D({ onExit, skin }) {
             setBlocks([...blocks, { x, y, t: sel }]);
           }
         }} 
-        className="bg-blue-300 w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] relative overflow-hidden pixel-border cursor-crosshair no-select"
+        className="bg-blue-300 w-[400px] h-[400px] sm:w-[520px] sm:h-[520px] relative overflow-hidden cursor-crosshair border-8 border-white shadow-2xl rounded-2xl"
       >
-        {blocks.map((b,i) => <div key={i} className="absolute text-3xl sm:text-4xl" style={{left:b.x, top:b.y}}>{b.t}</div>)}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl">{skin}</div>
+        <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+        {blocks.map((b,i) => <div key={i} className="absolute text-5xl transition-all animate-in fade-in zoom-in duration-200" style={{left:b.x, top:b.y}}>{b.t}</div>)}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl pointer-events-none drop-shadow-2xl z-10">{skin}</div>
       </div>
-      <p className="mt-2 text-[8px] pixel-font opacity-50 text-center uppercase">Tap to place or remove</p>
+      <div className="mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Click to build • Click block to break</div>
+      <button onClick={onExit} className="mt-8 bg-red-600 px-12 py-3 border-4 border-white font-black rounded-full shadow-lg hover:bg-red-700">EXIT BUILDER</button>
+    </div>
+  );
+}
+
+function QuestModule({ userData, saveUserData, onExit }) {
+  const [idx, setIdx] = useState(0);
+  const currentSet = userData.customSets[0];
+  const q = currentSet.questions[idx % currentSet.questions.length];
+  const [feedback, setFeedback] = useState(null);
+  
+  const handleAnswer = (i) => {
+    if (i === q.c) {
+      setFeedback("CORRECT! +15 COINS");
+      const up = { ...userData, coins: userData.coins + 15 };
+      saveUserData(up);
+      setTimeout(() => { setIdx(idx + 1); setFeedback(null); }, 1000);
+    } else {
+      setFeedback("WRONG! TRY AGAIN");
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto bg-white text-black p-12 border-8 border-slate-300 rounded-[3rem] shadow-2xl relative overflow-hidden">
+      {feedback && (
+        <div className={`absolute inset-0 z-50 flex items-center justify-center font-black text-4xl text-center p-4 backdrop-blur-md ${feedback.includes('CORRECT') ? 'text-emerald-600 bg-emerald-50/90' : 'text-red-600 bg-red-50/90'}`}>
+          {feedback}
+        </div>
+      )}
+      <div className="bg-slate-100 p-3 rounded-full mb-8 text-center pixel-font text-[9px] text-slate-500 border-2 border-slate-200">
+        QUEST PROGRESS: {idx + 1} / {currentSet.questions.length}
+      </div>
+      <h2 className="text-3xl font-black mb-12 leading-tight text-slate-800">{q.q}</h2>
+      <div className="space-y-5">
+        {q.a.map((opt, i) => (
+          <button 
+            key={i} 
+            onClick={() => handleAnswer(i)}
+            className="w-full p-6 border-4 border-slate-100 hover:border-yellow-400 font-black text-xl transition-all text-left bg-slate-50 hover:bg-yellow-50 rounded-2xl shadow-sm hover:shadow-md"
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+      <button onClick={onExit} className="mt-12 w-full p-4 bg-slate-100 text-slate-400 font-black hover:text-red-500 transition-colors uppercase tracking-widest text-sm rounded-xl">Abandon Quest</button>
     </div>
   );
 }
