@@ -83,7 +83,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState('login');
   const [adminPass, setAdminPass] = useState('');
 
-  // --- Load Zapier Chatbot Script ---
+  // --- Zapier Chatbot Script Injection ---
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js';
@@ -91,7 +91,10 @@ export default function App() {
     script.type = 'module';
     document.head.appendChild(script);
     return () => {
-      document.head.removeChild(script);
+      // Cleanup script on unmount
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
     };
   }, []);
 
@@ -168,7 +171,7 @@ export default function App() {
         canvas { max-width: 100%; height: auto; image-rendering: pixelated; }
       `}</style>
 
-      {/* Zapier Chatbot Embed */}
+      {/* Zapier Chatbot Component */}
       <zapier-interfaces-chatbot-embed 
         is-popup="true" 
         chatbot-id="cmo8qa6lb00a0ibdesjkhldxa"
@@ -262,7 +265,7 @@ export default function App() {
   );
 }
 
-// --- Components ---
+// --- Game/UI Components ---
 
 function MenuCard({ icon, label, color, onClick }) {
   return (
@@ -667,7 +670,6 @@ function Minecraft2D({ onExit, skin }) {
           const r = e.currentTarget.getBoundingClientRect();
           const x = Math.floor((e.clientX-r.left)/40)*40;
           const y = Math.floor((e.clientY-r.top)/40)*40;
-          // Delete if block exists
           if (blocks.some(b => b.x === x && b.y === y)) {
             setBlocks(blocks.filter(b => !(b.x === x && b.y === y)));
           } else {
