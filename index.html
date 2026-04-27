@@ -78,11 +78,22 @@ export default function App() {
     background: 'bg-slate-900'
   });
 
-  // Auth/Admin State
   const [authEmail, setAuthEmail] = useState('');
   const [authPass, setAuthPass] = useState('');
   const [authMode, setAuthMode] = useState('login');
   const [adminPass, setAdminPass] = useState('');
+
+  // --- Load Zapier Chatbot Script ---
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js';
+    script.async = true;
+    script.type = 'module';
+    document.head.appendChild(script);
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
 
   // --- Persistence ---
   useEffect(() => {
@@ -153,8 +164,15 @@ export default function App() {
         .retro-card { transition: all 0.2s; cursor: pointer; border: 4px solid white; box-shadow: 6px 6px 0px rgba(0,0,0,0.4); border-radius: 12px; }
         .retro-card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0px rgba(0,0,0,0.5); }
         .retro-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.5); }
-        .no-select { user-select: none; }
+        .no-select { user-select: none; -webkit-tap-highlight-color: transparent; }
+        canvas { max-width: 100%; height: auto; image-rendering: pixelated; }
       `}</style>
+
+      {/* Zapier Chatbot Embed */}
+      <zapier-interfaces-chatbot-embed 
+        is-popup="true" 
+        chatbot-id="cmo8qa6lb00a0ibdesjkhldxa"
+      ></zapier-interfaces-chatbot-embed>
 
       {/* Header */}
       <header className="p-4 bg-slate-900 border-b-4 border-white flex justify-between items-center sticky top-0 z-50">
@@ -175,9 +193,9 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-grow flex flex-col items-center justify-center p-6">
+      <main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 overflow-hidden">
         {view === 'menu' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl w-full">
             <MenuCard icon="❓" label="Quest" color="bg-purple-600" onClick={() => setView('quest')} />
             <MenuCard icon="🐦" label="Flappy" color="bg-green-600" onClick={() => setView('flappy')} />
             <MenuCard icon="🏎️" label="Racer" color="bg-blue-500" onClick={() => setView('racer')} />
@@ -248,9 +266,9 @@ export default function App() {
 
 function MenuCard({ icon, label, color, onClick }) {
   return (
-    <div onClick={onClick} className={`${color} p-8 retro-card flex flex-col items-center justify-center text-center no-select`}>
-      <div className="text-5xl mb-4 drop-shadow-md">{icon}</div>
-      <h2 className="pixel-font text-[10px] uppercase tracking-tight">{label}</h2>
+    <div onClick={onClick} className={`${color} p-4 sm:p-8 retro-card flex flex-col items-center justify-center text-center no-select`}>
+      <div className="text-3xl sm:text-5xl mb-2 sm:mb-4 drop-shadow-md">{icon}</div>
+      <h2 className="pixel-font text-[8px] sm:text-[10px] uppercase tracking-tight">{label}</h2>
     </div>
   );
 }
@@ -274,14 +292,14 @@ function JeopardyGame({ onExit, userData, setUserData, saveUserData }) {
   };
 
   return (
-    <div className="bg-slate-900 p-8 pixel-border rounded-xl w-full max-w-5xl">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="pixel-font text-sm text-yellow-400">JEOPARDY</h2>
+    <div className="bg-slate-900 p-4 sm:p-8 pixel-border rounded-xl w-full max-w-5xl overflow-y-auto max-h-full">
+      <div className="flex justify-between items-center mb-6 sm:mb-8">
+        <h2 className="pixel-font text-xs sm:text-sm text-yellow-400">JEOPARDY</h2>
         <button onClick={onExit} className="bg-red-600 p-2 pixel-border pixel-font text-[8px]">EXIT</button>
       </div>
 
       {!selected ? (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {JEOPARDY_DATA.map(cat => (
             <div key={cat.cat} className="flex flex-col gap-4">
               <div className="bg-blue-800 p-3 pixel-border text-center pixel-font text-[10px]">{cat.cat}</div>
@@ -290,7 +308,7 @@ function JeopardyGame({ onExit, userData, setUserData, saveUserData }) {
                   key={clue.q}
                   disabled={answered.includes(clue.q)}
                   onClick={() => setSelected(clue)}
-                  className={`p-6 pixel-border text-center pixel-font text-lg ${answered.includes(clue.q) ? 'opacity-20 bg-slate-800' : 'bg-blue-600 hover:bg-blue-500'}`}
+                  className={`p-4 sm:p-6 pixel-border text-center pixel-font text-sm sm:text-lg ${answered.includes(clue.q) ? 'opacity-20 bg-slate-800' : 'bg-blue-600 hover:bg-blue-500'}`}
                 >
                   {clue.v}
                 </button>
@@ -299,15 +317,15 @@ function JeopardyGame({ onExit, userData, setUserData, saveUserData }) {
           ))}
         </div>
       ) : (
-        <div className="bg-blue-800 p-12 pixel-border rounded-lg text-center">
-          <div className="pixel-font text-sm text-yellow-400 mb-8 uppercase">Value: {selected.v}</div>
-          <p className="text-2xl font-black mb-10 leading-relaxed">"{selected.q}"</p>
+        <div className="bg-blue-800 p-6 sm:p-12 pixel-border rounded-lg text-center">
+          <div className="pixel-font text-[10px] text-yellow-400 mb-6 uppercase">Value: {selected.v}</div>
+          <p className="text-xl sm:text-2xl font-black mb-8 leading-relaxed">"{selected.q}"</p>
           <input 
             value={input} 
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAnswer()}
             placeholder="What is..." 
-            className="w-full bg-slate-900 border-4 border-white p-4 text-xl mb-6 text-center"
+            className="w-full bg-slate-900 border-4 border-white p-4 text-lg sm:text-xl mb-6 text-center"
             autoFocus
           />
           <button onClick={handleAnswer} className="bg-yellow-400 text-black px-8 py-3 pixel-border pixel-font text-xs">SUBMIT</button>
@@ -323,6 +341,7 @@ function SurfGame({ onExit, skin }) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let x = 140;
     let obstacles = [];
@@ -352,9 +371,7 @@ function SurfGame({ onExit, skin }) {
       obstacles = obstacles.filter(o => o.y < 500);
       items = items.filter(it => it.y < 500);
 
-      // Draw Water
       ctx.fillStyle = '#06b6d4'; ctx.fillRect(0,0,320,480);
-      // Wave lines
       ctx.strokeStyle = 'rgba(255,255,255,0.3)';
       ctx.lineWidth = 4;
       for(let i=0; i<5; i++) {
@@ -379,13 +396,27 @@ function SurfGame({ onExit, skin }) {
   }, [touch]);
 
   return (
-    <div className="flex flex-col items-center relative">
+    <div className="flex flex-col items-center relative max-h-full">
       <button onClick={onExit} className="mb-4 pixel-font text-[8px] bg-red-600 p-2 pixel-border">QUIT SURF</button>
-      <div className="relative">
+      <div className="relative no-select">
         <canvas ref={canvasRef} width="320" height="480" className="pixel-border rounded-lg touch-none" />
         <div className="absolute inset-0 flex">
-           <div className="w-1/2 h-full" onTouchStart={(e) => { e.preventDefault(); setTouch(-1); }} onTouchEnd={() => setTouch(0)} onMouseDown={() => setTouch(-1)} onMouseUp={() => setTouch(0)}></div>
-           <div className="w-1/2 h-full" onTouchStart={(e) => { e.preventDefault(); setTouch(1); }} onTouchEnd={() => setTouch(0)} onMouseDown={() => setTouch(1)} onMouseUp={() => setTouch(0)}></div>
+           <div 
+             className="w-1/2 h-full" 
+             onTouchStart={(e) => { e.preventDefault(); setTouch(-1); }} 
+             onTouchEnd={() => setTouch(0)} 
+             onMouseDown={() => setTouch(-1)} 
+             onMouseUp={() => setTouch(0)}
+             onMouseLeave={() => setTouch(0)}
+           ></div>
+           <div 
+             className="w-1/2 h-full" 
+             onTouchStart={(e) => { e.preventDefault(); setTouch(1); }} 
+             onTouchEnd={() => setTouch(0)} 
+             onMouseDown={() => setTouch(1)} 
+             onMouseUp={() => setTouch(0)}
+             onMouseLeave={() => setTouch(0)}
+           ></div>
         </div>
       </div>
       <p className="mt-4 pixel-font text-[8px] opacity-50 uppercase">Tap sides to move</p>
@@ -393,22 +424,20 @@ function SurfGame({ onExit, skin }) {
   );
 }
 
-// --- Reused components from previous version (Cleaned) ---
-
 function DashView({ onExit }) {
   return (
     <div className="w-full h-full max-w-6xl flex flex-col items-center">
       <button onClick={onExit} className="mb-4 bg-slate-700 px-6 py-2 pixel-border pixel-font text-xs">BACK</button>
-      <iframe src="https://frofrocreater.github.io/FroFroChat/" className="w-full h-[70vh] pixel-border bg-white rounded-xl" />
+      <iframe src="https://frofrocreater.github.io/FroFroChat/" className="w-full h-[60vh] sm:h-[70vh] pixel-border bg-white rounded-xl" />
     </div>
   );
 }
 
 function ShopView({ onExit, userData, buySkinPack }) {
   return (
-    <div className="w-full max-w-5xl bg-slate-800 p-8 pixel-border rounded-xl overflow-y-auto max-h-[85vh]">
+    <div className="w-full max-w-5xl bg-slate-800 p-4 sm:p-8 pixel-border rounded-xl overflow-y-auto max-h-[85vh]">
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-xl pixel-font text-yellow-400 uppercase">Shop</h2>
+        <h2 className="text-lg sm:text-xl pixel-font text-yellow-400 uppercase">Shop</h2>
         <button onClick={onExit} className="bg-red-500 px-4 py-2 pixel-border pixel-font text-xs">EXIT</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -429,7 +458,7 @@ function ShopView({ onExit, userData, buySkinPack }) {
 
 function SettingsView({ onExit, userData, setUserData, saveUserData, user, setView }) {
   return (
-    <div className="w-full max-w-2xl bg-slate-800 p-8 pixel-border rounded-xl">
+    <div className="w-full max-w-2xl bg-slate-800 p-6 sm:p-8 pixel-border rounded-xl overflow-y-auto max-h-full">
        <div className="flex justify-between items-center mb-8">
         <h2 className="text-xl pixel-font uppercase">Settings</h2>
         <button onClick={onExit} className="bg-slate-700 p-2 pixel-border">BACK</button>
@@ -467,8 +496,6 @@ function AuthView({ setAuthMode, authMode, authEmail, setAuthEmail, authPass, se
   );
 }
 
-// --- Rest of original games (Minimalist ports) ---
-
 function SetsCreator({ onExit, userData, saveUserData }) {
   const [sets, setSets] = useState(userData.customSets || []);
   const [editingId, setEditingId] = useState(null);
@@ -480,7 +507,7 @@ function SetsCreator({ onExit, userData, saveUserData }) {
   };
 
   return (
-    <div className="bg-slate-800 p-8 pixel-border rounded-xl w-full max-w-4xl h-[80vh] flex flex-col">
+    <div className="bg-slate-800 p-4 sm:p-8 pixel-border rounded-xl w-full max-w-4xl h-[80vh] flex flex-col">
       <div className="flex justify-between items-center mb-6">
         <h2 className="pixel-font text-sm text-yellow-400">SETS</h2>
         <button onClick={onExit} className="bg-red-500 p-2 pixel-border pixel-font text-[8px]">EXIT</button>
@@ -489,14 +516,14 @@ function SetsCreator({ onExit, userData, saveUserData }) {
         <div className="overflow-y-auto space-y-4">
           {sets.map(set => (
             <div key={set.id} className="bg-slate-900 p-4 pixel-border flex justify-between items-center">
-              <span className="pixel-font text-[10px]">{set.title}</span>
+              <span className="pixel-font text-[8px] sm:text-[10px]">{set.title}</span>
               <button onClick={() => { setEditingId(set.id); setCurrentEdit(set); }} className="bg-blue-600 p-2 pixel-border text-[8px]">EDIT</button>
             </div>
           ))}
           <button onClick={() => { setEditingId('new'); setCurrentEdit({ title: 'New Set', questions: [{ q: "1+1?", a: ["1","2","3","4"], c: 1 }] }); }} className="w-full bg-green-600 p-4 pixel-border pixel-font text-[10px]">+ NEW</button>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 overflow-y-auto">
            <input value={currentEdit.title} onChange={e => setCurrentEdit({...currentEdit, title: e.target.value})} className="bg-slate-900 p-2 border-2 text-xs" />
            <button onClick={save} className="bg-yellow-400 text-black p-4 pixel-border font-bold">SAVE</button>
            <button onClick={() => setEditingId(null)} className="text-[8px]">CANCEL</button>
@@ -521,12 +548,12 @@ function QuestGame({ onExit, userData, setUserData, saveUserData }) {
   };
 
   return (
-    <div className="bg-white text-black p-10 pixel-border rounded-xl w-full max-w-2xl relative">
+    <div className="bg-white text-black p-6 sm:p-10 pixel-border rounded-xl w-full max-w-2xl relative">
       <button onClick={onExit} className="absolute top-4 right-4 pixel-font text-[8px]">EXIT</button>
-      <h2 className="text-xl font-black mb-10">{q.q}</h2>
-      <div className="grid grid-cols-2 gap-4">
+      <h2 className="text-lg sm:text-xl font-black mb-8 sm:mb-10">{q.q}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {q.a.map((opt, i) => (
-          <button key={i} onClick={() => check(i)} className="bg-slate-100 p-5 border-4 border-slate-200 hover:border-yellow-400 font-bold">{opt}</button>
+          <button key={i} onClick={() => check(i)} className="bg-slate-100 p-4 sm:p-5 border-4 border-slate-200 hover:border-yellow-400 font-bold active:bg-yellow-100">{opt}</button>
         ))}
       </div>
     </div>
@@ -537,11 +564,20 @@ function FlappyGame({ onExit, skin }) {
   const canvasRef = useRef(null);
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let b = { y: 240, v: 0 };
     let pipes = [];
     let frame;
-    canvas.onclick = () => b.v = -5;
+
+    const handleJump = (e) => {
+      e.preventDefault();
+      b.v = -5;
+    };
+
+    canvas.addEventListener('mousedown', handleJump);
+    canvas.addEventListener('touchstart', handleJump, { passive: false });
+
     const loop = () => {
       b.v += 0.25; b.y += b.v;
       if(pipes.length === 0 || pipes[pipes.length-1].x < 150) pipes.push({ x: 320, y: Math.random()*200+50 });
@@ -553,9 +589,19 @@ function FlappyGame({ onExit, skin }) {
       frame = requestAnimationFrame(loop);
     };
     loop();
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      canvas.removeEventListener('mousedown', handleJump);
+      canvas.removeEventListener('touchstart', handleJump);
+    };
   }, []);
-  return <canvas ref={canvasRef} width="320" height="480" className="pixel-border" />;
+  return (
+    <div className="flex flex-col items-center">
+      <button onClick={onExit} className="mb-4 pixel-font text-[8px] bg-red-600 p-2 pixel-border">EXIT</button>
+      <canvas ref={canvasRef} width="320" height="480" className="pixel-border no-select touch-none" />
+      <p className="mt-4 pixel-font text-[8px] opacity-50 uppercase">Tap screen to jump</p>
+    </div>
+  );
 }
 
 function RacerGame({ onExit, skin, onCrash }) {
@@ -563,6 +609,7 @@ function RacerGame({ onExit, skin, onCrash }) {
   const [touch, setTouch] = useState(0);
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let x = 140; let enemies = []; let frame;
     const loop = () => {
@@ -578,12 +625,30 @@ function RacerGame({ onExit, skin, onCrash }) {
     loop(); return () => cancelAnimationFrame(frame);
   }, [touch]);
   return (
-    <div className="relative">
-      <canvas ref={canvasRef} width="320" height="480" className="pixel-border" />
-      <div className="absolute inset-0 flex">
-        <div className="w-1/2" onMouseDown={() => setTouch(-1)} onMouseUp={() => setTouch(0)}></div>
-        <div className="w-1/2" onMouseDown={() => setTouch(1)} onMouseUp={() => setTouch(0)}></div>
+    <div className="relative flex flex-col items-center">
+      <button onClick={onExit} className="mb-4 pixel-font text-[8px] bg-red-600 p-2 pixel-border">EXIT</button>
+      <div className="relative no-select">
+        <canvas ref={canvasRef} width="320" height="480" className="pixel-border touch-none" />
+        <div className="absolute inset-0 flex">
+          <div 
+            className="w-1/2" 
+            onMouseDown={() => setTouch(-1)} 
+            onMouseUp={() => setTouch(0)}
+            onTouchStart={(e) => { e.preventDefault(); setTouch(-1); }}
+            onTouchEnd={() => setTouch(0)}
+            onMouseLeave={() => setTouch(0)}
+          ></div>
+          <div 
+            className="w-1/2" 
+            onMouseDown={() => setTouch(1)} 
+            onMouseUp={() => setTouch(0)}
+            onTouchStart={(e) => { e.preventDefault(); setTouch(1); }}
+            onTouchEnd={() => setTouch(0)}
+            onMouseLeave={() => setTouch(0)}
+          ></div>
+        </div>
       </div>
+      <p className="mt-4 pixel-font text-[8px] opacity-50 uppercase">Hold sides to steer</p>
     </div>
   );
 }
@@ -592,18 +657,29 @@ function Minecraft2D({ onExit, skin }) {
   const [blocks, setBlocks] = useState([]);
   const [sel, setSel] = useState('🟫');
   return (
-    <div className="bg-slate-800 p-6 pixel-border rounded-xl">
-      <div className="flex gap-2 mb-4">
-        {['🟫', '🟩', '⬛', '⬜'].map(b => <button key={b} onClick={() => setSel(b)} className={`w-10 h-10 border-2 ${sel===b ? 'border-yellow-400' : ''}`}>{b}</button>)}
-        <button onClick={onExit} className="bg-red-600 px-4 text-[8px]">EXIT</button>
+    <div className="bg-slate-800 p-4 sm:p-6 pixel-border rounded-xl">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+        {['🟫', '🟩', '⬛', '⬜', '🧱', '💎'].map(b => <button key={b} onClick={() => setSel(b)} className={`w-10 h-10 border-2 flex-shrink-0 ${sel===b ? 'border-yellow-400' : ''}`}>{b}</button>)}
+        <button onClick={onExit} className="bg-red-600 px-4 text-[8px] flex-shrink-0">EXIT</button>
       </div>
-      <div onClick={(e) => {
-        const r = e.currentTarget.getBoundingClientRect();
-        setBlocks([...blocks, { x: Math.floor((e.clientX-r.left)/40)*40, y: Math.floor((e.clientY-r.top)/40)*40, t: sel }]);
-      }} className="bg-blue-300 w-[320px] h-[320px] relative overflow-hidden pixel-border">
-        {blocks.map((b,i) => <div key={i} className="absolute text-3xl" style={{left:b.x, top:b.y}}>{b.t}</div>)}
+      <div 
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          const x = Math.floor((e.clientX-r.left)/40)*40;
+          const y = Math.floor((e.clientY-r.top)/40)*40;
+          // Delete if block exists
+          if (blocks.some(b => b.x === x && b.y === y)) {
+            setBlocks(blocks.filter(b => !(b.x === x && b.y === y)));
+          } else {
+            setBlocks([...blocks, { x, y, t: sel }]);
+          }
+        }} 
+        className="bg-blue-300 w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] relative overflow-hidden pixel-border cursor-crosshair no-select"
+      >
+        {blocks.map((b,i) => <div key={i} className="absolute text-3xl sm:text-4xl" style={{left:b.x, top:b.y}}>{b.t}</div>)}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl">{skin}</div>
       </div>
+      <p className="mt-2 text-[8px] pixel-font opacity-50 text-center uppercase">Tap to place or remove</p>
     </div>
   );
 }
