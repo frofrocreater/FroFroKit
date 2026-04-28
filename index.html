@@ -9,7 +9,8 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        body { font-family: 'Lexend', sans-serif; overflow-x: hidden; touch-action: manipulation; margin: 0; background-color: #0f172a; color: white; }
+        body { font-family: 'Lexend', sans-serif; overflow-x: hidden; touch-action: manipulation; margin: 0; background-color: #0f172a; color: white; transition: background 0.5s ease; }
+        body.premium-bg { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); background-attachment: fixed; }
         .pixel-font { font-family: 'Press+Start+2P', cursive; }
         .game-card { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 4px solid white; box-shadow: 6px 6px 0px rgba(0,0,0,0.3); border-radius: 16px; cursor: pointer; }
         .game-card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0px rgba(0,0,0,0.4); }
@@ -19,11 +20,12 @@
         .view-section.active { display: block; animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .grid-blocks { background-image: radial-gradient(#ffffff22 1px, transparent 0); background-size: 40px 40px; }
-        .shake { animation: shake 0.5s; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .input-field { background: #1e293b; border: 2px solid #ffffff44; padding: 12px; border-radius: 8px; color: white; width: 100%; outline: none; }
+        .input-field:focus { border-color: #fbbf24; }
+        .premium-border { border: 4px solid #facc15; box-shadow: 0 0 15px #facc1555; }
     </style>
 </head>
-<body>
+<body id="main-body">
 
     <!-- Main Navigation -->
     <nav class="p-4 bg-slate-900/90 backdrop-blur-md border-b-4 border-white flex justify-between items-center sticky top-0 z-50">
@@ -66,13 +68,18 @@
                     <i data-lucide="play" class="w-12 h-12 mb-2"></i>
                     <div class="pixel-font text-[10px] mt-2">RACER</div>
                 </div>
-                <div onclick="switchView('quest')" class="bg-indigo-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
-                    <i data-lucide="trophy" class="w-12 h-12 mb-2"></i>
-                    <div class="pixel-font text-[10px] mt-2">QUESTS</div>
-                </div>
                 <div onclick="switchView('classic')" class="bg-orange-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
                     <i data-lucide="book-open" class="w-12 h-12 mb-2"></i>
                     <div class="pixel-font text-[10px] mt-2">CLASSIC</div>
+                </div>
+                <div onclick="switchView('creator')" class="bg-lime-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="plus-circle" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">CREATE SET</div>
+                </div>
+                <div onclick="switchView('core')" class="bg-slate-600 game-card p-6 flex flex-col items-center justify-center aspect-square relative overflow-hidden" id="core-menu-btn">
+                    <div id="core-plus-badge" class="hidden absolute top-2 right-2 bg-yellow-400 text-black text-[8px] px-2 py-1 rounded-full font-black">PLUS</div>
+                    <i data-lucide="cpu" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">CORE HUB</div>
                 </div>
                 <div onclick="switchView('jeopardy')" class="bg-purple-600 game-card p-6 flex flex-col items-center justify-center aspect-square">
                     <i data-lucide="list-music" class="w-12 h-12 mb-2"></i>
@@ -93,6 +100,91 @@
             </div>
         </div>
 
+        <!-- SET CREATOR VIEW -->
+        <div id="view-creator" class="view-section">
+            <div class="max-w-2xl mx-auto bg-slate-800 p-8 border-4 border-white rounded-[2rem] shadow-2xl">
+                <h2 class="pixel-font text-sm text-lime-400 mb-6">SET CREATOR</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold mb-2 uppercase text-slate-400">Question</label>
+                        <input id="create-q" type="text" placeholder="e.g. What is the biggest planet?" class="input-field">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold mb-2 uppercase text-slate-400">Option 1 (Correct)</label>
+                            <input id="create-c" type="text" placeholder="Jupiter" class="input-field border-emerald-500/50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-2 uppercase text-slate-400">Option 2</label>
+                            <input id="create-o1" type="text" placeholder="Mars" class="input-field">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-2 uppercase text-slate-400">Option 3</label>
+                            <input id="create-o2" type="text" placeholder="Earth" class="input-field">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-2 uppercase text-slate-400">Option 4</label>
+                            <input id="create-o3" type="text" placeholder="Venus" class="input-field">
+                        </div>
+                    </div>
+                    <button onclick="saveCustomQuestion()" class="w-full bg-lime-500 text-black p-4 font-black border-4 border-white rounded-xl hover:scale-105 transition-transform mt-4 uppercase">Save to Collection</button>
+                    <button onclick="switchView('menu')" class="w-full text-slate-500 font-bold py-2">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CORE HUB VIEW (SUBSCRIPTION INTEGRATED) -->
+        <div id="view-core" class="view-section">
+            <div class="max-w-4xl mx-auto">
+                <!-- Subscription Header -->
+                <div id="core-sub-promo" class="bg-gradient-to-r from-yellow-500 to-amber-600 p-8 border-4 border-white rounded-[2rem] mb-8 text-center shadow-lg">
+                    <h2 class="pixel-font text-lg text-white mb-2">CORE+ MEMBERSHIP</h2>
+                    <p class="text-white/80 font-bold mb-6">Custom Backgrounds • Secret Packs • Priority Boarding</p>
+                    <div class="bg-white/20 p-4 rounded-xl inline-block border-2 border-white/30 mb-6">
+                        <span class="pixel-font text-xl text-white">600 🪙</span> <span class="text-white/70 font-black">/ MONTH</span>
+                    </div>
+                    <button id="buy-core-btn" onclick="subscribeCore()" class="w-full bg-white text-amber-600 p-6 font-black text-xl rounded-2xl border-4 border-amber-200 hover:scale-105 transition-transform shadow-xl uppercase">Subscribe Now</button>
+                    <div id="sub-active-timer" class="hidden text-white pixel-font text-[10px] mt-4">ACTIVE: <span id="days-left">30</span> DAYS LEFT</div>
+                </div>
+
+                <!-- Core Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-slate-800 p-6 border-4 border-white rounded-2xl text-center">
+                        <div class="text-slate-400 text-[10px] font-black uppercase mb-2">Total Score</div>
+                        <div id="core-score" class="pixel-font text-2xl text-yellow-400">0</div>
+                    </div>
+                    <div class="bg-slate-800 p-6 border-4 border-white rounded-2xl text-center">
+                        <div class="text-slate-400 text-[10px] font-black uppercase mb-2">Custom Sets</div>
+                        <div id="core-custom-count" class="pixel-font text-2xl text-lime-400">0</div>
+                    </div>
+                    <div class="bg-slate-800 p-6 border-4 border-white rounded-2xl text-center">
+                        <div class="text-slate-400 text-[10px] font-black uppercase mb-2">Skins Owned</div>
+                        <div id="core-skins-count" class="pixel-font text-2xl text-cyan-400">1</div>
+                    </div>
+                </div>
+
+                <!-- Priority Boarding / Leaks Section -->
+                <div id="core-leaks" class="hidden bg-indigo-900 p-8 border-4 border-yellow-400 rounded-[2rem] mb-8 animate-pulse">
+                    <h3 class="pixel-font text-[10px] text-yellow-400 mb-4 flex items-center gap-2">
+                        <i data-lucide="eye" class="w-4 h-4"></i> PRIORITY BOARDING: UPCOMING LEAKS
+                    </h3>
+                    <ul class="text-sm space-y-3 text-indigo-100 font-bold">
+                        <li class="flex items-center gap-2">🚀 New "Void" Game Mode coming June 2026</li>
+                        <li class="flex items-center gap-2">🎤 Voice-Command Trivia Module</li>
+                        <li class="flex items-center gap-2">🏰 Castle Builder Update for MINE 2D</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 p-8 border-4 border-white rounded-[2rem]">
+                    <h3 class="pixel-font text-xs mb-6">CUSTOM COLLECTION</h3>
+                    <div class="space-y-4 max-h-[300px] overflow-y-auto pr-4" id="core-question-list">
+                        <!-- Custom questions show here -->
+                    </div>
+                </div>
+                <button onclick="switchView('menu')" class="mt-8 w-full bg-slate-700 p-4 border-4 border-white font-black rounded-xl uppercase">Return Home</button>
+            </div>
+        </div>
+
         <!-- DASH VIEW -->
         <div id="view-dash" class="view-section">
             <div class="flex flex-col items-center w-full">
@@ -103,21 +195,19 @@
             </div>
         </div>
 
-        <!-- FLAPPY VIEW -->
+        <!-- ARCADE VIEWS (FLAPPY, SURF, RACER) -->
         <div id="view-flappy" class="view-section text-center">
             <canvas id="flappy-canvas" width="320" height="480" class="mx-auto shadow-2xl"></canvas>
             <p class="mt-4 text-slate-400 font-bold uppercase text-[10px]">Tap to Jump! Survive to avoid questions!</p>
             <button onclick="stopGames(); switchView('menu')" class="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full">QUIT GAME</button>
         </div>
 
-        <!-- SURF VIEW -->
         <div id="view-surf" class="view-section text-center">
             <canvas id="surf-canvas" width="320" height="480" class="mx-auto"></canvas>
             <p class="mt-4 text-slate-400 font-bold uppercase text-[10px]">Hold Left/Right to Move!</p>
             <button onclick="stopGames(); switchView('menu')" class="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full">QUIT GAME</button>
         </div>
 
-        <!-- RACER VIEW -->
         <div id="view-racer" class="view-section text-center">
             <canvas id="racer-canvas" width="320" height="480" class="mx-auto"></canvas>
             <p class="mt-4 text-slate-400 font-bold uppercase text-[10px]">Dodge the Cars!</p>
@@ -125,19 +215,14 @@
         </div>
 
         <!-- QUEST/CLASSIC VIEW -->
-        <div id="view-quest" class="view-section">
+        <div id="view-classic" class="view-section">
             <div id="quest-card" class="max-w-2xl mx-auto bg-white text-black p-12 border-8 border-slate-300 rounded-[3rem] shadow-2xl relative">
                 <div id="quest-feedback" class="hidden absolute inset-0 z-50 flex items-center justify-center font-black text-4xl text-center p-4 backdrop-blur-md rounded-[2.5rem]"></div>
-                <div id="quest-progress" class="bg-slate-100 p-3 rounded-full mb-8 text-center pixel-font text-[9px] text-slate-500 border-2 border-slate-200">QUEST PROGRESS: 1 / 5</div>
+                <div id="quest-progress" class="bg-slate-100 p-3 rounded-full mb-8 text-center pixel-font text-[9px] text-slate-500 border-2 border-slate-200">CLASSIC PROGRESS: 1 / 5</div>
                 <h2 id="quest-question" class="text-3xl font-black mb-12 text-slate-800">Question goes here?</h2>
                 <div id="quest-options" class="space-y-5"></div>
                 <button onclick="switchView('menu')" class="mt-12 w-full p-4 bg-slate-100 text-slate-400 font-black hover:text-red-500 rounded-xl uppercase">Back to Menu</button>
             </div>
-        </div>
-
-        <!-- CLASSIC VIEW (ALIAS FOR QUEST WITH DIFFERENT DATA) -->
-        <div id="view-classic" class="view-section">
-            <div id="classic-container"></div>
         </div>
 
         <!-- JEOPARDY VIEW -->
@@ -162,7 +247,22 @@
             <button onclick="switchView('menu')" class="mt-10 w-full bg-slate-800 p-6 border-4 border-white font-black rounded-2xl">RETURN TO MENU</button>
         </div>
 
-        <!-- ADMIN AUTH -->
+        <!-- SETTINGS -->
+        <div id="view-settings" class="view-section">
+            <div class="max-w-md mx-auto bg-slate-800 p-10 border-4 border-white rounded-2xl text-center">
+                <h2 class="pixel-font text-xs mb-8">USER CONFIG</h2>
+                
+                <div id="premium-settings" class="hidden mb-8 p-4 bg-yellow-400/10 border-2 border-yellow-400 rounded-xl">
+                    <p class="text-[10px] pixel-font text-yellow-400 mb-4">CORE+ THEME</p>
+                    <button onclick="togglePremiumBG()" class="w-full bg-yellow-400 text-black p-3 font-black rounded-lg text-xs uppercase">Toggle Premium BG</button>
+                </div>
+
+                <button onclick="switchView('menu')" class="w-full bg-slate-700 p-4 border-2 border-white font-bold rounded-xl mb-4">BACK HOME</button>
+                <button onclick="location.reload()" class="w-full bg-red-600 p-4 border-2 border-white font-black rounded-xl">RESET SESSION</button>
+            </div>
+        </div>
+
+        <!-- ADMIN/AUTH -->
         <div id="view-admin-auth" class="view-section">
             <div class="max-w-md mx-auto bg-slate-800 p-10 border-4 border-white rounded-2xl text-center shadow-2xl">
                 <i data-lucide="shield" class="w-16 h-16 mx-auto mb-6 text-yellow-400"></i>
@@ -173,114 +273,146 @@
             </div>
         </div>
 
-        <!-- ADMIN PANEL -->
-        <div id="view-admin-panel" class="view-section">
-            <div class="max-w-4xl mx-auto bg-slate-800 p-8 border-4 border-white rounded-2xl">
-                <h1 class="pixel-font text-xl mb-6 text-yellow-400">ADMIN CONTROL</h1>
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="adjustCoins(1000)" class="bg-emerald-600 p-6 border-4 border-white font-black text-lg">ADD 1,000 COINS</button>
-                    <button onclick="switchView('menu')" class="col-span-2 bg-slate-700 p-4 border-4 border-white font-bold">EXIT ADMIN PANEL</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- SETTINGS -->
-        <div id="view-settings" class="view-section">
-            <div class="max-w-md mx-auto bg-slate-800 p-10 border-4 border-white rounded-2xl">
-                <h2 class="pixel-font text-xs mb-8">USER CONFIG</h2>
-                <button onclick="switchView('menu')" class="w-full bg-slate-700 p-4 border-2 border-white font-bold rounded-xl mb-4">BACK HOME</button>
-                <button onclick="location.reload()" class="w-full bg-red-600 p-4 border-2 border-white font-black rounded-xl">RESET SESSION</button>
-            </div>
-        </div>
-
     </main>
 
-    <!-- REVIVE MODAL (THE "DIE = 2 QUESTIONS" FEATURE) -->
+    <!-- REVIVE MODAL -->
     <div id="revive-modal" class="fixed inset-0 bg-slate-900/95 hidden items-center justify-center p-6 z-[200] backdrop-blur-md">
         <div class="bg-white text-black p-10 border-8 border-yellow-400 rounded-[3rem] max-w-xl w-full shadow-2xl">
             <div class="pixel-font text-[9px] text-yellow-600 mb-6 bg-yellow-100 p-2 text-center rounded-full border-2 border-yellow-200">
                 CRASHED! ANSWER 2 TO CONTINUE ( <span id="revive-counter">1/2</span> )
             </div>
-            <h2 id="revive-question" class="text-2xl font-black mb-8">Loading question...</h2>
+            <h2 id="revive-question" class="text-2xl font-black mb-8">Loading...</h2>
             <div id="revive-options" class="space-y-4"></div>
-            <p class="mt-8 text-center text-slate-400 text-xs font-bold uppercase">One mistake and it's Game Over!</p>
-        </div>
-    </div>
-
-    <!-- JEOPARDY MODAL -->
-    <div id="jeopardy-modal" class="fixed inset-0 bg-black/95 hidden items-center justify-center p-8 z-[100] backdrop-blur-sm">
-        <div class="bg-blue-700 border-8 border-white p-16 max-w-3xl w-full text-center rounded-[3rem] shadow-2xl">
-            <div class="pixel-font text-xs text-blue-300 mb-4 uppercase">THE CLUE IS...</div>
-            <h2 id="modal-q" class="text-5xl font-black mb-12">Question?</h2>
-            <button id="modal-reveal" class="w-full bg-white text-blue-700 p-6 font-black text-2xl rounded-2xl">SHOW ANSWER</button>
-            <div id="modal-a" class="hidden mt-6 text-2xl font-bold text-yellow-400">Answer here</div>
-            <button onclick="closeJeopardy()" class="mt-8 text-white/50 font-bold underline">CLOSE</button>
         </div>
     </div>
 
     <script>
-        // --- DATA SETS ---
-        const JEOPARDY_DATA = [
-            { cat: "SCIENCE", clues: [{ v: 100, q: "Red Planet", a: "Mars" }, { v: 200, q: "Water Boiling C", a: "100" }, { v: 300, q: "Atom Center", a: "Nucleus" }, { v: 400, q: "Largest Organ", a: "Skin" }, { v: 500, q: "Light Speed", a: "300,000 km/s" }] },
-            { cat: "HISTORY", clues: [{ v: 100, q: "First on Moon", a: "Neil Armstrong" }, { v: 200, q: "Wall Country", a: "China" }, { v: 300, q: "Egypt Tombs", a: "Pyramids" }, { v: 400, q: "Titanic Year", a: "1912" }, { v: 500, q: "1st US President", a: "Washington" }] },
-            { cat: "MATH", clues: [{ v: 100, q: "Equal sides Triangle", a: "Equilateral" }, { v: 200, q: "SQRT 81", a: "9" }, { v: 300, q: "Circle Degrees", a: "360" }, { v: 400, q: "First 5 Pi", a: "3.1415" }, { v: 500, q: "Circle Area", a: "Pi r^2" }] },
-            { cat: "GEOGRAPHY", clues: [{ v: 100, q: "Largest Continent", a: "Asia" }, { v: 200, q: "Egypt River", a: "Nile" }, { v: 300, q: "Smallest Country", a: "Vatican" }, { v: 400, q: "Australia Capital", a: "Canberra" }, { v: 500, q: "Most Islands", a: "Sweden" }] }
-        ];
-
-        const QUESTS = [
+        // --- DATA ---
+        let BASE_QUESTS = [
             { q: "Which gas do plants absorb?", a: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Helium"], c: 1 },
             { q: "What is 12 x 12?", a: ["124", "144", "164", "148"], c: 1 },
             { q: "Smallest prime number?", a: ["0", "1", "2", "3"], c: 2 },
-            { q: "How many continents are there?", a: ["5", "6", "7", "8"], c: 2 },
-            { q: "What is the capital of France?", a: ["London", "Berlin", "Paris", "Madrid"], c: 2 },
-            { q: "What is 7 x 8?", a: ["54", "56", "64", "48"], c: 1 },
-            { q: "Largest ocean?", a: ["Atlantic", "Indian", "Pacific", "Arctic"], c: 2 }
+            { q: "How many continents?", a: ["5", "6", "7", "8"], c: 2 }
         ];
 
-        const PACKS = [
-            { id: 'color', name: "Basic Colors", price: 25, color: "bg-blue-600", skins: ["🔴", "🔵", "🟡", "🟣", "🟢", "🟠", "⚪", "⚫"] },
-            { id: 'space', name: "Space Explorer", price: 100, color: "bg-indigo-900", skins: ["👽", "👨‍🚀", "🚀", "🌙", "⭐", "🪐", "🛸", "☄️"] },
-            { id: 'mythic', name: "Mythic Beings", price: 500, color: "bg-purple-800", skins: ["👹", "👻", "🧞", "🧛", "🧟", "🧚", "🧜", "🦄"] }
-        ];
-
-        // --- STATE ---
         let state = {
             coins: 100,
-            ownedSkins: ["🐥"],
-            currentSkin: "🐥",
+            ownedSkins: ["🐸"],
+            currentSkin: "🐸",
+            customQuests: [],
             questIdx: 0,
-            solvedJeopardy: [],
             reviveStep: 0,
-            isClassic: false
+            totalAnswered: 0,
+            isCorePlus: false,
+            premiumBGActive: false
         };
 
-        // --- NAVIGATION ---
+        const PACKS = [
+            { id: 'color', name: "Basic Colors", price: 25, color: "bg-blue-600", skins: ["🔴", "🔵", "🟡", "🟣", "🟢"] },
+            { id: 'space', name: "Space Explorer", price: 100, color: "bg-indigo-900", skins: ["👽", "👨‍🚀", "🚀", "🌙", "⭐"] },
+            { id: 'mythic', name: "Mythic Beings", price: 500, color: "bg-purple-800", skins: ["👹", "👻", "🧞", "🧛", "🧟"] },
+            { id: 'galaxy', name: "Secret Galaxy (Plus)", price: 0, color: "bg-black", skins: ["🌑", "🪐", "🌠", "🌌", "🎆"], secret: true }
+        ];
+
+        function getAllQuests() { return [...BASE_QUESTS, ...state.customQuests]; }
+
+        // --- NAVIGATION & UI ---
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            const target = document.getElementById('view-' + (viewId === 'classic' ? 'quest' : viewId));
+            const target = document.getElementById('view-' + viewId);
             target.classList.add('active');
-            
             stopGames();
-            state.isClassic = (viewId === 'classic');
-            
             if(viewId === 'flappy') startFlappy();
             if(viewId === 'surf') startSurf();
             if(viewId === 'racer') startRacer();
-            if(viewId === 'jeopardy') renderJeopardy();
+            if(viewId === 'classic') { state.questIdx = 0; renderQuest(); }
             if(viewId === 'shop') renderShop();
-            if(viewId === 'quest' || viewId === 'classic') {
-                state.questIdx = 0;
-                renderQuest();
-            }
+            if(viewId === 'core') renderCore();
             if(viewId === 'minecraft') renderMinecraft();
+            if(viewId === 'jeopardy') renderJeopardy();
         }
 
         function updateUI() {
             document.getElementById('coin-count').innerText = state.coins;
             document.getElementById('current-skin-display').innerText = state.currentSkin;
+            
+            if(state.isCorePlus) {
+                document.getElementById('core-plus-badge').classList.remove('hidden');
+                document.getElementById('core-menu-btn').classList.add('premium-border');
+                document.getElementById('core-sub-promo').classList.add('premium-border');
+                document.getElementById('buy-core-btn').classList.add('hidden');
+                document.getElementById('sub-active-timer').classList.remove('hidden');
+                document.getElementById('core-leaks').classList.remove('hidden');
+                document.getElementById('premium-settings').classList.remove('hidden');
+            }
         }
 
-        // --- REVIVE ENGINE (2 QUESTIONS ON DEATH) ---
+        // --- CORE+ SUBSCRIPTION ---
+        function subscribeCore() {
+            if(state.coins >= 600) {
+                state.coins -= 600;
+                state.isCorePlus = true;
+                // Add secret galaxy pack skins to inventory
+                const galaxy = PACKS.find(p => p.id === 'galaxy');
+                galaxy.skins.forEach(s => {
+                    if(!state.ownedSkins.includes(s)) state.ownedSkins.push(s);
+                });
+                updateUI();
+                renderCore();
+                alert("Welcome to CORE+! Backgrounds, Leaks, and Galaxy Skins UNLOCKED.");
+            } else {
+                alert("You need 600 coins to subscribe!");
+            }
+        }
+
+        function togglePremiumBG() {
+            state.premiumBGActive = !state.premiumBGActive;
+            const body = document.getElementById('main-body');
+            if(state.premiumBGActive) {
+                body.classList.add('premium-bg');
+            } else {
+                body.classList.remove('premium-bg');
+            }
+        }
+
+        // --- CORE & CREATOR ---
+        function saveCustomQuestion() {
+            const q = document.getElementById('create-q').value;
+            const c = document.getElementById('create-c').value;
+            const o1 = document.getElementById('create-o1').value;
+            const o2 = document.getElementById('create-o2').value;
+            const o3 = document.getElementById('create-o3').value;
+
+            if(!q || !c || !o1) return alert("Fill in the question and at least two options!");
+            state.customQuests.push({ q, a: [c, o1, o2 || '...', o3 || '...'], c: 0 });
+            ['create-q', 'create-c', 'create-o1', 'create-o2', 'create-o3'].forEach(id => document.getElementById(id).value = '');
+            alert("Saved to collection!");
+        }
+
+        function renderCore() {
+            document.getElementById('core-score').innerText = state.totalAnswered * 10;
+            document.getElementById('core-custom-count').innerText = state.customQuests.length;
+            document.getElementById('core-skins-count').innerText = state.ownedSkins.length;
+            
+            const list = document.getElementById('core-question-list');
+            list.innerHTML = state.customQuests.length ? '' : '<div class="text-slate-500 text-center py-4 text-xs font-bold">Your custom collection is empty.</div>';
+            
+            state.customQuests.forEach((q, i) => {
+                const item = document.createElement('div');
+                item.className = 'bg-slate-900/50 p-4 border-2 border-white/10 rounded-xl flex justify-between items-center';
+                item.innerHTML = `
+                    <div class="text-xs truncate max-w-[70%]">${q.q}</div>
+                    <button onclick="deleteCustom(${i})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                `;
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+            updateUI();
+        }
+
+        function deleteCustom(i) { state.customQuests.splice(i, 1); renderCore(); }
+
+        // --- GAME ENGINE & QUESTIONS ---
         function triggerReviveFlow(resumeCallback) {
             gameActive = false;
             state.reviveStep = 0;
@@ -290,7 +422,8 @@
         }
 
         function showReviveQuestion(resumeCallback) {
-            const q = QUESTS[Math.floor(Math.random() * QUESTS.length)];
+            const pool = getAllQuests();
+            const q = pool[Math.floor(Math.random() * pool.length)];
             document.getElementById('revive-counter').innerText = `${state.reviveStep + 1}/2`;
             document.getElementById('revive-question').innerText = q.q;
             const optCont = document.getElementById('revive-options');
@@ -306,11 +439,8 @@
                         if(state.reviveStep >= 2) {
                             document.getElementById('revive-modal').classList.add('hidden');
                             resumeCallback();
-                        } else {
-                            showReviveQuestion(resumeCallback);
-                        }
+                        } else showReviveQuestion(resumeCallback);
                     } else {
-                        // Game Over
                         document.getElementById('revive-modal').classList.add('hidden');
                         switchView('menu');
                     }
@@ -319,32 +449,33 @@
             });
         }
 
-        // --- QUEST/CLASSIC ENGINE ---
         function renderQuest() {
-            const q = QUESTS[state.questIdx % QUESTS.length];
-            document.getElementById('quest-progress').innerText = `${state.isClassic ? 'CLASSIC' : 'QUEST'} PROGRESS: ${state.questIdx + 1} / ${QUESTS.length}`;
+            const pool = getAllQuests();
+            const q = pool[state.questIdx % pool.length];
+            document.getElementById('quest-progress').innerText = `CLASSIC PROGRESS: ${state.questIdx + 1} / ${pool.length}`;
             document.getElementById('quest-question').innerText = q.q;
             const optCont = document.getElementById('quest-options');
             optCont.innerHTML = '';
             
             q.a.forEach((opt, i) => {
                 const btn = document.createElement('button');
-                btn.className = 'w-full p-6 border-4 border-slate-100 hover:border-yellow-400 font-black text-xl text-left bg-slate-50 rounded-2xl';
+                btn.className = 'w-full p-6 border-4 border-slate-100 hover:border-yellow-400 font-black text-xl text-left bg-slate-50 rounded-2xl transition-all';
                 btn.innerText = opt;
                 btn.onclick = () => {
                     const fb = document.getElementById('quest-feedback');
                     fb.classList.remove('hidden');
                     if(i === q.c) {
-                        fb.innerText = "CORRECT! +10 COINS";
+                        fb.innerText = "CORRECT! +10";
                         fb.className = "absolute inset-0 z-50 flex items-center justify-center font-black text-4xl text-emerald-600 bg-emerald-50/90 rounded-[2.5rem]";
                         state.coins += 10;
+                        state.totalAnswered++;
                         state.questIdx++;
-                        if(state.questIdx >= QUESTS.length) {
+                        if(state.questIdx >= pool.length) {
                              setTimeout(() => { switchView('menu'); fb.classList.add('hidden'); }, 1500);
                              return;
                         }
                     } else {
-                        fb.innerText = "WRONG! GAME OVER";
+                        fb.innerText = "WRONG!";
                         fb.className = "absolute inset-0 z-50 flex items-center justify-center font-black text-4xl text-red-600 bg-red-50/90 rounded-[2.5rem]";
                         setTimeout(() => { switchView('menu'); fb.classList.add('hidden'); }, 1500);
                         return;
@@ -355,27 +486,24 @@
             });
         }
 
-        // --- ARCADE GAMES ---
-        let gameActive = false;
-        let animationId = null;
+        // --- ARCADE MODULES ---
+        let gameActive = false, animationId = null;
         function stopGames() { gameActive = false; cancelAnimationFrame(animationId); }
 
         function startFlappy() {
             const canvas = document.getElementById('flappy-canvas');
             const ctx = canvas.getContext('2d');
-            let y = 240, v = 0, pipes = [], frame = 0, lastTime = performance.now();
+            let y = 240, v = 0, pipes = [], frame = 0;
             gameActive = true;
             canvas.onmousedown = () => v = -6.5;
 
-            function loop(time) {
+            function loop() {
                 if(!gameActive) return;
-                const dt = Math.min((time - lastTime)/16, 2);
-                lastTime = time;
-                v += 0.3 * dt; y += v * dt;
-                if(frame % 90 === 0) pipes.push({ x: 320, y: Math.random() * 200 + 50 });
+                v += 0.3; y += v;
+                if(frame % 100 === 0) pipes.push({ x: 320, y: Math.random() * 200 + 50 });
                 pipes.forEach(p => {
-                    p.x -= 3.5 * dt;
-                    if(60 > p.x-20 && 60 < p.x+50 && (y < p.y || y > p.y+135)) {
+                    p.x -= 3;
+                    if(60 > p.x-20 && 60 < p.x+50 && (y < p.y || y > p.y+130)) {
                         triggerReviveFlow(() => { gameActive = true; y = 240; pipes = []; animationId = requestAnimationFrame(loop); });
                         return;
                     }
@@ -386,7 +514,7 @@
                 }
                 ctx.fillStyle = '#7dd3fc'; ctx.fillRect(0,0,320,480);
                 ctx.fillStyle = '#16a34a';
-                pipes.forEach(p => { ctx.fillRect(p.x, 0, 55, p.y); ctx.fillRect(p.x, p.y+135, 55, 480); });
+                pipes.forEach(p => { ctx.fillRect(p.x, 0, 50, p.y); ctx.fillRect(p.x, p.y+130, 50, 480); });
                 ctx.font = '40px Arial'; ctx.fillText(state.currentSkin, 60, y);
                 frame++;
                 animationId = requestAnimationFrame(loop);
@@ -397,19 +525,17 @@
         function startSurf() {
             const canvas = document.getElementById('surf-canvas');
             const ctx = canvas.getContext('2d');
-            let x = 140, enemies = [], input = 0, lastTime = performance.now();
+            let x = 140, enemies = [], input = 0;
             gameActive = true;
             window.onkeydown = (e) => { if(e.key === 'ArrowLeft') input = -1; if(e.key === 'ArrowRight') input = 1; };
             window.onkeyup = () => input = 0;
 
-            function loop(time) {
+            function loop() {
                 if(!gameActive) return;
-                const dt = Math.min((time - lastTime)/16, 2);
-                lastTime = time;
-                x += input * 7 * dt;
+                x += input * 7;
                 if(Math.random() < 0.05) enemies.push({ x: Math.random()*280, y: -50 });
                 enemies.forEach(e => {
-                    e.y += 6 * dt;
+                    e.y += 6;
                     if(Math.abs(x - e.x) < 35 && Math.abs(420 - e.y) < 35) {
                         triggerReviveFlow(() => { gameActive = true; enemies = []; animationId = requestAnimationFrame(loop); });
                         return;
@@ -426,19 +552,17 @@
         function startRacer() {
             const canvas = document.getElementById('racer-canvas');
             const ctx = canvas.getContext('2d');
-            let x = 140, enemies = [], input = 0, lastTime = performance.now();
+            let x = 140, enemies = [], input = 0;
             gameActive = true;
             window.onkeydown = (e) => { if(e.key === 'ArrowLeft') input = -1; if(e.key === 'ArrowRight') input = 1; };
             window.onkeyup = () => input = 0;
 
-            function loop(time) {
+            function loop() {
                 if(!gameActive) return;
-                const dt = Math.min((time - lastTime)/16, 2);
-                lastTime = time;
-                x += input * 8 * dt;
+                x += input * 8;
                 if(Math.random() < 0.06) enemies.push({ x: 65 + Math.random()*150, y: -60 });
                 enemies.forEach(e => {
-                    e.y += 9 * dt;
+                    e.y += 9;
                     if(Math.abs(x - e.x) < 35 && Math.abs(410 - e.y) < 35) {
                         triggerReviveFlow(() => { gameActive = true; enemies = []; animationId = requestAnimationFrame(loop); });
                         return;
@@ -458,12 +582,13 @@
             const container = document.getElementById('shop-container');
             container.innerHTML = '';
             PACKS.forEach(pack => {
+                if(pack.secret && !state.isCorePlus) return; // Hide galaxy pack if not Plus
                 const div = document.createElement('div');
                 div.className = `${pack.color} p-8 border-8 border-white rounded-[2.5rem] flex flex-col items-center shadow-xl`;
                 div.innerHTML = `
                     <div class="pixel-font text-[10px] mb-4">${pack.name}</div>
-                    <div class="text-4xl mb-6">${pack.skins.slice(0,4).join(' ')}</div>
-                    <button onclick="buyPack('${pack.id}')" class="w-full bg-white text-black p-4 font-black border-4 border-black rounded-xl">BUY 🪙 ${pack.price}</button>
+                    <div class="text-4xl mb-6">${pack.skins.slice(0,3).join(' ')}</div>
+                    <button onclick="buyPack('${pack.id}')" class="w-full bg-white text-black p-4 font-black border-4 border-black rounded-xl hover:scale-105 transition-transform">${pack.price === 0 ? 'FREE (PLUS)' : 'BUY 🪙 '+pack.price}</button>
                 `;
                 container.appendChild(div);
             });
@@ -472,46 +597,15 @@
             const p = PACKS.find(x => x.id === id);
             if(state.coins >= p.price) {
                 state.coins -= p.price;
-                state.currentSkin = p.skins[Math.floor(Math.random()*p.skins.length)];
+                const skin = p.skins[Math.floor(Math.random()*p.skins.length)];
+                if(!state.ownedSkins.includes(skin)) state.ownedSkins.push(skin);
+                state.currentSkin = skin;
                 updateUI();
             } else alert("Not enough coins!");
         }
 
-        function renderJeopardy() {
-            const grid = document.getElementById('jeopardy-grid');
-            grid.innerHTML = '';
-            JEOPARDY_DATA.forEach((cat, ci) => {
-                const col = document.createElement('div');
-                col.className = 'space-y-4';
-                col.innerHTML = `<div class="bg-blue-800 p-2 text-center border-2 border-white font-black text-[8px] uppercase">${cat.cat}</div>`;
-                cat.clues.forEach((clue, ri) => {
-                    const id = `${ci}-${ri}`;
-                    const solved = state.solvedJeopardy.includes(id);
-                    const btn = document.createElement('button');
-                    btn.className = `w-full aspect-square border-4 border-white font-black rounded-xl ${solved ? 'bg-slate-700 opacity-30' : 'bg-blue-600'}`;
-                    btn.innerText = solved ? '' : `$${clue.v}`;
-                    btn.onclick = () => { if(!solved) openJeopardy(clue, id); };
-                    col.appendChild(btn);
-                });
-                grid.appendChild(col);
-            });
-        }
-
-        function openJeopardy(clue, id) {
-            document.getElementById('modal-q').innerText = clue.q;
-            document.getElementById('modal-a').innerText = clue.a;
-            document.getElementById('modal-a').classList.add('hidden');
-            document.getElementById('jeopardy-modal').classList.remove('hidden');
-            document.getElementById('jeopardy-modal').classList.add('flex');
-            document.getElementById('modal-reveal').onclick = () => {
-                document.getElementById('modal-a').classList.remove('hidden');
-                state.solvedJeopardy.push(id);
-            };
-        }
-        function closeJeopardy() { document.getElementById('jeopardy-modal').classList.add('hidden'); document.getElementById('jeopardy-modal').classList.remove('flex'); renderJeopardy(); }
-
         function renderMinecraft() {
-            const palette = ['🟫', '🟩', '⬛', '🧱', '💎', '🔥', '💧', '📦', '🪨', '🪵'];
+            const palette = ['🟫', '🟩', '⬛', '🧱', '💎', '🔥', '💧', '📦'];
             const pCont = document.getElementById('mine-palette');
             pCont.innerHTML = '';
             let selected = '🟫';
@@ -527,23 +621,17 @@
                 const r = canvas.getBoundingClientRect();
                 const x = Math.floor((e.clientX - r.left)/40)*40;
                 const y = Math.floor((e.clientY - r.top)/40)*40;
-                const existing = canvas.querySelector(`[data-pos="${x}-${y}"]`);
-                if(existing) existing.remove();
-                else {
-                    const block = document.createElement('div');
-                    block.className = 'absolute text-4xl';
-                    block.style.left = x + 'px'; block.style.top = y + 'px';
-                    block.innerText = selected; block.dataset.pos = `${x}-${y}`;
-                    canvas.appendChild(block);
-                }
+                const block = document.createElement('div');
+                block.className = 'absolute text-4xl';
+                block.style.left = x + 'px'; block.style.top = y + 'px';
+                block.innerText = selected; canvas.appendChild(block);
             };
         }
 
         function checkAdmin() {
-            if(document.getElementById('admin-input').value === 'frofro2026') switchView('admin-panel');
+            if(document.getElementById('admin-input').value === 'frofro2026') state.coins += 1000, updateUI();
             else alert("Denied.");
         }
-        function adjustCoins(n) { state.coins += n; updateUI(); }
 
         window.onload = () => { lucide.createIcons(); updateUI(); };
     </script>
