@@ -1,610 +1,551 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  signInAnonymously, 
-  signInWithCustomToken, 
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
-} from 'firebase/auth';
-import { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  getDoc,
-  onSnapshot,
-  collection 
-} from 'firebase/firestore';
-import { 
-  Shield, Settings, ShoppingBag, Gamepad2, Hammer, 
-  LogOut, Key, Sparkles, Layout, Trophy, Play, Trash2, 
-  Plus, ArrowLeft, Waves, ListMusic, User, Zap 
-} from 'lucide-react';
-
-// --- Firebase Configuration ---
-const firebaseConfig = JSON.parse(__firebase_config);
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'frofro-kit-ultimate';
-
-// --- Constants & Data Sets (All 600+ Lines Worth of Content) ---
-const DEFAULT_QUESTIONS = [
-  { q: "Which gas do plants absorb?", a: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Helium"], c: 1 },
-  { q: "What is 12 x 12?", a: ["124", "144", "164", "148"], c: 1 },
-  { q: "Smallest prime number?", a: ["0", "1", "2", "3"], c: 2 },
-  { q: "How many continents are there?", a: ["5", "6", "7", "8"], c: 2 },
-  { q: "What is the capital of France?", a: ["London", "Berlin", "Paris", "Madrid"], c: 2 }
-];
-
-const PACKS = [
-  { id: 'color', name: "Basic Colors", price: 25, color: "bg-blue-600", skins: ["🔴", "🔵", "🟡", "🟣", "🟢", "🟠", "⚪", "⚫"] },
-  { id: 'space', name: "Space Explorer", price: 100, color: "bg-indigo-900", skins: ["👽", "👨‍🚀", "🚀", "🌙", "⭐", "🪐", "🛸", "☄️"] },
-  { id: 'medieval', name: "Medieval Quest", price: 250, color: "bg-amber-800", skins: ["🛡️", "⚔️", "🏰", "🤴", "👸", "🧙", "🐉", "🦄"] },
-  { id: 'elements', name: "Elemental Power", price: 500, color: "bg-orange-600", skins: ["🔥", "💧", "🌱", "⚡", "🌪️", "❄️", "🌋", "☀️"], coreOnly: true },
-  { id: 'mythic', name: "Mythic Beings", price: 1000, color: "bg-purple-800", skins: ["👹", "👻", "🧞", "🧛", "🧟", "🧚", "🧜", "🦄"] }
-];
-
-const JEOPARDY_DATA = [
-  { 
-    cat: "SCIENCE", 
-    clues: [
-      { v: 100, q: "This planet is known as the Red Planet.", a: "Mars" },
-      { v: 200, q: "The boiling point of water in Celsius.", a: "100" },
-      { v: 300, q: "The center of an atom.", a: "Nucleus" },
-      { v: 400, q: "Largest organ in the human body.", a: "Skin" },
-      { v: 500, q: "Speed of light in a vacuum (approx km/s).", a: "300,000" }
-    ] 
-  },
-  { 
-    cat: "HISTORY", 
-    clues: [
-      { v: 100, q: "The first person to walk on the moon.", a: "Neil Armstrong" },
-      { v: 200, q: "The Great Wall is located in this country.", a: "China" },
-      { v: 300, q: "Ancient Egyptians built these as tombs.", a: "Pyramids" },
-      { v: 400, q: "The year the Titanic sank.", a: "1912" },
-      { v: 500, q: "He was the first president of the USA.", a: "Washington" }
-    ] 
-  },
-  { 
-    cat: "MATH", 
-    clues: [
-      { v: 100, q: "A triangle with all equal sides.", a: "Equilateral" },
-      { v: 200, q: "Square root of 81.", a: "9" },
-      { v: 300, q: "Degrees in a circle.", a: "360" },
-      { v: 400, q: "First 5 digits of Pi.", a: "3.1415" },
-      { v: 500, q: "Formula for area of a circle.", a: "Pi r squared" }
-    ] 
-  },
-  { 
-    cat: "GEOGRAPHY", 
-    clues: [
-      { v: 100, q: "The largest continent.", a: "Asia" },
-      { v: 200, q: "River that flows through Egypt.", a: "Nile" },
-      { v: 300, q: "The smallest country in the world.", a: "Vatican City" },
-      { v: 400, q: "Capital city of Australia.", a: "Canberra" },
-      { v: 500, q: "Country with the most islands.", a: "Sweden" }
-    ] 
-  }
-];
-
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [view, setView] = useState('menu');
-  const [userData, setUserData] = useState({
-    coins: 100,
-    ownedSkins: ["🐸"],
-    currentSkin: "🐸",
-    hasCore: false,
-    isAdmin: false,
-    customSets: [{ id: 'default', title: "Master Set", questions: DEFAULT_QUESTIONS }],
-    background: 'bg-slate-900',
-    stats: { wins: 0, blocksPlaced: 0, distance: 0 }
-  });
-
-  const [adminPass, setAdminPass] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  // --- External Integrations ---
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js';
-    script.async = true;
-    script.type = 'module';
-    document.head.appendChild(script);
-    return () => { if (document.head.contains(script)) document.head.removeChild(script); };
-  }, []);
-
-  // --- Authentication ---
-  useEffect(() => {
-    const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
-      } else {
-        await signInAnonymously(auth);
-      }
-    };
-    initAuth();
-    return onAuthStateChanged(auth, setUser);
-  }, []);
-
-  // --- Persistence ---
-  useEffect(() => {
-    if (!user) return;
-    const userDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-    const unsubscribe = onSnapshot(userDoc, (docSnap) => {
-      if (docSnap.exists()) {
-        setUserData(prev => ({ ...prev, ...docSnap.data() }));
-      } else {
-        setDoc(userDoc, userData);
-      }
-    }, (err) => console.error("Firestore Error:", err));
-    return () => unsubscribe();
-  }, [user]);
-
-  const saveUserData = async (newData) => {
-    if (!user) return;
-    const userDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-    await setDoc(userDoc, newData, { merge: true });
-  };
-
-  const handleAdminAuth = () => {
-    if (adminPass === 'frofro2026') {
-      const updated = { ...userData, isAdmin: true };
-      setUserData(updated);
-      saveUserData(updated);
-      setView('admin-panel');
-    } else {
-      alert("Unauthorized key.");
-    }
-  };
-
-  const buySkinPack = (pack) => {
-    if (userData.coins < pack.price) return alert("Insufficient coins!");
-    if (pack.coreOnly && !userData.hasCore) return alert("FroFroKitCore Required!");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FroFroKit Ultimate Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     
-    const randomSkin = pack.skins[Math.floor(Math.random() * pack.skins.length)];
-    const newSkins = [...new Set([...userData.ownedSkins, randomSkin])];
-    const updated = { ...userData, coins: userData.coins - pack.price, ownedSkins: newSkins, currentSkin: randomSkin };
-    setUserData(updated);
-    saveUserData(updated);
-  };
-
-  return (
-    <div className={`min-h-screen ${userData.background} text-white selection:bg-yellow-400 selection:text-black transition-colors duration-500`}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;900&family=Press+Start+2P&display=swap');
-        body { font-family: 'Lexend', sans-serif; overflow-x: hidden; touch-action: manipulation; margin: 0; }
+    <style>
+        body { font-family: 'Lexend', sans-serif; overflow-x: hidden; touch-action: manipulation; margin: 0; background-color: #0f172a; color: white; }
         .pixel-font { font-family: 'Press+Start+2P', cursive; }
-        .game-card { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 4px solid white; box-shadow: 6px 6px 0px rgba(0,0,0,0.3); border-radius: 16px; }
+        .game-card { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 4px solid white; box-shadow: 6px 6px 0px rgba(0,0,0,0.3); border-radius: 16px; cursor: pointer; }
         .game-card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0px rgba(0,0,0,0.4); }
         .game-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
-        canvas { image-rendering: pixelated; touch-action: none; background: #000; }
-        .custom-scroll::-webkit-scrollbar { width: 8px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
-        iframe { border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-      `}</style>
+        canvas { image-rendering: pixelated; touch-action: none; background: #000; border: 8px solid white; border-radius: 24px; max-width: 100%; height: auto; }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .grid-blocks { background-image: radial-gradient(#ffffff22 1px, transparent 0); background-size: 40px 40px; }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
 
-      <zapier-interfaces-chatbot-embed is-popup="true" chatbot-id="cmo8qa6lb00a0ibdesjkhldxa" />
-
-      {/* Main Header */}
-      <nav className="p-4 bg-slate-900/90 backdrop-blur-md border-b-4 border-white flex justify-between items-center sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="bg-white text-black p-2 rounded-xl text-2xl border-2 border-slate-300 transform -rotate-3">{userData.currentSkin}</div>
-          <div>
-            <div className="pixel-font text-[10px] leading-none">FROFRO<span className="text-yellow-400">KIT</span></div>
-            <div className="text-[9px] font-black text-slate-400 tracking-widest uppercase">Ultimate Edition</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="bg-slate-800 px-4 py-2 border-2 border-yellow-400 rounded-xl flex items-center gap-2 shadow-inner">
-            <span className="text-yellow-400 animate-pulse">🪙</span>
-            <span className="pixel-font text-[11px]">{userData.coins}</span>
-          </div>
-          <button onClick={() => setView('settings')} className="p-2 bg-slate-800 border-2 border-white rounded-xl hover:bg-slate-700 transition-colors">
-            <Settings size={20} />
-          </button>
-        </div>
-      </nav>
-
-      <main className="p-4 sm:p-8 max-w-7xl mx-auto">
-        {view === 'menu' && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 animate-in fade-in zoom-in duration-300">
-            <MenuIcon icon={<Zap />} label="FRO DASH" color="bg-yellow-500" onClick={() => setView('dash')} />
-            <MenuIcon icon={<Gamepad2 />} label="FLAPPY" color="bg-emerald-500" onClick={() => setView('flappy')} />
-            <MenuIcon icon={<Waves />} label="SURF" color="bg-cyan-500" onClick={() => setView('surf')} />
-            <MenuIcon icon={<Play />} label="RACER" color="bg-rose-500" onClick={() => setView('racer')} />
-            <MenuIcon icon={<Trophy />} label="QUESTS" color="bg-indigo-500" onClick={() => setView('quest')} />
-            <MenuIcon icon={<ListMusic />} label="JEOPARDY" color="bg-purple-600" onClick={() => setView('jeopardy')} />
-            <MenuIcon icon={<Hammer />} label="MINE 2D" color="bg-orange-700" onClick={() => setView('minecraft')} />
-            <MenuIcon icon={<ShoppingBag />} label="SHOP" color="bg-amber-500" onClick={() => setView('shop')} />
-            <MenuIcon icon={<Shield />} label="ADMIN" color="bg-slate-700" onClick={() => setView('admin-auth')} />
-          </div>
-        )}
-
-        {/* View Switcher Logic */}
-        {view === 'dash' && (
-          <div className="flex flex-col items-center w-full animate-in slide-in-from-bottom duration-500">
-            <div className="w-full h-[75vh] border-8 border-white rounded-[2rem] overflow-hidden shadow-2xl bg-black relative">
-              <iframe 
-                src="https://frofrocreater.github.io/FroFroChat/" 
-                className="w-full h-full border-none" 
-                title="FroFroDash"
-              />
+    <!-- Main Navigation -->
+    <nav class="p-4 bg-slate-900/90 backdrop-blur-md border-b-4 border-white flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div id="current-skin-display" class="bg-white text-black p-2 rounded-xl text-2xl border-2 border-slate-300 transform -rotate-3">🐸</div>
+            <div>
+                <div class="pixel-font text-[10px] leading-none">FROFRO<span class="text-yellow-400">KIT</span></div>
+                <div class="text-[9px] font-black text-slate-400 tracking-widest uppercase">Ultimate Edition</div>
             </div>
-            <button onClick={() => setView('menu')} className="mt-8 bg-red-600 px-16 py-4 border-4 border-white pixel-font text-[12px] uppercase hover:bg-red-700 transition-colors">Quit Dash</button>
-          </div>
-        )}
-
-        {view === 'flappy' && <FlappyGame skin={userData.currentSkin} onExit={() => setView('menu')} />}
-        {view === 'surf' && <SurfGame skin={userData.currentSkin} onExit={() => setView('menu')} />}
-        {view === 'racer' && <RacerGame skin={userData.currentSkin} onExit={() => setView('menu')} />}
-        {view === 'quest' && <QuestModule userData={userData} saveUserData={saveUserData} onExit={() => setView('menu')} />}
-        {view === 'jeopardy' && <JeopardyModule onExit={() => setView('menu')} />}
-        {view === 'minecraft' && <MinecraftModule skin={userData.currentSkin} onExit={() => setView('menu')} />}
-        {view === 'shop' && <ShopModule userData={userData} buyPack={buySkinPack} onExit={() => setView('menu')} />}
-        
-        {view === 'admin-auth' && (
-          <div className="max-w-md mx-auto bg-slate-800 p-10 border-4 border-white rounded-2xl text-center shadow-2xl">
-            <Shield size={64} className="mx-auto mb-6 text-yellow-400" />
-            <h2 className="pixel-font text-sm mb-8 tracking-tighter">RESTRICTED ACCESS</h2>
-            <input 
-              type="password" 
-              placeholder="System Key..." 
-              className="w-full bg-slate-900 border-4 border-white p-4 mb-6 rounded-xl text-center pixel-font text-xs"
-              value={adminPass}
-              onChange={(e) => setAdminPass(e.target.value)}
-            />
-            <button onClick={handleAdminAuth} className="w-full bg-yellow-400 text-black p-4 font-black border-4 border-white mb-4 hover:scale-105 transition-transform">UNLOCK SYSTEM</button>
-            <button onClick={() => setView('menu')} className="text-slate-500 font-bold hover:text-white">Cancel</button>
-          </div>
-        )}
-
-        {view === 'admin-panel' && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="bg-slate-800 p-8 border-4 border-white rounded-2xl">
-              <h1 className="pixel-font text-xl mb-6 text-yellow-400">ADMIN CONTROL</h1>
-              <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => {
-                  const up = {...userData, coins: userData.coins + 1000};
-                  setUserData(up); saveUserData(up);
-                }} className="bg-emerald-600 p-6 border-4 border-white font-black text-lg">ADD 1,000 COINS</button>
-                <button onClick={() => {
-                  const up = {...userData, hasCore: !userData.hasCore};
-                  setUserData(up); saveUserData(up);
-                }} className="bg-indigo-600 p-6 border-4 border-white font-black text-lg">{userData.hasCore ? "REVOKE CORE" : "GRANT CORE"}</button>
-                <button onClick={() => setView('menu')} className="col-span-2 bg-slate-700 p-4 border-4 border-white font-bold">EXIT ADMIN PANEL</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {view === 'settings' && (
-          <div className="max-w-md mx-auto bg-slate-800 p-10 border-4 border-white rounded-2xl">
-             <h2 className="pixel-font text-xs mb-8">USER CONFIG</h2>
-             <div className="space-y-4">
-                <button onClick={() => setView('menu')} className="w-full bg-slate-700 p-4 border-2 border-white font-bold rounded-xl">BACK HOME</button>
-                <button onClick={() => auth.signOut()} className="w-full bg-red-600 p-4 border-2 border-white font-black rounded-xl flex items-center justify-center gap-2">
-                  <LogOut size={20} /> SIGN OUT
-                </button>
-             </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
-
-function MenuIcon({ icon, label, color, onClick }) {
-  return (
-    <button onClick={onClick} className={`${color} game-card p-6 flex flex-col items-center justify-center aspect-square text-white`}>
-      <div className="mb-4 transform scale-[2] drop-shadow-md">{icon}</div>
-      <div className="pixel-font text-[10px] mt-2 text-center leading-tight">{label}</div>
-    </button>
-  );
-}
-
-// --- High Performance Game Engines ---
-
-function FlappyGame({ skin, onExit }) {
-  const canvasRef = useRef(null);
-  const state = useRef({ y: 240, v: 0, pipes: [], frame: 0, lastTime: 0, score: 0 });
-
-  useEffect(() => {
-    const ctx = canvasRef.current.getContext('2d');
-    const loop = (time) => {
-      const dt = Math.min((time - state.current.lastTime) / 16, 2);
-      state.current.lastTime = time;
-      state.current.v += 0.3 * dt;
-      state.current.y += state.current.v * dt;
-      if (state.current.frame % 90 === 0) state.current.pipes.push({ x: 320, y: Math.random() * 200 + 50 });
-      state.current.pipes.forEach(p => p.x -= 3.5 * dt);
-      state.current.pipes = state.current.pipes.filter(p => p.x > -60);
-      state.current.pipes.forEach(p => {
-        if (60 > p.x - 20 && 60 < p.x + 50 && (state.current.y < p.y || state.current.y > p.y + 135)) onExit();
-      });
-      if (state.current.y > 480 || state.current.y < 0) onExit();
-      
-      ctx.fillStyle = '#7dd3fc'; ctx.fillRect(0,0,320,480);
-      ctx.fillStyle = '#16a34a';
-      state.current.pipes.forEach(p => { 
-        ctx.fillRect(p.x, 0, 55, p.y); 
-        ctx.fillRect(p.x, p.y+135, 55, 480); 
-        ctx.strokeStyle = '#064e3b'; ctx.lineWidth = 4;
-        ctx.strokeRect(p.x, 0, 55, p.y); ctx.strokeRect(p.x, p.y+135, 55, 480);
-      });
-      ctx.font = '36px Arial'; ctx.fillText(skin, 60, state.current.y);
-      state.current.frame++;
-      state.current.req = requestAnimationFrame(loop);
-    };
-    state.current.req = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(state.current.req);
-  }, []);
-
-  return (
-    <div className="flex flex-col items-center">
-      <canvas ref={canvasRef} width="320" height="480" className="border-8 border-white rounded-3xl shadow-2xl" onMouseDown={() => state.current.v = -6.5} />
-      <button onClick={onExit} className="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full">QUIT MISSION</button>
-    </div>
-  );
-}
-
-function SurfGame({ skin, onExit }) {
-  const canvasRef = useRef(null);
-  const input = useRef(0);
-  const state = useRef({ x: 140, enemies: [], lastTime: 0 });
-
-  useEffect(() => {
-    const ctx = canvasRef.current.getContext('2d');
-    const loop = (time) => {
-      const dt = Math.min((time - state.current.lastTime) / 16, 2);
-      state.current.lastTime = time;
-      if (input.current === -1 && state.current.x > 25) state.current.x -= 7 * dt;
-      if (input.current === 1 && state.current.x < 265) state.current.x += 7 * dt;
-      if (Math.random() < 0.05) state.current.enemies.push({ x: Math.random()*280, y: -50 });
-      state.current.enemies.forEach(e => {
-        e.y += 6 * dt;
-        if (Math.abs(state.current.x - e.x) < 35 && Math.abs(420 - e.y) < 35) onExit();
-      });
-      state.current.enemies = state.current.enemies.filter(e => e.y < 500);
-      ctx.fillStyle = '#0891b2'; ctx.fillRect(0,0,320,480);
-      for(let i=0; i<5; i++) { ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fillRect(0, (state.current.lastTime/10 + i*100)%480, 320, 2); }
-      ctx.font = '45px Arial'; ctx.fillText(skin, state.current.x, 440);
-      state.current.enemies.forEach(e => ctx.fillText('🦈', e.x, e.y));
-      state.current.req = requestAnimationFrame(loop);
-    };
-    state.current.req = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(state.current.req);
-  }, []);
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative">
-        <canvas ref={canvasRef} width="320" height="480" className="border-8 border-white rounded-3xl" />
-        <div className="absolute inset-0 flex">
-          <div className="w-1/2 cursor-w-resize" onMouseDown={() => input.current = -1} onMouseUp={() => input.current = 0} onTouchStart={() => input.current = -1} onTouchEnd={() => input.current = 0} />
-          <div className="w-1/2 cursor-e-resize" onMouseDown={() => input.current = 1} onMouseUp={() => input.current = 0} onTouchStart={() => input.current = 1} onTouchEnd={() => input.current = 0} />
         </div>
-      </div>
-      <button onClick={onExit} className="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full uppercase">Wipe Out</button>
-    </div>
-  );
-}
-
-function RacerGame({ skin, onExit }) {
-  const canvasRef = useRef(null);
-  const input = useRef(0);
-  const state = useRef({ x: 140, enemies: [], lastTime: 0 });
-
-  useEffect(() => {
-    const ctx = canvasRef.current.getContext('2d');
-    const loop = (time) => {
-      const dt = Math.min((time - state.current.lastTime) / 16, 2);
-      state.current.lastTime = time;
-      if (input.current === -1 && state.current.x > 65) state.current.x -= 8 * dt;
-      if (input.current === 1 && state.current.x < 215) state.current.x += 8 * dt;
-      if (Math.random() < 0.06) state.current.enemies.push({ x: 65 + Math.random()*150, y: -60 });
-      state.current.enemies.forEach(e => {
-        e.y += 9 * dt;
-        if (Math.abs(state.current.x - e.x) < 35 && Math.abs(410 - e.y) < 35) onExit();
-      });
-      state.current.enemies = state.current.enemies.filter(e => e.y < 500);
-      ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,320,480);
-      ctx.fillStyle = '#334155'; ctx.fillRect(60, 0, 200, 480);
-      ctx.strokeStyle = '#fff'; ctx.setLineDash([20, 20]); ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.moveTo(160, 0); ctx.lineTo(160, 480); ctx.stroke();
-      ctx.font = '45px Arial'; ctx.fillText(skin, state.current.x, 430);
-      state.current.enemies.forEach(e => ctx.fillText('🏎️', e.x, e.y));
-      state.current.req = requestAnimationFrame(loop);
-    };
-    state.current.req = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(state.current.req);
-  }, []);
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative">
-        <canvas ref={canvasRef} width="320" height="480" className="border-8 border-white rounded-3xl" />
-        <div className="absolute inset-0 flex">
-          <div className="w-1/2" onMouseDown={() => input.current = -1} onMouseUp={() => input.current = 0} onTouchStart={() => input.current = -1} onTouchEnd={() => input.current = 0} />
-          <div className="w-1/2" onMouseDown={() => input.current = 1} onMouseUp={() => input.current = 0} onTouchStart={() => input.current = 1} onTouchEnd={() => input.current = 0} />
-        </div>
-      </div>
-      <button onClick={onExit} className="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full uppercase">Crash Exit</button>
-    </div>
-  );
-}
-
-// --- Extended Feature Modules ---
-
-function JeopardyModule({ onExit }) {
-  const [active, setActive] = useState(null);
-  const [solved, setSolved] = useState([]);
-
-  return (
-    <div className="max-w-5xl mx-auto animate-in slide-in-from-top duration-500">
-      <div className="grid grid-cols-4 gap-4">
-        {JEOPARDY_DATA.map((cat, ci) => (
-          <div key={ci} className="space-y-4">
-            <div className="bg-blue-800 p-6 text-center border-4 border-white font-black text-xs h-20 flex items-center justify-center uppercase shadow-lg tracking-tighter leading-none">{cat.cat}</div>
-            {cat.clues.map((clue, ri) => {
-              const id = `${ci}-${ri}`;
-              const isSolved = solved.includes(id);
-              return (
-                <button 
-                  key={ri} 
-                  disabled={isSolved}
-                  onClick={() => setActive({ ...clue, id })}
-                  className={`w-full aspect-square border-4 border-white text-3xl font-black transition-all rounded-xl ${isSolved ? 'bg-slate-700 opacity-30 cursor-default' : 'bg-blue-600 hover:bg-blue-400 hover:scale-105 shadow-md active:scale-95'}`}
-                >
-                  {isSolved ? '' : `$${clue.v}`}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-
-      {active && (
-        <div className="fixed inset-0 bg-black/95 flex items-center justify-center p-8 z-[100] backdrop-blur-sm">
-          <div className="bg-blue-700 border-8 border-white p-16 max-w-3xl w-full text-center rounded-[3rem] shadow-[0_0_100px_rgba(255,255,255,0.2)]">
-            <div className="pixel-font text-xs text-blue-300 mb-4 tracking-widest uppercase">THE CLUE IS...</div>
-            <h2 className="text-5xl font-black mb-12 leading-tight drop-shadow-xl">{active.q}</h2>
-            <div className="space-y-6">
-              <button 
-                onClick={() => { setSolved([...solved, active.id]); setActive(null); }}
-                className="w-full bg-white text-blue-700 p-6 font-black text-2xl hover:bg-slate-100 rounded-2xl active:scale-95 transition-all shadow-xl"
-              >
-                SHOW ANSWER
-              </button>
-              <div className="text-white/40 text-sm font-bold">(Hidden Answer: {active.a})</div>
+        <div class="flex items-center gap-4">
+            <div class="bg-slate-800 px-4 py-2 border-2 border-yellow-400 rounded-xl flex items-center gap-2 shadow-inner">
+                <span class="text-yellow-400 animate-pulse">🪙</span>
+                <span id="coin-count" class="pixel-font text-[11px]">100</span>
             </div>
-          </div>
-        </div>
-      )}
-      <button onClick={onExit} className="mt-12 w-full p-6 bg-slate-800 border-4 border-white font-black rounded-2xl hover:bg-slate-700 transition-colors uppercase tracking-widest">Back to Dashboard</button>
-    </div>
-  );
-}
-
-function ShopModule({ userData, buyPack, onExit }) {
-  return (
-    <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="text-center">
-        <h1 className="pixel-font text-2xl text-yellow-400 mb-2">MEGA SKIN SHOP</h1>
-        <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">Unlock premium avatars for your profile</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {PACKS.map(pack => (
-          <div key={pack.id} className={`${pack.color} p-10 border-8 border-white rounded-[2.5rem] flex flex-col items-center shadow-2xl relative overflow-hidden group`}>
-            <div className="absolute top-0 left-0 w-full h-full bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-            <div className="pixel-font text-[10px] mb-6 text-white/90 bg-black/20 px-4 py-2 rounded-full">{pack.name}</div>
-            <div className="text-7xl mb-8 flex gap-3 flex-wrap justify-center">
-              {pack.skins.slice(0, 4).map((s, i) => <span key={i} className="drop-shadow-2xl hover:scale-125 transition-transform cursor-help">{s}</span>)}
-            </div>
-            <button 
-              onClick={() => buyPack(pack)}
-              className="w-full bg-white text-black p-5 font-black border-4 border-black hover:bg-slate-100 flex justify-between items-center rounded-2xl transition-all hover:scale-105 active:scale-95"
-            >
-              <span className="text-lg">BUY PACK</span>
-              <span className="bg-slate-200 px-3 py-1 rounded-lg">🪙 {pack.price}</span>
+            <button onclick="switchView('settings')" class="p-2 bg-slate-800 border-2 border-white rounded-xl hover:bg-slate-700 transition-colors">
+                <i data-lucide="settings" class="w-5 h-5"></i>
             </button>
-            {pack.coreOnly && (
-              <div className="mt-4 flex items-center gap-2 text-[11px] font-black text-white/70 uppercase">
-                <Shield size={14} className="text-yellow-300" /> FroFroKitCore Required
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <button onClick={onExit} className="w-full bg-slate-800 p-6 border-4 border-white font-black rounded-2xl text-xl hover:bg-slate-700">RETURN TO MENU</button>
-    </div>
-  );
-}
-
-function MinecraftModule({ skin, onExit }) {
-  const [blocks, setBlocks] = useState([]);
-  const [sel, setSel] = useState('🟫');
-  const palette = ['🟫', '🟩', '⬛', '🧱', '💎', '🔥', '💧', '📦', '🪨', '🪵'];
-
-  return (
-    <div className="flex flex-col items-center animate-in zoom-in duration-300">
-      <div className="flex flex-wrap justify-center gap-3 mb-6 bg-slate-800 p-6 border-4 border-white rounded-2xl">
-        {palette.map(p => (
-          <button 
-            key={p} 
-            onClick={() => setSel(p)} 
-            className={`w-14 h-14 text-3xl flex items-center justify-center border-4 transition-all rounded-lg ${sel===p ? 'border-yellow-400 bg-slate-900 scale-110 shadow-lg' : 'border-white bg-slate-700 hover:bg-slate-600'}`}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
-      <div 
-        onClick={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          const x = Math.floor((e.clientX-r.left)/40)*40;
-          const y = Math.floor((e.clientY-r.top)/40)*40;
-          if (blocks.some(b => b.x === x && b.y === y)) {
-            setBlocks(blocks.filter(b => !(b.x === x && b.y === y)));
-          } else {
-            setBlocks([...blocks, { x, y, t: sel }]);
-          }
-        }} 
-        className="bg-blue-300 w-[400px] h-[400px] sm:w-[520px] sm:h-[520px] relative overflow-hidden cursor-crosshair border-8 border-white shadow-2xl rounded-2xl"
-      >
-        <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 0)', backgroundSize: '40px 40px' }} />
-        {blocks.map((b,i) => <div key={i} className="absolute text-5xl transition-all animate-in fade-in zoom-in duration-200" style={{left:b.x, top:b.y}}>{b.t}</div>)}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl pointer-events-none drop-shadow-2xl z-10">{skin}</div>
-      </div>
-      <div className="mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Click to build • Click block to break</div>
-      <button onClick={onExit} className="mt-8 bg-red-600 px-12 py-3 border-4 border-white font-black rounded-full shadow-lg hover:bg-red-700">EXIT BUILDER</button>
-    </div>
-  );
-}
-
-function QuestModule({ userData, saveUserData, onExit }) {
-  const [idx, setIdx] = useState(0);
-  const currentSet = userData.customSets[0];
-  const q = currentSet.questions[idx % currentSet.questions.length];
-  const [feedback, setFeedback] = useState(null);
-  
-  const handleAnswer = (i) => {
-    if (i === q.c) {
-      setFeedback("CORRECT! +15 COINS");
-      const up = { ...userData, coins: userData.coins + 15 };
-      saveUserData(up);
-      setTimeout(() => { setIdx(idx + 1); setFeedback(null); }, 1000);
-    } else {
-      setFeedback("WRONG! TRY AGAIN");
-      setTimeout(() => setFeedback(null), 1000);
-    }
-  };
-
-  return (
-    <div className="max-w-2xl mx-auto bg-white text-black p-12 border-8 border-slate-300 rounded-[3rem] shadow-2xl relative overflow-hidden">
-      {feedback && (
-        <div className={`absolute inset-0 z-50 flex items-center justify-center font-black text-4xl text-center p-4 backdrop-blur-md ${feedback.includes('CORRECT') ? 'text-emerald-600 bg-emerald-50/90' : 'text-red-600 bg-red-50/90'}`}>
-          {feedback}
         </div>
-      )}
-      <div className="bg-slate-100 p-3 rounded-full mb-8 text-center pixel-font text-[9px] text-slate-500 border-2 border-slate-200">
-        QUEST PROGRESS: {idx + 1} / {currentSet.questions.length}
-      </div>
-      <h2 className="text-3xl font-black mb-12 leading-tight text-slate-800">{q.q}</h2>
-      <div className="space-y-5">
-        {q.a.map((opt, i) => (
-          <button 
-            key={i} 
-            onClick={() => handleAnswer(i)}
-            className="w-full p-6 border-4 border-slate-100 hover:border-yellow-400 font-black text-xl transition-all text-left bg-slate-50 hover:bg-yellow-50 rounded-2xl shadow-sm hover:shadow-md"
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
-      <button onClick={onExit} className="mt-12 w-full p-4 bg-slate-100 text-slate-400 font-black hover:text-red-500 transition-colors uppercase tracking-widest text-sm rounded-xl">Abandon Quest</button>
+    </nav>
+
+    <main class="p-4 sm:p-8 max-w-7xl mx-auto">
+        
+        <!-- MAIN MENU -->
+        <div id="view-menu" class="view-section active">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                <div onclick="switchView('dash')" class="bg-yellow-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="zap" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">FRO DASH</div>
+                </div>
+                <div onclick="switchView('flappy')" class="bg-emerald-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="gamepad-2" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">FLAPPY</div>
+                </div>
+                <div onclick="switchView('surf')" class="bg-cyan-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="waves" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">SURF</div>
+                </div>
+                <div onclick="switchView('racer')" class="bg-rose-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="play" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">RACER</div>
+                </div>
+                <div onclick="switchView('quest')" class="bg-indigo-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="trophy" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">QUESTS</div>
+                </div>
+                <div onclick="switchView('classic')" class="bg-orange-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="book-open" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">CLASSIC</div>
+                </div>
+                <div onclick="switchView('jeopardy')" class="bg-purple-600 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="list-music" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">JEOPARDY</div>
+                </div>
+                <div onclick="switchView('minecraft')" class="bg-orange-700 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="hammer" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">MINE 2D</div>
+                </div>
+                <div onclick="switchView('shop')" class="bg-amber-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="shopping-bag" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">SHOP</div>
+                </div>
+                <div onclick="switchView('admin-auth')" class="bg-slate-700 game-card p-6 flex flex-col items-center justify-center aspect-square">
+                    <i data-lucide="shield" class="w-12 h-12 mb-2"></i>
+                    <div class="pixel-font text-[10px] mt-2">ADMIN</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DASH VIEW -->
+        <div id="view-dash" class="view-section">
+            <div class="flex flex-col items-center w-full">
+                <div class="w-full h-[75vh] border-8 border-white rounded-[2rem] overflow-hidden shadow-2xl bg-black relative">
+                    <iframe src="https://frofrocreater.github.io/FroFroChat/" class="w-full h-full border-none"></iframe>
+                </div>
+                <button onclick="switchView('menu')" class="mt-8 bg-red-600 px-16 py-4 border-4 border-white pixel-font text-[12px] uppercase hover:bg-red-700">Quit Dash</button>
+            </div>
+        </div>
+
+        <!-- FLAPPY VIEW -->
+        <div id="view-flappy" class="view-section text-center">
+            <canvas id="flappy-canvas" width="320" height="480" class="mx-auto shadow-2xl"></canvas>
+            <p class="mt-4 text-slate-400 font-bold uppercase text-[10px]">Tap to Jump! Survive to avoid questions!</p>
+            <button onclick="stopGames(); switchView('menu')" class="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full">QUIT GAME</button>
+        </div>
+
+        <!-- SURF VIEW -->
+        <div id="view-surf" class="view-section text-center">
+            <canvas id="surf-canvas" width="320" height="480" class="mx-auto"></canvas>
+            <p class="mt-4 text-slate-400 font-bold uppercase text-[10px]">Hold Left/Right to Move!</p>
+            <button onclick="stopGames(); switchView('menu')" class="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full">QUIT GAME</button>
+        </div>
+
+        <!-- RACER VIEW -->
+        <div id="view-racer" class="view-section text-center">
+            <canvas id="racer-canvas" width="320" height="480" class="mx-auto"></canvas>
+            <p class="mt-4 text-slate-400 font-bold uppercase text-[10px]">Dodge the Cars!</p>
+            <button onclick="stopGames(); switchView('menu')" class="mt-8 bg-red-600 px-10 py-3 border-4 border-white font-black rounded-full">QUIT GAME</button>
+        </div>
+
+        <!-- QUEST/CLASSIC VIEW -->
+        <div id="view-quest" class="view-section">
+            <div id="quest-card" class="max-w-2xl mx-auto bg-white text-black p-12 border-8 border-slate-300 rounded-[3rem] shadow-2xl relative">
+                <div id="quest-feedback" class="hidden absolute inset-0 z-50 flex items-center justify-center font-black text-4xl text-center p-4 backdrop-blur-md rounded-[2.5rem]"></div>
+                <div id="quest-progress" class="bg-slate-100 p-3 rounded-full mb-8 text-center pixel-font text-[9px] text-slate-500 border-2 border-slate-200">QUEST PROGRESS: 1 / 5</div>
+                <h2 id="quest-question" class="text-3xl font-black mb-12 text-slate-800">Question goes here?</h2>
+                <div id="quest-options" class="space-y-5"></div>
+                <button onclick="switchView('menu')" class="mt-12 w-full p-4 bg-slate-100 text-slate-400 font-black hover:text-red-500 rounded-xl uppercase">Back to Menu</button>
+            </div>
+        </div>
+
+        <!-- CLASSIC VIEW (ALIAS FOR QUEST WITH DIFFERENT DATA) -->
+        <div id="view-classic" class="view-section">
+            <div id="classic-container"></div>
+        </div>
+
+        <!-- JEOPARDY VIEW -->
+        <div id="view-jeopardy" class="view-section">
+            <div id="jeopardy-grid" class="grid grid-cols-4 gap-4"></div>
+            <button onclick="switchView('menu')" class="mt-12 w-full p-6 bg-slate-800 border-4 border-white font-black rounded-2xl hover:bg-slate-700 uppercase">Back to Menu</button>
+        </div>
+
+        <!-- MINE 2D VIEW -->
+        <div id="view-minecraft" class="view-section text-center">
+            <div id="mine-palette" class="flex flex-wrap justify-center gap-3 mb-6 bg-slate-800 p-6 border-4 border-white rounded-2xl"></div>
+            <div id="mine-canvas" class="bg-blue-300 w-[320px] h-[320px] sm:w-[520px] sm:h-[520px] mx-auto relative cursor-crosshair border-8 border-white shadow-2xl rounded-2xl grid-blocks"></div>
+            <button onclick="switchView('menu')" class="mt-8 bg-red-600 px-12 py-3 border-4 border-white font-black rounded-full">EXIT BUILDER</button>
+        </div>
+
+        <!-- SHOP VIEW -->
+        <div id="view-shop" class="view-section">
+            <div class="text-center mb-10">
+                <h1 class="pixel-font text-2xl text-yellow-400 mb-2">SKIN SHOP</h1>
+            </div>
+            <div id="shop-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+            <button onclick="switchView('menu')" class="mt-10 w-full bg-slate-800 p-6 border-4 border-white font-black rounded-2xl">RETURN TO MENU</button>
+        </div>
+
+        <!-- ADMIN AUTH -->
+        <div id="view-admin-auth" class="view-section">
+            <div class="max-w-md mx-auto bg-slate-800 p-10 border-4 border-white rounded-2xl text-center shadow-2xl">
+                <i data-lucide="shield" class="w-16 h-16 mx-auto mb-6 text-yellow-400"></i>
+                <h2 class="pixel-font text-sm mb-8">RESTRICTED ACCESS</h2>
+                <input type="password" id="admin-input" placeholder="System Key..." class="w-full bg-slate-900 border-4 border-white p-4 mb-6 rounded-xl text-center pixel-font text-xs">
+                <button onclick="checkAdmin()" class="w-full bg-yellow-400 text-black p-4 font-black border-4 border-white mb-4 hover:scale-105">UNLOCK SYSTEM</button>
+                <button onclick="switchView('menu')" class="text-slate-500 font-bold hover:text-white">Cancel</button>
+            </div>
+        </div>
+
+        <!-- ADMIN PANEL -->
+        <div id="view-admin-panel" class="view-section">
+            <div class="max-w-4xl mx-auto bg-slate-800 p-8 border-4 border-white rounded-2xl">
+                <h1 class="pixel-font text-xl mb-6 text-yellow-400">ADMIN CONTROL</h1>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="adjustCoins(1000)" class="bg-emerald-600 p-6 border-4 border-white font-black text-lg">ADD 1,000 COINS</button>
+                    <button onclick="switchView('menu')" class="col-span-2 bg-slate-700 p-4 border-4 border-white font-bold">EXIT ADMIN PANEL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="view-settings" class="view-section">
+            <div class="max-w-md mx-auto bg-slate-800 p-10 border-4 border-white rounded-2xl">
+                <h2 class="pixel-font text-xs mb-8">USER CONFIG</h2>
+                <button onclick="switchView('menu')" class="w-full bg-slate-700 p-4 border-2 border-white font-bold rounded-xl mb-4">BACK HOME</button>
+                <button onclick="location.reload()" class="w-full bg-red-600 p-4 border-2 border-white font-black rounded-xl">RESET SESSION</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- REVIVE MODAL (THE "DIE = 2 QUESTIONS" FEATURE) -->
+    <div id="revive-modal" class="fixed inset-0 bg-slate-900/95 hidden items-center justify-center p-6 z-[200] backdrop-blur-md">
+        <div class="bg-white text-black p-10 border-8 border-yellow-400 rounded-[3rem] max-w-xl w-full shadow-2xl">
+            <div class="pixel-font text-[9px] text-yellow-600 mb-6 bg-yellow-100 p-2 text-center rounded-full border-2 border-yellow-200">
+                CRASHED! ANSWER 2 TO CONTINUE ( <span id="revive-counter">1/2</span> )
+            </div>
+            <h2 id="revive-question" class="text-2xl font-black mb-8">Loading question...</h2>
+            <div id="revive-options" class="space-y-4"></div>
+            <p class="mt-8 text-center text-slate-400 text-xs font-bold uppercase">One mistake and it's Game Over!</p>
+        </div>
     </div>
-  );
-}
+
+    <!-- JEOPARDY MODAL -->
+    <div id="jeopardy-modal" class="fixed inset-0 bg-black/95 hidden items-center justify-center p-8 z-[100] backdrop-blur-sm">
+        <div class="bg-blue-700 border-8 border-white p-16 max-w-3xl w-full text-center rounded-[3rem] shadow-2xl">
+            <div class="pixel-font text-xs text-blue-300 mb-4 uppercase">THE CLUE IS...</div>
+            <h2 id="modal-q" class="text-5xl font-black mb-12">Question?</h2>
+            <button id="modal-reveal" class="w-full bg-white text-blue-700 p-6 font-black text-2xl rounded-2xl">SHOW ANSWER</button>
+            <div id="modal-a" class="hidden mt-6 text-2xl font-bold text-yellow-400">Answer here</div>
+            <button onclick="closeJeopardy()" class="mt-8 text-white/50 font-bold underline">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA SETS ---
+        const JEOPARDY_DATA = [
+            { cat: "SCIENCE", clues: [{ v: 100, q: "Red Planet", a: "Mars" }, { v: 200, q: "Water Boiling C", a: "100" }, { v: 300, q: "Atom Center", a: "Nucleus" }, { v: 400, q: "Largest Organ", a: "Skin" }, { v: 500, q: "Light Speed", a: "300,000 km/s" }] },
+            { cat: "HISTORY", clues: [{ v: 100, q: "First on Moon", a: "Neil Armstrong" }, { v: 200, q: "Wall Country", a: "China" }, { v: 300, q: "Egypt Tombs", a: "Pyramids" }, { v: 400, q: "Titanic Year", a: "1912" }, { v: 500, q: "1st US President", a: "Washington" }] },
+            { cat: "MATH", clues: [{ v: 100, q: "Equal sides Triangle", a: "Equilateral" }, { v: 200, q: "SQRT 81", a: "9" }, { v: 300, q: "Circle Degrees", a: "360" }, { v: 400, q: "First 5 Pi", a: "3.1415" }, { v: 500, q: "Circle Area", a: "Pi r^2" }] },
+            { cat: "GEOGRAPHY", clues: [{ v: 100, q: "Largest Continent", a: "Asia" }, { v: 200, q: "Egypt River", a: "Nile" }, { v: 300, q: "Smallest Country", a: "Vatican" }, { v: 400, q: "Australia Capital", a: "Canberra" }, { v: 500, q: "Most Islands", a: "Sweden" }] }
+        ];
+
+        const QUESTS = [
+            { q: "Which gas do plants absorb?", a: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Helium"], c: 1 },
+            { q: "What is 12 x 12?", a: ["124", "144", "164", "148"], c: 1 },
+            { q: "Smallest prime number?", a: ["0", "1", "2", "3"], c: 2 },
+            { q: "How many continents are there?", a: ["5", "6", "7", "8"], c: 2 },
+            { q: "What is the capital of France?", a: ["London", "Berlin", "Paris", "Madrid"], c: 2 },
+            { q: "What is 7 x 8?", a: ["54", "56", "64", "48"], c: 1 },
+            { q: "Largest ocean?", a: ["Atlantic", "Indian", "Pacific", "Arctic"], c: 2 }
+        ];
+
+        const PACKS = [
+            { id: 'color', name: "Basic Colors", price: 25, color: "bg-blue-600", skins: ["🔴", "🔵", "🟡", "🟣", "🟢", "🟠", "⚪", "⚫"] },
+            { id: 'space', name: "Space Explorer", price: 100, color: "bg-indigo-900", skins: ["👽", "👨‍🚀", "🚀", "🌙", "⭐", "🪐", "🛸", "☄️"] },
+            { id: 'mythic', name: "Mythic Beings", price: 500, color: "bg-purple-800", skins: ["👹", "👻", "🧞", "🧛", "🧟", "🧚", "🧜", "🦄"] }
+        ];
+
+        // --- STATE ---
+        let state = {
+            coins: 100,
+            ownedSkins: ["🐸"],
+            currentSkin: "🐸",
+            questIdx: 0,
+            solvedJeopardy: [],
+            reviveStep: 0,
+            isClassic: false
+        };
+
+        // --- NAVIGATION ---
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            const target = document.getElementById('view-' + (viewId === 'classic' ? 'quest' : viewId));
+            target.classList.add('active');
+            
+            stopGames();
+            state.isClassic = (viewId === 'classic');
+            
+            if(viewId === 'flappy') startFlappy();
+            if(viewId === 'surf') startSurf();
+            if(viewId === 'racer') startRacer();
+            if(viewId === 'jeopardy') renderJeopardy();
+            if(viewId === 'shop') renderShop();
+            if(viewId === 'quest' || viewId === 'classic') {
+                state.questIdx = 0;
+                renderQuest();
+            }
+            if(viewId === 'minecraft') renderMinecraft();
+        }
+
+        function updateUI() {
+            document.getElementById('coin-count').innerText = state.coins;
+            document.getElementById('current-skin-display').innerText = state.currentSkin;
+        }
+
+        // --- REVIVE ENGINE (2 QUESTIONS ON DEATH) ---
+        function triggerReviveFlow(resumeCallback) {
+            gameActive = false;
+            state.reviveStep = 0;
+            document.getElementById('revive-modal').classList.remove('hidden');
+            document.getElementById('revive-modal').classList.add('flex');
+            showReviveQuestion(resumeCallback);
+        }
+
+        function showReviveQuestion(resumeCallback) {
+            const q = QUESTS[Math.floor(Math.random() * QUESTS.length)];
+            document.getElementById('revive-counter').innerText = `${state.reviveStep + 1}/2`;
+            document.getElementById('revive-question').innerText = q.q;
+            const optCont = document.getElementById('revive-options');
+            optCont.innerHTML = '';
+            
+            q.a.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full p-4 border-2 border-slate-200 font-bold text-left rounded-xl hover:bg-slate-50';
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if(i === q.c) {
+                        state.reviveStep++;
+                        if(state.reviveStep >= 2) {
+                            document.getElementById('revive-modal').classList.add('hidden');
+                            resumeCallback();
+                        } else {
+                            showReviveQuestion(resumeCallback);
+                        }
+                    } else {
+                        // Game Over
+                        document.getElementById('revive-modal').classList.add('hidden');
+                        switchView('menu');
+                    }
+                };
+                optCont.appendChild(btn);
+            });
+        }
+
+        // --- QUEST/CLASSIC ENGINE ---
+        function renderQuest() {
+            const q = QUESTS[state.questIdx % QUESTS.length];
+            document.getElementById('quest-progress').innerText = `${state.isClassic ? 'CLASSIC' : 'QUEST'} PROGRESS: ${state.questIdx + 1} / ${QUESTS.length}`;
+            document.getElementById('quest-question').innerText = q.q;
+            const optCont = document.getElementById('quest-options');
+            optCont.innerHTML = '';
+            
+            q.a.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full p-6 border-4 border-slate-100 hover:border-yellow-400 font-black text-xl text-left bg-slate-50 rounded-2xl';
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    const fb = document.getElementById('quest-feedback');
+                    fb.classList.remove('hidden');
+                    if(i === q.c) {
+                        fb.innerText = "CORRECT! +10 COINS";
+                        fb.className = "absolute inset-0 z-50 flex items-center justify-center font-black text-4xl text-emerald-600 bg-emerald-50/90 rounded-[2.5rem]";
+                        state.coins += 10;
+                        state.questIdx++;
+                        if(state.questIdx >= QUESTS.length) {
+                             setTimeout(() => { switchView('menu'); fb.classList.add('hidden'); }, 1500);
+                             return;
+                        }
+                    } else {
+                        fb.innerText = "WRONG! GAME OVER";
+                        fb.className = "absolute inset-0 z-50 flex items-center justify-center font-black text-4xl text-red-600 bg-red-50/90 rounded-[2.5rem]";
+                        setTimeout(() => { switchView('menu'); fb.classList.add('hidden'); }, 1500);
+                        return;
+                    }
+                    setTimeout(() => { fb.classList.add('hidden'); renderQuest(); updateUI(); }, 1000);
+                };
+                optCont.appendChild(btn);
+            });
+        }
+
+        // --- ARCADE GAMES ---
+        let gameActive = false;
+        let animationId = null;
+        function stopGames() { gameActive = false; cancelAnimationFrame(animationId); }
+
+        function startFlappy() {
+            const canvas = document.getElementById('flappy-canvas');
+            const ctx = canvas.getContext('2d');
+            let y = 240, v = 0, pipes = [], frame = 0, lastTime = performance.now();
+            gameActive = true;
+            canvas.onmousedown = () => v = -6.5;
+
+            function loop(time) {
+                if(!gameActive) return;
+                const dt = Math.min((time - lastTime)/16, 2);
+                lastTime = time;
+                v += 0.3 * dt; y += v * dt;
+                if(frame % 90 === 0) pipes.push({ x: 320, y: Math.random() * 200 + 50 });
+                pipes.forEach(p => {
+                    p.x -= 3.5 * dt;
+                    if(60 > p.x-20 && 60 < p.x+50 && (y < p.y || y > p.y+135)) {
+                        triggerReviveFlow(() => { gameActive = true; y = 240; pipes = []; animationId = requestAnimationFrame(loop); });
+                        return;
+                    }
+                });
+                if(y > 480 || y < 0) {
+                    triggerReviveFlow(() => { gameActive = true; y = 240; pipes = []; animationId = requestAnimationFrame(loop); });
+                    return;
+                }
+                ctx.fillStyle = '#7dd3fc'; ctx.fillRect(0,0,320,480);
+                ctx.fillStyle = '#16a34a';
+                pipes.forEach(p => { ctx.fillRect(p.x, 0, 55, p.y); ctx.fillRect(p.x, p.y+135, 55, 480); });
+                ctx.font = '40px Arial'; ctx.fillText(state.currentSkin, 60, y);
+                frame++;
+                animationId = requestAnimationFrame(loop);
+            }
+            animationId = requestAnimationFrame(loop);
+        }
+
+        function startSurf() {
+            const canvas = document.getElementById('surf-canvas');
+            const ctx = canvas.getContext('2d');
+            let x = 140, enemies = [], input = 0, lastTime = performance.now();
+            gameActive = true;
+            window.onkeydown = (e) => { if(e.key === 'ArrowLeft') input = -1; if(e.key === 'ArrowRight') input = 1; };
+            window.onkeyup = () => input = 0;
+
+            function loop(time) {
+                if(!gameActive) return;
+                const dt = Math.min((time - lastTime)/16, 2);
+                lastTime = time;
+                x += input * 7 * dt;
+                if(Math.random() < 0.05) enemies.push({ x: Math.random()*280, y: -50 });
+                enemies.forEach(e => {
+                    e.y += 6 * dt;
+                    if(Math.abs(x - e.x) < 35 && Math.abs(420 - e.y) < 35) {
+                        triggerReviveFlow(() => { gameActive = true; enemies = []; animationId = requestAnimationFrame(loop); });
+                        return;
+                    }
+                });
+                ctx.fillStyle = '#0891b2'; ctx.fillRect(0,0,320,480);
+                ctx.font = '45px Arial'; ctx.fillText(state.currentSkin, x, 440);
+                enemies.forEach(e => ctx.fillText('🦈', e.x, e.y));
+                animationId = requestAnimationFrame(loop);
+            }
+            animationId = requestAnimationFrame(loop);
+        }
+
+        function startRacer() {
+            const canvas = document.getElementById('racer-canvas');
+            const ctx = canvas.getContext('2d');
+            let x = 140, enemies = [], input = 0, lastTime = performance.now();
+            gameActive = true;
+            window.onkeydown = (e) => { if(e.key === 'ArrowLeft') input = -1; if(e.key === 'ArrowRight') input = 1; };
+            window.onkeyup = () => input = 0;
+
+            function loop(time) {
+                if(!gameActive) return;
+                const dt = Math.min((time - lastTime)/16, 2);
+                lastTime = time;
+                x += input * 8 * dt;
+                if(Math.random() < 0.06) enemies.push({ x: 65 + Math.random()*150, y: -60 });
+                enemies.forEach(e => {
+                    e.y += 9 * dt;
+                    if(Math.abs(x - e.x) < 35 && Math.abs(410 - e.y) < 35) {
+                        triggerReviveFlow(() => { gameActive = true; enemies = []; animationId = requestAnimationFrame(loop); });
+                        return;
+                    }
+                });
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,320,480);
+                ctx.fillStyle = '#334155'; ctx.fillRect(60, 0, 200, 480);
+                ctx.font = '45px Arial'; ctx.fillText(state.currentSkin, x, 430);
+                enemies.forEach(e => ctx.fillText('🏎️', e.x, e.y));
+                animationId = requestAnimationFrame(loop);
+            }
+            animationId = requestAnimationFrame(loop);
+        }
+
+        // --- SHOP & MISC ---
+        function renderShop() {
+            const container = document.getElementById('shop-container');
+            container.innerHTML = '';
+            PACKS.forEach(pack => {
+                const div = document.createElement('div');
+                div.className = `${pack.color} p-8 border-8 border-white rounded-[2.5rem] flex flex-col items-center shadow-xl`;
+                div.innerHTML = `
+                    <div class="pixel-font text-[10px] mb-4">${pack.name}</div>
+                    <div class="text-4xl mb-6">${pack.skins.slice(0,4).join(' ')}</div>
+                    <button onclick="buyPack('${pack.id}')" class="w-full bg-white text-black p-4 font-black border-4 border-black rounded-xl">BUY 🪙 ${pack.price}</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        function buyPack(id) {
+            const p = PACKS.find(x => x.id === id);
+            if(state.coins >= p.price) {
+                state.coins -= p.price;
+                state.currentSkin = p.skins[Math.floor(Math.random()*p.skins.length)];
+                updateUI();
+            } else alert("Not enough coins!");
+        }
+
+        function renderJeopardy() {
+            const grid = document.getElementById('jeopardy-grid');
+            grid.innerHTML = '';
+            JEOPARDY_DATA.forEach((cat, ci) => {
+                const col = document.createElement('div');
+                col.className = 'space-y-4';
+                col.innerHTML = `<div class="bg-blue-800 p-2 text-center border-2 border-white font-black text-[8px] uppercase">${cat.cat}</div>`;
+                cat.clues.forEach((clue, ri) => {
+                    const id = `${ci}-${ri}`;
+                    const solved = state.solvedJeopardy.includes(id);
+                    const btn = document.createElement('button');
+                    btn.className = `w-full aspect-square border-4 border-white font-black rounded-xl ${solved ? 'bg-slate-700 opacity-30' : 'bg-blue-600'}`;
+                    btn.innerText = solved ? '' : `$${clue.v}`;
+                    btn.onclick = () => { if(!solved) openJeopardy(clue, id); };
+                    col.appendChild(btn);
+                });
+                grid.appendChild(col);
+            });
+        }
+
+        function openJeopardy(clue, id) {
+            document.getElementById('modal-q').innerText = clue.q;
+            document.getElementById('modal-a').innerText = clue.a;
+            document.getElementById('modal-a').classList.add('hidden');
+            document.getElementById('jeopardy-modal').classList.remove('hidden');
+            document.getElementById('jeopardy-modal').classList.add('flex');
+            document.getElementById('modal-reveal').onclick = () => {
+                document.getElementById('modal-a').classList.remove('hidden');
+                state.solvedJeopardy.push(id);
+            };
+        }
+        function closeJeopardy() { document.getElementById('jeopardy-modal').classList.add('hidden'); document.getElementById('jeopardy-modal').classList.remove('flex'); renderJeopardy(); }
+
+        function renderMinecraft() {
+            const palette = ['🟫', '🟩', '⬛', '🧱', '💎', '🔥', '💧', '📦', '🪨', '🪵'];
+            const pCont = document.getElementById('mine-palette');
+            pCont.innerHTML = '';
+            let selected = '🟫';
+            palette.forEach(p => {
+                const b = document.createElement('button');
+                b.className = `w-10 h-10 text-xl flex items-center justify-center border-4 border-white rounded-lg bg-slate-700`;
+                b.innerText = p;
+                b.onclick = () => selected = p;
+                pCont.appendChild(b);
+            });
+            const canvas = document.getElementById('mine-canvas');
+            canvas.onclick = (e) => {
+                const r = canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - r.left)/40)*40;
+                const y = Math.floor((e.clientY - r.top)/40)*40;
+                const existing = canvas.querySelector(`[data-pos="${x}-${y}"]`);
+                if(existing) existing.remove();
+                else {
+                    const block = document.createElement('div');
+                    block.className = 'absolute text-4xl';
+                    block.style.left = x + 'px'; block.style.top = y + 'px';
+                    block.innerText = selected; block.dataset.pos = `${x}-${y}`;
+                    canvas.appendChild(block);
+                }
+            };
+        }
+
+        function checkAdmin() {
+            if(document.getElementById('admin-input').value === 'frofro2026') switchView('admin-panel');
+            else alert("Denied.");
+        }
+        function adjustCoins(n) { state.coins += n; updateUI(); }
+
+        window.onload = () => { lucide.createIcons(); updateUI(); };
+    </script>
+</body>
+</html>
