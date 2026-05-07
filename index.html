@@ -3,682 +3,617 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FroFroKit Ultimate Edition</title>
+    <title>FroFroKit - Retro Arcade</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;900&family=Press+Start+2P&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Lexend', sans-serif; overflow-x: hidden; touch-action: manipulation; margin: 0; background-color: #0f172a; color: white; transition: background 0.5s ease; }
-        body.premium-bg { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); background-attachment: fixed; }
-        .pixel-font { font-family: 'Press+Start+2P', cursive; }
-        .game-card { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 4px solid white; box-shadow: 6px 6px 0px rgba(0,0,0,0.3); border-radius: 16px; cursor: pointer; }
-        .game-card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0px rgba(0,0,0,0.4); }
-        .game-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
-        canvas { image-rendering: pixelated; touch-action: none; background: #000; border: 8px solid white; border-radius: 24px; max-width: 100%; height: auto; }
-        .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .grid-blocks { background-image: radial-gradient(#ffffff22 1px, transparent 0); background-size: 40px 40px; }
-        .input-field { background: #1e293b; border: 2px solid #ffffff44; padding: 12px; border-radius: 8px; color: white; width: 100%; outline: none; }
-        .input-field:focus { border-color: #fbbf24; }
-        
-        .news-ticker { overflow: hidden; white-space: nowrap; }
-        .news-content { display: inline-block; animation: scroll-left 25s linear infinite; }
-        @keyframes scroll-left { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #2c3e50;
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
 
-        .mine-pixel { width: 100%; aspect-ratio: 1/1; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
-        .mine-pixel:hover { filter: brightness(1.2); outline: 2px solid white; z-index: 10; }
-        
-        /* Admin Styling */
-        .admin-glow { box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); border-color: #fbbf24 !important; }
+        .top-nav {
+            background: #1a2a3a;
+            border-bottom: 4px solid #000;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-logo {
+            color: #ffcc00;
+            font-size: 12px;
+            text-shadow: 2px 2px #000;
+            cursor: pointer;
+        }
+
+        .nav-btn {
+            background: #3b82f6;
+            border-bottom: 4px solid #1d4ed8;
+            padding: 6px 10px;
+            font-size: 7px;
+            border-radius: 6px;
+            margin: 0 2px;
+            transition: all 0.1s;
+        }
+        .nav-btn:active { transform: translateY(2px); border-bottom-width: 1px; }
+        .nav-btn.core { background: #8b5cf6; border-bottom-color: #6d28d9; color: #fff; }
+        .nav-btn.alt { background: #ec4899; border-bottom-color: #be185d; }
+
+        .pixel-btn {
+            background: #3b82f6;
+            border-radius: 8px;
+            border-bottom: 6px solid #1d4ed8;
+            padding: 12px 20px;
+            transition: all 0.1s;
+            text-shadow: 2px 2px #1d4ed8;
+            font-size: 10px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .pixel-btn:active { transform: translateY(4px); border-bottom-width: 2px; }
+        .pixel-btn.locked { background: #475569; border-bottom-color: #1e293b; opacity: 0.8; }
+
+        #game-canvas {
+            image-rendering: pixelated;
+            background: #000;
+            width: 100%;
+            max-width: 400px;
+            height: 500px;
+            border-radius: 15px;
+            box-shadow: 0 10px 0 #1a2a3a;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .modal-container {
+            background: rgba(0,0,0,0.9);
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .blook-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 24px;
+            text-align: center;
+            color: #000;
+            border-bottom: 4px solid #ccc;
+            cursor: pointer;
+        }
+        .blook-item.locked { filter: grayscale(1) brightness(0.5); cursor: not-allowed; }
+        .blook-item.selected { border: 4px solid #3b82f6; background: #dbeafe; }
+
+        .pack-card {
+            background: #34495e;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border-bottom: 4px solid #1a2a3a;
+        }
+        .pack-card.special { border: 4px solid #8b5cf6; background: #1e1b4b; }
+
+        .jeopardy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            height: 100%;
+        }
+        .jeopardy-cell {
+            background: #060ce9;
+            border: 2px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #ffcc00;
+            cursor: pointer;
+        }
+
+        .craft-inv {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px;
+            border-radius: 8px;
+            z-index: 30;
+        }
+        .inv-slot {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .inv-slot.active { border-color: #fff; background: rgba(255,255,255,0.2); }
     </style>
 </head>
-<body id="main-body">
+<body class="flex flex-col items-center justify-center min-h-screen pt-16">
 
-    <!-- News Bar (Elite Only) -->
-    <div id="elite-news-bar" class="hidden h-8 bg-indigo-600 border-b-2 border-white flex items-center">
-        <div class="bg-white text-indigo-600 px-3 h-full flex items-center font-black text-[10px] z-10">ELITE NEWS</div>
-        <div class="news-ticker flex-grow">
-            <div class="news-content text-[10px] font-bold uppercase tracking-widest flex gap-12">
-                <span>🚀 THE VOID GAME MODE IS NOW LIVE FOR ELITE MEMBERS!</span>
-                <span>💎 NEW "CHROME" SKIN PACK DROPPING NEXT WEEK!</span>
-                <span>🛠️ SERVER MAINTENANCE SCHEDULED FOR SUNDAY AT 02:00 UTC</span>
-                <span>🏆 SEASON 1 RANKINGS ARE BEING CALCULATED...</span>
-            </div>
+    <nav class="top-nav">
+        <div class="flex items-center">
+            <span class="nav-logo" onclick="adminClick()">FROFROKIT</span>
+            <button onclick="showModal('packs')" class="nav-btn alt">MARKET</button>
+            <button onclick="showModal('locker')" class="nav-btn">LOCKER</button>
+            <button onclick="showModal('core')" id="core-nav-btn" class="nav-btn core">CORE</button>
+            <button onclick="showModal('news')" class="nav-btn">DASH</button>
         </div>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="p-4 bg-slate-900/90 backdrop-blur-md border-b-4 border-white flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-3">
-            <div id="current-skin-display" class="bg-white text-black p-2 rounded-xl text-2xl border-2 border-slate-300 transform -rotate-3">🐸</div>
-            <div>
-                <div class="pixel-font text-[10px] leading-none">FROFRO<span class="text-yellow-400">KIT</span></div>
-                <div class="text-[9px] font-black text-slate-400 tracking-widest uppercase">Ultimate Edition</div>
-            </div>
-        </div>
-        <div class="flex items-center gap-4">
-            <div class="bg-slate-800 px-4 py-2 border-2 border-yellow-400 rounded-xl flex items-center gap-2 shadow-inner">
-                <span class="text-yellow-400 animate-pulse">🪙</span>
-                <span id="coin-count" class="pixel-font text-[11px]">100</span>
-            </div>
-            <button onclick="switchView('settings')" class="p-2 bg-slate-800 border-2 border-white rounded-xl hover:bg-slate-700">
-                <i data-lucide="settings" class="w-5 h-5"></i>
-            </button>
+        <div class="flex flex-col items-end gap-1">
+            <div class="text-[8px]">💰 <span id="coin-count">0</span></div>
+            <div class="text-[6px] text-green-400">☁️ Cloud Sync Active</div>
         </div>
     </nav>
 
-    <main class="p-4 sm:p-8 max-w-7xl mx-auto">
-        
-        <!-- MAIN MENU -->
-        <div id="view-menu" class="view-section active">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                <div onclick="switchView('dash')" class="bg-yellow-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
-                    <i data-lucide="zap" class="w-12 h-12"></i>
-                    <div class="pixel-font text-[10px] mt-4">FRO DASH</div>
-                </div>
-                <div onclick="switchView('flappy')" class="bg-emerald-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
-                    <i data-lucide="gamepad-2" class="w-12 h-12"></i>
-                    <div class="pixel-font text-[10px] mt-4 text-center">FLAPPY</div>
-                </div>
-                <div onclick="switchView('surf')" class="bg-cyan-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
-                    <i data-lucide="waves" class="w-12 h-12"></i>
-                    <div class="pixel-font text-[10px] mt-4">SURF</div>
-                </div>
-                <div onclick="switchView('racer')" class="bg-rose-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
-                    <i data-lucide="play" class="w-12 h-12"></i>
-                    <div class="pixel-font text-[10px] mt-4">RACER</div>
-                </div>
-                <!-- THE VOID (ELITE) -->
-                <div onclick="checkEliteAccess('void')" class="bg-indigo-900 game-card p-6 flex flex-col items-center justify-center aspect-square relative overflow-hidden group">
-                    <div id="void-lock" class="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm group-hover:bg-black/40 transition-all">
-                        <i data-lucide="lock" class="w-8 h-8 text-white"></i>
-                    </div>
-                    <i data-lucide="orbit" class="w-12 h-12 text-indigo-400"></i>
-                    <div class="pixel-font text-[10px] mt-4">THE VOID</div>
-                </div>
-                <div onclick="switchView('classic')" class="bg-orange-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
-                    <i data-lucide="book-open" class="w-12 h-12"></i>
-                    <div class="pixel-font text-[10px] mt-4">CLASSIC</div>
-                </div>
-                <div onclick="switchView('creator')" class="bg-lime-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
-                    <i data-lucide="plus-circle" class="w-12 h-12"></i>
-                    <div class="pixel-font text-[10px] mt-4 text-center">CREATOR</div>
-                </div>
-                <div onclick="switchView('core')" class="bg-slate-600 game-card p-6 flex flex-col items-center justify-center aspect-square relative overflow-hidden">
-                    <div id="core-plus-badge" class="hidden absolute top-2 right-2 bg-yellow-400 text-black text-[8px] px-2 py-1 rounded-full font-black">PLUS</div>
-                    <div id="elite-badge" class="hidden absolute top-2 left-2 bg-indigo-400 text-white text-[8px] px-2 py-1 rounded-full font-black">ELITE</div>
-                    <i data-lucide="cpu" class="w-12 h-12"></i>
-                    <div class="pixel-font text-[10px] mt-4">CORE HUB</div>
-                </div>
-                <div onclick="switchView('minecraft')" class="bg-orange-800 game-card p-6 flex flex-col items-center justify-center aspect-square">
-                    <i data-lucide="hammer" class="w-12 h-12"></i>
-                    <div class="pixel-font text-[10px] mt-4">MINE 2D</div>
-                </div>
-                <div onclick="switchView('shop')" class="bg-amber-500 game-card p-6 flex flex-col items-center justify-center aspect-square">
-                    <i data-lucide="shopping-bag" class="w-12 h-12"></i>
-                    <div class="pixel-font text-[10px] mt-4">SHOP</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CORE HUB -->
-        <div id="view-core" class="view-section">
-            <div class="max-w-4xl mx-auto">
-                <!-- Admin Panel (Locked) -->
-                <div id="admin-panel" class="hidden bg-slate-900 border-4 border-yellow-400 rounded-[2rem] p-8 mb-8 admin-glow">
-                    <div class="flex items-center gap-4 mb-6">
-                        <i data-lucide="shield-check" class="text-yellow-400 w-8 h-8"></i>
-                        <h2 class="pixel-font text-lg text-yellow-400">ADMIN PANEL</h2>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <button onclick="addAdminCoins(1000)" class="bg-yellow-500 text-black p-4 font-black rounded-xl text-[10px] uppercase">+1000 COINS</button>
-                        <button onclick="state.isCorePlus = true; updateUI();" class="bg-amber-600 text-white p-4 font-black rounded-xl text-[10px] uppercase">FORCE CORE+</button>
-                        <button onclick="state.isElite = true; updateUI();" class="bg-indigo-600 text-white p-4 font-black rounded-xl text-[10px] uppercase">FORCE ELITE</button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-gradient-to-br from-amber-500 to-yellow-600 p-8 border-4 border-white rounded-[2rem] text-center shadow-lg">
-                        <h2 class="pixel-font text-lg text-white mb-2">CORE+</h2>
-                        <ul class="text-white/80 text-[10px] font-bold mb-6 space-y-1">
-                            <li>• Custom Backgrounds</li>
-                            <li>• Secret Skin Packs</li>
-                            <li>• Priority Boarding</li>
-                        </ul>
-                        <button id="buy-plus-btn" onclick="subscribe('plus')" class="w-full bg-white text-amber-600 p-4 font-black rounded-xl border-2 border-amber-200">SUBSCRIBE 600🪙</button>
-                        <div id="plus-active-status" class="hidden text-white pixel-font text-[10px] mt-4 italic">ACTIVE MEMBER</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-indigo-600 to-purple-800 p-8 border-4 border-white rounded-[2rem] text-center shadow-lg relative">
-                        <h2 class="pixel-font text-lg text-white mb-2">ELITE</h2>
-                        <ul class="text-white/80 text-[10px] font-bold mb-6 space-y-1">
-                            <li>• "THE VOID" Early Access</li>
-                            <li>• Early News Bar Access</li>
-                            <li>• Ultimate Priority</li>
-                        </ul>
-                        <button id="buy-elite-btn" onclick="subscribe('elite')" class="w-full bg-white text-indigo-600 p-4 font-black rounded-xl border-2 border-indigo-200">SUBSCRIBE 1200🪙</button>
-                        <div id="elite-active-status" class="hidden text-white pixel-font text-[10px] mt-4 italic">ELITE STATUS ACTIVE</div>
-                    </div>
-                </div>
-                
-                <div id="core-leaks" class="hidden bg-indigo-900/50 p-6 border-4 border-yellow-400 rounded-3xl mb-8">
-                    <h3 class="pixel-font text-[10px] text-yellow-400 mb-4 uppercase">Priority Leaks</h3>
-                    <ul class="text-xs space-y-2 text-indigo-100 font-bold">
-                        <li>🌀 New Dimension: "The Static" coming soon.</li>
-                        <li>🎨 "Neon" skin pack set for July release.</li>
-                    </ul>
-                </div>
-
-                <div class="bg-slate-800 p-8 border-4 border-white rounded-[2rem]">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="pixel-font text-xs">CUSTOM COLLECTION</h3>
-                        <button onclick="promptAdmin()" class="opacity-10 hover:opacity-100 transition-opacity">
-                            <i data-lucide="key" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div class="space-y-4 max-h-[300px] overflow-y-auto pr-4" id="core-question-list"></div>
-                </div>
-                <button onclick="switchView('menu')" class="mt-8 w-full bg-slate-700 p-4 border-4 border-white font-black rounded-xl uppercase">Home</button>
-            </div>
-        </div>
-
-        <!-- THE VOID -->
-        <div id="view-void" class="view-section text-center">
-            <canvas id="void-canvas" width="400" height="600" class="mx-auto border-indigo-500"></canvas>
-            <p class="mt-4 text-indigo-300 font-bold uppercase text-[10px]">Dodge planets and asteroids!</p>
-            <button onclick="stopGames(); switchView('menu')" class="mt-8 bg-indigo-700 px-10 py-3 border-4 border-white font-black rounded-full">ABORT</button>
-        </div>
-
-        <!-- FLAPPY -->
-        <div id="view-flappy" class="view-section text-center">
-            <canvas id="flappy-canvas" width="320" height="480" class="mx-auto"></canvas>
-            <p class="mt-4 text-emerald-400 font-bold uppercase text-[10px]">Tap to Jump!</p>
-            <button onclick="stopGames(); switchView('menu')" class="mt-8 bg-emerald-700 px-10 py-3 border-4 border-white font-black rounded-full">QUIT</button>
-        </div>
-
-        <!-- SURF -->
-        <div id="view-surf" class="view-section text-center">
-            <canvas id="surf-canvas" width="320" height="480" class="mx-auto"></canvas>
-            <p class="mt-4 text-cyan-400 font-bold uppercase text-[10px]">Avoid the logs!</p>
-            <button onclick="stopGames(); switchView('menu')" class="mt-8 bg-cyan-700 px-10 py-3 border-4 border-white font-black rounded-full">QUIT</button>
-        </div>
-
-        <!-- RACER -->
-        <div id="view-racer" class="view-section text-center">
-            <canvas id="racer-canvas" width="320" height="480" class="mx-auto"></canvas>
-            <p class="mt-4 text-rose-400 font-bold uppercase text-[10px]">Dodge Traffic!</p>
-            <button onclick="stopGames(); switchView('menu')" class="mt-8 bg-rose-700 px-10 py-3 border-4 border-white font-black rounded-full">QUIT</button>
-        </div>
-
-        <!-- MINE 2D -->
-        <div id="view-minecraft" class="view-section">
-            <div class="max-w-2xl mx-auto">
-                <div id="mine-palette" class="flex flex-wrap justify-center gap-2 mb-4 bg-slate-800 p-4 border-2 border-white rounded-xl"></div>
-                <div id="mine-canvas" class="bg-blue-400 w-full aspect-square grid grid-cols-10 border-4 border-white rounded-xl overflow-hidden shadow-2xl"></div>
-                <button onclick="switchView('menu')" class="mt-6 w-full bg-slate-700 p-4 border-2 border-white font-black rounded-xl">FINISH BUILD</button>
-            </div>
-        </div>
-
-        <!-- SETTINGS -->
-        <div id="view-settings" class="view-section">
-            <div class="max-w-md mx-auto bg-slate-800 p-8 border-4 border-white rounded-2xl text-center">
-                <h2 class="pixel-font text-xs mb-8">SETTINGS</h2>
-                <div id="premium-settings" class="hidden mb-6 p-4 bg-yellow-500/10 border-2 border-yellow-500 rounded-xl">
-                    <p class="text-[10px] pixel-font text-yellow-400 mb-4">CORE+ FEATURES</p>
-                    <button onclick="togglePremiumBG()" class="w-full bg-yellow-500 text-black p-3 font-black rounded-lg text-[10px]">TOGGLE GRADIENT BG</button>
-                </div>
-                <button onclick="switchView('menu')" class="w-full bg-slate-700 p-4 border-2 border-white font-bold rounded-xl mb-4">BACK</button>
-                <button onclick="location.reload()" class="w-full bg-red-600 p-4 border-2 border-white font-black rounded-xl">RESET ALL</button>
-            </div>
-        </div>
-
-        <!-- DASH (IFRAME) -->
-        <div id="view-dash" class="view-section">
-            <div class="w-full h-[70vh] border-8 border-white rounded-[2rem] overflow-hidden bg-black">
-                <iframe src="https://frofrocreater.github.io/FroFroChat/" class="w-full h-full border-none"></iframe>
-            </div>
-            <button onclick="switchView('menu')" class="mt-6 w-full bg-yellow-600 p-4 border-4 border-white font-black rounded-xl">CLOSE DASH</button>
-        </div>
-
-        <!-- CLASSIC TRIVIA -->
-        <div id="view-classic" class="view-section">
-            <div id="quest-card" class="max-w-2xl mx-auto bg-white text-black p-8 sm:p-12 border-8 border-slate-300 rounded-[3rem] shadow-2xl">
-                <div id="quest-progress" class="bg-slate-100 p-3 rounded-full mb-6 text-center pixel-font text-[8px] text-slate-500 uppercase">LVL 1</div>
-                <h2 id="quest-question" class="text-xl sm:text-2xl font-black mb-8 text-slate-800">...</h2>
-                <div id="quest-options" class="space-y-4"></div>
-            </div>
-        </div>
-
-        <!-- CREATOR -->
-        <div id="view-creator" class="view-section">
-            <div class="max-w-2xl mx-auto bg-slate-800 p-8 border-4 border-white rounded-[2rem]">
-                <h2 class="pixel-font text-sm text-lime-400 mb-6 uppercase">New Question</h2>
-                <input id="create-q" type="text" placeholder="Question Text" class="input-field mb-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                    <input id="create-c" type="text" placeholder="Correct" class="input-field border-emerald-500">
-                    <input id="create-o1" type="text" placeholder="Wrong 1" class="input-field border-rose-500">
-                </div>
-                <button onclick="saveCustomQuestion()" class="w-full bg-lime-500 text-black p-4 font-black rounded-xl uppercase">Save to Collection</button>
-                <button onclick="switchView('menu')" class="mt-4 w-full text-slate-400 font-bold uppercase text-xs">Cancel</button>
-            </div>
-        </div>
-
-        <!-- SHOP -->
-        <div id="view-shop" class="view-section">
-            <div id="shop-container" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
-            <button onclick="switchView('menu')" class="mt-8 w-full bg-slate-800 p-4 border-4 border-white font-black rounded-xl">HOME</button>
-        </div>
-
-    </main>
-
-    <!-- REVIVE MODAL -->
-    <div id="revive-modal" class="fixed inset-0 bg-slate-950/95 hidden items-center justify-center p-6 z-[200] backdrop-blur-xl">
-        <div class="bg-white text-black p-8 sm:p-12 border-8 border-yellow-400 rounded-[3rem] max-w-xl w-full">
-            <div id="revive-header" class="pixel-font text-[8px] text-yellow-600 mb-6 bg-yellow-100 p-3 text-center rounded-full border-2 border-yellow-200 uppercase font-black">
-                CRASH! REVIVE ATTEMPT: <span id="revive-count">1/2</span>
-            </div>
-            <h2 id="revive-question" class="text-xl font-black mb-8">...</h2>
-            <div id="revive-options" class="space-y-3"></div>
+    <!-- Main Menu -->
+    <div id="menu-screen" class="text-center w-full max-w-lg px-6">
+        <h1 class="text-xl mb-6" style="text-shadow: 4px 4px #000;">GAME CENTER</h1>
+        <div class="grid grid-cols-1 gap-2">
+            <button onclick="startGame('craft')" class="pixel-btn bg-green-600 border-green-800">FROFRO CRAFT (NEW!)</button>
+            <button onclick="startGame('void')" id="btn-void" class="pixel-btn bg-indigo-600 border-indigo-900 locked">VOID STRIKE (CORE)</button>
+            <button onclick="startGame('flappy')" class="pixel-btn">FROPPY BIRD</button>
+            <button onclick="startGame('dash')" class="pixel-btn bg-orange-500 border-orange-700">FROFRO DASH</button>
+            <button onclick="startGame('racer')" class="pixel-btn bg-red-500 border-red-700">RETRO RACER</button>
+            <button onclick="startGame('jeopardy')" class="pixel-btn bg-purple-500 border-purple-700">JEOPARDY</button>
         </div>
     </div>
 
-    <script>
-        // --- DATA & STATE ---
-        let BASE_QUESTS = [
-            { q: "What is 7 + 8?", a: ["13", "14", "15", "16"], c: 2 },
-            { q: "Which planet is red?", a: ["Earth", "Mars", "Venus", "Jupiter"], c: 1 },
-            { q: "Water boils at?", a: ["50°C", "90°C", "100°C", "120°C"], c: 2 },
-            { q: "Largest ocean?", a: ["Atlantic", "Pacific", "Indian", "Arctic"], c: 1 },
-            { q: "What is 5 x 5?", a: ["10", "20", "25", "30"], c: 2 }
-        ];
+    <!-- Modals -->
+    <div id="core-modal" class="modal-container hidden">
+        <div class="bg-[#1e1b4b] p-6 rounded-2xl border-4 border-white w-full max-w-md text-center relative">
+            <button onclick="closeModals()" class="absolute top-2 right-2 text-white">X</button>
+            <h2 class="text-xl mb-4 text-purple-400">FroFroCore</h2>
+            <p class="text-[8px] mb-4">Cost: 1,000 Coins</p>
+            <p class="text-[6px] mb-4 opacity-75">Unlock Void Strike, the Secret Pack, and special Status.</p>
+            <button id="core-buy-btn" onclick="buyCore()" class="pixel-btn bg-purple-600 border-purple-800">BUY CORE (1000💰)</button>
+        </div>
+    </div>
 
-        let state = {
+    <div id="locker-modal" class="modal-container hidden">
+        <div class="bg-[#2c3e50] p-6 rounded-2xl border-4 border-black w-full max-w-md max-h-[85vh] overflow-y-auto relative">
+            <button onclick="closeModals()" class="absolute top-2 right-2 text-white">X</button>
+            <h2 class="text-center text-sm mb-6">MY LOCKER</h2>
+            <div id="locker-grid" class="grid grid-cols-4 gap-3"></div>
+        </div>
+    </div>
+
+    <div id="packs-modal" class="modal-container hidden">
+        <div class="bg-[#2c3e50] p-6 rounded-2xl border-4 border-black w-full max-w-md max-h-[85vh] overflow-y-auto relative">
+            <button onclick="closeModals()" class="absolute top-2 right-2 text-white">X</button>
+            <h2 class="text-center text-sm mb-6 text-yellow-400">MARKET</h2>
+            <div id="market-grid" class="grid grid-cols-1 gap-4">
+                <!-- Packs will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="news-modal" class="modal-container hidden">
+        <div class="bg-[#2c3e50] p-6 rounded-2xl border-4 border-black w-full max-w-md relative">
+            <button onclick="closeModals()" class="absolute top-2 right-2 text-white">X</button>
+            <h2 class="text-center text-sm mb-6 text-yellow-400">DASH NEWS</h2>
+            <div id="news-content" class="text-[8px] space-y-2">
+                <p>• FroFroCore now costs 1,000 coins!</p>
+                <p>• Added Secret Core Pack to Market.</p>
+                <p>• All games now reward coins!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game View -->
+    <div id="game-container" class="hidden relative w-full max-w-[400px]">
+        <div class="flex justify-between mb-2 text-[8px] px-2">
+            <div>SCORE: <span id="current-score">0</span></div>
+            <div id="active-blook-display">🔴</div>
+        </div>
+        <canvas id="game-canvas"></canvas>
+        
+        <!-- Crafting UI -->
+        <div id="craft-ui" class="hidden">
+            <div class="craft-inv" id="hotbar">
+                <div class="inv-slot active" onclick="setBlock(0)">🟫</div>
+                <div class="inv-slot" onclick="setBlock(1)">⬜</div>
+                <div class="inv-slot" onclick="setBlock(2)">🪵</div>
+                <div class="inv-slot" onclick="setBlock(3)">🌿</div>
+            </div>
+        </div>
+
+        <div id="jeopardy-screen" class="hidden absolute inset-0 bg-[#000033] p-2 z-20">
+            <div class="jeopardy-grid" id="j-grid"></div>
+        </div>
+
+        <div id="quiz-modal" class="hidden absolute inset-0 bg-black/95 flex flex-col items-center justify-center p-6 z-50">
+            <div id="quiz-q" class="text-[10px] mb-8 text-center leading-loose"></div>
+            <div id="quiz-options" class="grid grid-cols-1 gap-4 w-full"></div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-screen" class="hidden text-center">
+        <h2 class="text-2xl text-red-400 mb-2">GAME OVER</h2>
+        <p id="final-stats" class="mb-4 text-xs"></p>
+        <p id="coin-stats" class="mb-4 text-[10px] text-yellow-400"></p>
+        <button onclick="location.reload()" class="pixel-btn">RETURN TO MENU</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const storageKey = 'frofro_cloud_save_v1';
+
+        // Player Data & Cloud Save Logic
+        let player = {
             coins: 100,
-            ownedSkins: ["🐸"],
-            currentSkin: "🐸",
-            customQuests: [],
-            questIdx: 0,
-            isCorePlus: false,
-            isElite: false,
-            isAdmin: false,
-            premiumBGActive: false,
-            reviveGoal: 2,
-            reviveCurrent: 0,
-            reviveSuccessCallback: null
+            unlocked: ['🔴'],
+            selected: '🔴',
+            isCore: false
         };
 
-        const PACKS = [
-            { id: 'basic', name: "Standard Pack", price: 50, color: "bg-blue-600", skins: ["🐱", "🐶", "🦁", "🐧"] },
-            { id: 'pro', name: "Pro Pack", price: 150, color: "bg-rose-600", skins: ["🐉", "🦄", "👑", "🔥"] },
-            { id: 'galaxy', name: "Galaxy Elite", price: 0, color: "bg-black", skins: ["🌑", "🪐", "🌠", "🌌"], secret: true }
+        function loadCloudSave() {
+            const data = localStorage.getItem(storageKey);
+            if (data) {
+                player = JSON.parse(data);
+                updateUI();
+            }
+        }
+
+        function saveToCloud() {
+            localStorage.setItem(storageKey, JSON.stringify(player));
+            updateUI();
+        }
+
+        const blookPacks = {
+            'Starter': { cost: 10, items: ['🔴', '🔵', '🟢', '🟡'] },
+            'Nature': { cost: 50, items: ['🌳', '🍄', '🌻', '🐝'] },
+            'Royalty': { cost: 100, items: ['👑', '🏰', '🛡️', '⚔️'] },
+            'Void': { cost: 250, items: ['🌌', '👽', '🛸', '🌑'], coreOnly: true }
+        };
+
+        const jeopardyData = [
+            { v: 100, q: "2 + 2?", a: ["3", "4", "5"], c: 1 },
+            { v: 200, q: "Capital of USA?", a: ["DC", "NY", "LA"], c: 0 },
+            { v: 300, q: "Color of Grass?", a: ["Blue", "Red", "Green"], c: 2 }
         ];
 
-        // --- ADMIN FUNCTIONS ---
-        function promptAdmin() {
-            const code = prompt("Enter Admin Access Code:");
-            if (code === "frofro2026") {
-                state.isAdmin = true;
-                updateUI();
-                alert("Admin Access Granted!");
-            } else {
-                alert("Invalid Code.");
-            }
-        }
+        let gameState = {
+            active: false, mode: '', score: 0, frame: 0,
+            player: { x: 200, y: 250, vx: 0, vy: 0 },
+            entities: [],
+            world: [],
+            selectedBlock: '🟫'
+        };
 
-        function addAdminCoins(amt) {
-            state.coins += amt;
-            updateUI();
-        }
-
-        // --- CORE NAVIGATION ---
-        function switchView(id) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById('view-' + id).classList.add('active');
-            stopGames();
-            if(id === 'flappy') startFlappy();
-            if(id === 'surf') startSurf();
-            if(id === 'racer') startRacer();
-            if(id === 'void') startVoid();
-            if(id === 'shop') renderShop();
-            if(id === 'core') renderCore();
-            if(id === 'classic') { state.questIdx = 0; renderQuest(); }
-            if(id === 'minecraft') renderMinecraft();
-        }
+        window.onload = () => { 
+            loadCloudSave(); 
+            renderLocker(); 
+            renderMarket();
+        };
 
         function updateUI() {
-            document.getElementById('coin-count').innerText = state.coins;
-            document.getElementById('current-skin-display').innerText = state.currentSkin;
+            document.getElementById('coin-count').innerText = player.coins;
+            document.getElementById('active-blook-display').innerText = player.selected;
+            const btn = document.getElementById('btn-void');
+            const coreNav = document.getElementById('core-nav-btn');
             
-            if(state.isAdmin) {
-                document.getElementById('admin-panel').classList.remove('hidden');
-            }
-
-            if(state.isCorePlus) {
-                document.getElementById('core-plus-badge').classList.remove('hidden');
-                document.getElementById('buy-plus-btn')?.classList.add('hidden');
-                document.getElementById('plus-active-status')?.classList.remove('hidden');
-                document.getElementById('core-leaks')?.classList.remove('hidden');
-                document.getElementById('premium-settings')?.classList.remove('hidden');
-            }
-            if(state.isElite) {
-                document.getElementById('elite-badge').classList.remove('hidden');
-                document.getElementById('elite-news-bar').classList.remove('hidden');
-                document.getElementById('void-lock').classList.add('hidden');
-                document.getElementById('buy-elite-btn')?.classList.add('hidden');
-                document.getElementById('elite-active-status')?.classList.remove('hidden');
+            if (player.isCore) {
+                btn.classList.remove('locked');
+                coreNav.innerText = "CORE ACTIVE";
+                coreNav.style.boxShadow = "0 0 10px #8b5cf6";
             }
         }
 
-        function checkEliteAccess(gameId) {
-            if(state.isElite) switchView(gameId);
-            else alert("ELITE ACCESS REQUIRED. Get it at the Core Hub!");
-        }
-
-        function subscribe(type) {
-            if(type === 'plus' && state.coins >= 600) {
-                state.coins -= 600; state.isCorePlus = true;
-                PACKS.find(p => p.id === 'galaxy').skins.forEach(s => !state.ownedSkins.includes(s) && state.ownedSkins.push(s));
-            } else if(type === 'elite' && state.coins >= 1200) {
-                state.coins -= 1200; state.isElite = true;
+        function buyCore() {
+            if (player.isCore) return alert("You already have Core!");
+            if (player.coins >= 1000) {
+                player.coins -= 1000;
+                player.isCore = true;
+                saveToCloud();
+                renderMarket(); // Show core-only packs
+                closeModals();
+                alert("Welcome to FroFroCore! Secret Pack unlocked.");
             } else {
-                alert("Insufficient coins!"); return;
+                alert("Need 1,000 coins to upgrade to Core!");
             }
-            updateUI();
         }
 
-        function togglePremiumBG() {
-            state.premiumBGActive = !state.premiumBGActive;
-            document.getElementById('main-body').classList.toggle('premium-bg', state.premiumBGActive);
+        function showModal(type) {
+            closeModals();
+            const modal = document.getElementById(`${type}-modal`);
+            if (modal) modal.classList.remove('hidden');
         }
 
-        // --- GAME ENGINES ---
-        let gameActive = false, animationId = null;
-        function stopGames() { gameActive = false; cancelAnimationFrame(animationId); }
-
-        // THE VOID ENGINE
-        function startVoid() {
-            const cvs = document.getElementById('void-canvas');
-            const ctx = cvs.getContext('2d');
-            let px = 180, objects = [], frame = 0;
-            gameActive = true;
-
-            cvs.onmousemove = (e) => px = e.offsetX - 20;
-            cvs.ontouchmove = (e) => px = e.touches[0].clientX - cvs.getBoundingClientRect().left - 20;
-
-            function loop() {
-                if(!gameActive) return;
-                ctx.fillStyle = '#010409'; ctx.fillRect(0,0,cvs.width,cvs.height);
-                
-                if(frame % 25 === 0) {
-                    let type = Math.random() > 0.8;
-                    objects.push({ x: Math.random()*(cvs.width-50), y: -50, s: 4+Math.random()*6, char: type?'🪐':'☄️', sz: type?60:30 });
-                }
-
-                objects.forEach((o, i) => {
-                    o.y += o.s;
-                    ctx.font = `${o.sz}px Arial`;
-                    ctx.fillText(o.char, o.x, o.y);
-                    if(Math.abs(px+20 - (o.x+o.sz/2)) < o.sz/2+15 && Math.abs(550 - o.y) < o.sz/2+15) {
-                        triggerRevive(() => startVoid());
-                    }
-                    if(o.y > cvs.height) { objects.splice(i,1); state.coins++; updateUI(); }
-                });
-
-                ctx.font = '40px Arial';
-                ctx.fillText(state.currentSkin, px, 570);
-                frame++; animationId = requestAnimationFrame(loop);
-            }
-            loop();
+        function closeModals() { 
+            document.querySelectorAll('.modal-container').forEach(m => m.classList.add('hidden')); 
         }
 
-        // FLAPPY ENGINE
-        function startFlappy() {
-            const cvs = document.getElementById('flappy-canvas');
-            const ctx = cvs.getContext('2d');
-            let py = 200, pv = 0, pipes = [], frame = 0;
-            gameActive = true;
+        function renderMarket() {
+            const grid = document.getElementById('market-grid');
+            grid.innerHTML = '';
+            Object.keys(blookPacks).forEach(name => {
+                const pack = blookPacks[name];
+                if (pack.coreOnly && !player.isCore) return; // Skip if core only and player not core
 
-            const jump = () => pv = -7;
-            cvs.onclick = jump; window.onkeydown = (e) => e.code === 'Space' && jump();
-
-            function loop() {
-                if(!gameActive) return;
-                ctx.fillStyle = '#10b981'; ctx.fillRect(0,0,cvs.width,cvs.height);
-                
-                pv += 0.4; py += pv;
-                if(frame % 90 === 0) {
-                    let gap = 120, h = 50 + Math.random() * 200;
-                    pipes.push({ x: cvs.width, h, gap });
-                }
-
-                pipes.forEach((p, i) => {
-                    p.x -= 3;
-                    ctx.fillStyle = '#065f46';
-                    ctx.fillRect(p.x, 0, 50, p.h);
-                    ctx.fillRect(p.x, p.h + p.gap, 50, cvs.height);
-
-                    if(p.x < 50 && p.x > 0 && (py < p.h || py > p.h + p.gap)) triggerRevive(() => startFlappy());
-                    if(p.x < -50) { pipes.splice(i, 1); state.coins += 5; updateUI(); }
-                });
-
-                if(py > cvs.height || py < 0) triggerRevive(() => startFlappy());
-
-                ctx.font = '30px Arial';
-                ctx.fillText(state.currentSkin, 30, py);
-                frame++; animationId = requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        // SURF ENGINE
-        function startSurf() {
-            const cvs = document.getElementById('surf-canvas');
-            const ctx = cvs.getContext('2d');
-            let px = 140, logs = [], frame = 0;
-            gameActive = true;
-
-            let keys = {};
-            window.onkeydown = (e) => keys[e.code] = true;
-            window.onkeyup = (e) => keys[e.code] = false;
-
-            function loop() {
-                if(!gameActive) return;
-                ctx.fillStyle = '#06b6d4'; ctx.fillRect(0,0,cvs.width,cvs.height);
-                
-                if(keys['ArrowLeft'] && px > 0) px -= 5;
-                if(keys['ArrowRight'] && px < cvs.width-40) px += 5;
-
-                if(frame % 60 === 0) logs.push({ x: Math.random()*(cvs.width-60), y: -50, s: 5 });
-
-                logs.forEach((l, i) => {
-                    l.y += l.s;
-                    ctx.fillStyle = '#713f12';
-                    ctx.fillRect(l.x, l.y, 60, 20);
-                    if(Math.abs(px - l.x) < 40 && Math.abs(400 - l.y) < 20) triggerRevive(() => startSurf());
-                    if(l.y > cvs.height) { logs.splice(i,1); state.coins += 2; updateUI(); }
-                });
-
-                ctx.font = '30px Arial';
-                ctx.fillText(state.currentSkin, px, 430);
-                frame++; animationId = requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        // RACER ENGINE
-        function startRacer() {
-            const cvs = document.getElementById('racer-canvas');
-            const ctx = cvs.getContext('2d');
-            let px = 140, enemies = [], frame = 0;
-            gameActive = true;
-
-            cvs.onmousemove = (e) => px = e.offsetX - 20;
-
-            function loop() {
-                if(!gameActive) return;
-                ctx.fillStyle = '#334155'; ctx.fillRect(0,0,cvs.width,cvs.height);
-                ctx.strokeStyle = 'white'; ctx.setLineDash([20, 20]);
-                ctx.beginPath(); ctx.moveTo(cvs.width/2, 0); ctx.lineTo(cvs.width/2, cvs.height); ctx.stroke();
-
-                if(frame % 50 === 0) enemies.push({ x: Math.random()*(cvs.width-40), y: -60, s: 7 });
-
-                enemies.forEach((e, i) => {
-                    e.y += e.s;
-                    ctx.fillStyle = '#e11d48';
-                    ctx.fillRect(e.x, e.y, 40, 60);
-                    if(Math.abs(px - e.x) < 35 && Math.abs(400 - e.y) < 55) triggerRevive(() => startRacer());
-                    if(e.y > cvs.height) { enemies.splice(i,1); state.coins += 10; updateUI(); }
-                });
-
-                ctx.font = '30px Arial';
-                ctx.fillText(state.currentSkin, px, 430);
-                frame++; animationId = requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        // --- TRIVIA & REVIVE ---
-        function renderQuest() {
-            const pool = [...BASE_QUESTS, ...state.customQuests];
-            const q = pool[state.questIdx % pool.length];
-            document.getElementById('quest-progress').innerText = `LVL ${state.questIdx + 1}`;
-            document.getElementById('quest-question').innerText = q.q;
-            const optCont = document.getElementById('quest-options');
-            optCont.innerHTML = '';
-            q.a.forEach((opt, i) => {
-                const btn = document.createElement('button');
-                btn.className = 'w-full p-5 border-4 border-slate-100 font-black text-left bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all active:scale-95';
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    if(i === q.c) { state.coins += 20; state.questIdx++; renderQuest(); updateUI(); }
-                    else switchView('menu');
-                };
-                optCont.appendChild(btn);
-            });
-        }
-
-        function triggerRevive(onSuccess) {
-            stopGames();
-            state.reviveSuccessCallback = onSuccess;
-            state.reviveCurrent = 0;
-            document.getElementById('revive-modal').classList.remove('hidden');
-            document.getElementById('revive-modal').classList.add('flex');
-            renderReviveQuest();
-        }
-
-        function renderReviveQuest() {
-            const pool = [...BASE_QUESTS, ...state.customQuests];
-            const q = pool[Math.floor(Math.random()*pool.length)];
-            document.getElementById('revive-count').innerText = `${state.reviveCurrent + 1}/${state.reviveGoal}`;
-            document.getElementById('revive-question').innerText = q.q;
-            const optCont = document.getElementById('revive-options');
-            optCont.innerHTML = '';
-            q.a.forEach((opt, i) => {
-                const btn = document.createElement('button');
-                btn.className = 'w-full p-4 bg-slate-100 font-bold rounded-xl text-left border-2 border-slate-200';
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    if(i === q.c) {
-                        state.reviveCurrent++;
-                        if(state.reviveCurrent >= state.reviveGoal) {
-                            document.getElementById('revive-modal').classList.add('hidden');
-                            document.getElementById('revive-modal').classList.remove('flex');
-                            state.reviveSuccessCallback();
-                        } else renderReviveQuest();
-                    } else switchView('menu');
-                };
-                optCont.appendChild(btn);
-            });
-        }
-
-        // --- SHOP & SKINS ---
-        function renderShop() {
-            const cont = document.getElementById('shop-container');
-            cont.innerHTML = '';
-            PACKS.forEach(p => {
-                if(p.secret && !state.isCorePlus) return;
-                const card = document.createElement('div');
-                card.className = `${p.color} p-6 border-4 border-white rounded-[2rem] shadow-xl`;
-                card.innerHTML = `
-                    <div class="pixel-font text-[10px] mb-4">${p.name}</div>
-                    <div class="grid grid-cols-4 gap-2 mb-6">
-                        ${p.skins.map(s => `
-                            <button onclick="setSkin('${s}')" class="bg-white/20 aspect-square rounded-lg flex items-center justify-center text-xl hover:bg-white/40 transition-all ${state.ownedSkins.includes(s)?'ring-2 ring-white':''}">
-                                ${s}
-                            </button>
-                        `).join('')}
-                    </div>
-                    ${!state.ownedSkins.includes(p.skins[0]) && p.price > 0 ? `
-                        <button onclick="buyPack('${p.id}', ${p.price})" class="w-full bg-white text-black p-3 font-black rounded-xl uppercase text-[10px]">Buy for ${p.price}🪙</button>
-                    ` : `<div class="text-[8px] pixel-font text-white/50 text-center uppercase">Owned</div>`}
+                const el = document.createElement('div');
+                el.className = `pack-card ${pack.coreOnly ? 'special' : ''}`;
+                el.innerHTML = `
+                    <div class="text-[10px] mb-2">${name} Pack ${pack.coreOnly ? '✨' : ''}</div>
+                    <div class="text-[8px] mb-2">${pack.cost} 💰</div>
+                    <button onclick="buyPack('${name}')" class="pixel-btn text-[8px] p-2">OPEN</button>
                 `;
-                cont.appendChild(card);
+                grid.appendChild(el);
             });
         }
 
-        function buyPack(id, price) {
-            if(state.coins >= price) {
-                state.coins -= price;
-                const pack = PACKS.find(p => p.id === id);
-                pack.skins.forEach(s => !state.ownedSkins.includes(s) && state.ownedSkins.push(s));
-                updateUI(); renderShop();
-            } else alert("Not enough coins!");
-        }
-
-        function setSkin(s) {
-            if(state.ownedSkins.includes(s)) {
-                state.currentSkin = s; updateUI();
-            } else alert("Unlock this pack first!");
-        }
-
-        // --- MINE 2D ---
-        const COLORS = ["#8b4513", "#228b22", "#808080", "#0000ff", "#ffffff", "#ffff00", "#ff0000"];
-        let activeColor = COLORS[0];
-        function renderMinecraft() {
-            const p = document.getElementById('mine-palette'); p.innerHTML = '';
-            COLORS.forEach(c => {
-                const b = document.createElement('div');
-                b.className = `w-10 h-10 rounded-lg cursor-pointer border-2 border-white`;
-                b.style.backgroundColor = c;
-                b.onclick = () => activeColor = c;
-                p.appendChild(b);
-            });
-            const c = document.getElementById('mine-canvas'); c.innerHTML = '';
-            for(let i=0; i<100; i++) {
-                const px = document.createElement('div');
-                px.className = 'mine-pixel';
-                px.onclick = () => px.style.backgroundColor = activeColor;
-                c.appendChild(px);
+        function buyPack(name) {
+            const pack = blookPacks[name];
+            if (player.coins >= pack.cost) {
+                player.coins -= pack.cost;
+                const randomItem = pack.items[Math.floor(Math.random() * pack.items.length)];
+                if (!player.unlocked.includes(randomItem)) {
+                    player.unlocked.push(randomItem);
+                }
+                saveToCloud();
+                renderLocker();
+                alert(`You pulled a ${randomItem}!`);
+            } else {
+                alert("Not enough coins!");
             }
         }
 
-        // --- CREATOR ---
-        function saveCustomQuestion() {
-            const q = document.getElementById('create-q').value;
-            const c = document.getElementById('create-c').value;
-            const o = document.getElementById('create-o1').value;
-            if(!q || !c || !o) return alert("Fill all fields!");
-            state.customQuests.push({ q, a: [c, o, "...", "..."], c: 0 });
-            document.getElementById('create-q').value = '';
-            document.getElementById('create-c').value = '';
-            document.getElementById('create-o1').value = '';
-            alert("Saved!");
-        }
-
-        function renderCore() {
-            const list = document.getElementById('core-question-list');
-            list.innerHTML = state.customQuests.length ? '' : '<div class="text-slate-500 text-center py-4 text-xs font-bold uppercase">Empty</div>';
-            state.customQuests.forEach((q, i) => {
-                const item = document.createElement('div');
-                item.className = 'bg-slate-900/50 p-4 border-2 border-white/10 rounded-xl flex justify-between items-center';
-                item.innerHTML = `<div class="text-[10px] font-bold truncate pr-4 text-slate-300 uppercase">${q.q}</div>
-                    <button onclick="state.customQuests.splice(${i},1);renderCore()" class="text-rose-500 font-black px-2">X</button>`;
-                list.appendChild(item);
+        function renderLocker() {
+            const grid = document.getElementById('locker-grid');
+            grid.innerHTML = '';
+            player.unlocked.forEach(item => {
+                const el = document.createElement('div');
+                el.className = `blook-item ${player.selected === item ? 'selected' : ''}`;
+                el.innerText = item;
+                el.onclick = () => { player.selected = item; saveToCloud(); renderLocker(); };
+                grid.appendChild(el);
             });
         }
 
-        window.onload = () => { lucide.createIcons(); updateUI(); };
+        function startGame(mode) {
+            if (mode === 'void' && !player.isCore) return showModal('core');
+            
+            gameState = { 
+                active: true, mode, score: 0, frame: 0, 
+                player: { x: 200, y: 250, vx: 0, vy: 0 },
+                entities: [], world: []
+            };
+
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+
+            if (mode === 'craft') initCraft();
+            else if (mode === 'jeopardy') showJeopardy();
+            else requestAnimationFrame(gameLoop);
+        }
+
+        function gameLoop() {
+            if (!gameState.active) return;
+            ctx.clearRect(0, 0, 400, 500);
+            document.getElementById('current-score').innerText = gameState.score;
+
+            if (gameState.mode === 'flappy') updateFlappy();
+            if (gameState.mode === 'dash') updateDash();
+            if (gameState.mode === 'racer') updateRacer();
+            if (gameState.mode === 'void') updateVoid();
+            if (gameState.mode === 'craft') updateCraft();
+
+            gameState.frame++;
+            requestAnimationFrame(gameLoop);
+        }
+
+        function initCraft() {
+            document.getElementById('craft-ui').classList.remove('hidden');
+            for(let y=0; y<20; y++) {
+                for(let x=0; x<16; x++) {
+                    let type = ' ';
+                    if (y > 12) type = '🟫';
+                    if (y === 12) type = '🌿';
+                    if (y > 16) type = '⬜';
+                    gameState.world.push({ x: x*25, y: y*25, type });
+                }
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateCraft() {
+            gameState.world.forEach(b => {
+                if(b.type !== ' ') {
+                    ctx.font = "20px Arial";
+                    ctx.fillText(b.type, b.x + 12, b.y + 18);
+                }
+            });
+            ctx.font = "30px Arial";
+            ctx.fillText(player.selected, gameState.player.x, gameState.player.y);
+            
+            gameState.player.vy += 0.5;
+            gameState.player.y += gameState.player.vy;
+            if (gameState.player.y > 300) {
+                gameState.player.y = 300;
+                gameState.player.vy = 0;
+            }
+        }
+
+        function setBlock(idx) {
+            const icons = ['🟫', '⬜', '🪵', '🌿'];
+            gameState.selectedBlock = icons[idx];
+            document.querySelectorAll('.inv-slot').forEach((s, i) => {
+                s.classList.toggle('active', i === idx);
+            });
+        }
+
+        function updateFlappy() {
+            gameState.player.vy += 0.25;
+            gameState.player.y += gameState.player.vy;
+            if (gameState.frame % 90 === 0) {
+                gameState.entities.push({ x: 400, h: Math.random() * 200 + 50 });
+            }
+            gameState.entities.forEach((p, i) => {
+                p.x -= 3;
+                ctx.fillStyle = "#4ade80";
+                ctx.fillRect(p.x, 0, 40, p.h);
+                ctx.fillRect(p.x, p.h + 150, 40, 500);
+                if (p.x < 70 && p.x > 30 && (gameState.player.y < p.h || gameState.player.y > p.h + 150)) endGame();
+                if (p.x === 40) gameState.score++;
+            });
+            drawBlook(50, gameState.player.y);
+            if (gameState.player.y > 500 || gameState.player.y < 0) endGame();
+        }
+
+        function updateDash() {
+            if (gameState.frame % 30 === 0) {
+                gameState.entities.push({ x: Math.random() * 400, y: -20, s: 5 });
+            }
+            gameState.entities.forEach((o, i) => {
+                o.y += o.s;
+                ctx.fillStyle = "cyan";
+                ctx.beginPath(); ctx.arc(o.x, o.y, 10, 0, Math.PI*2); ctx.fill();
+                if (Math.abs(o.x - gameState.player.x) < 25 && Math.abs(o.y - 450) < 25) endGame();
+                if (o.y > 500) { gameState.entities.splice(i, 1); gameState.score++; }
+            });
+            drawBlook(gameState.player.x, 450);
+        }
+
+        function updateRacer() {
+            if (gameState.frame % 40 === 0) {
+                gameState.entities.push({ x: Math.random() * 300 + 50, y: -50 });
+            }
+            ctx.fillStyle = "#222"; ctx.fillRect(50, 0, 300, 500);
+            gameState.entities.forEach((o, i) => {
+                o.y += 6;
+                ctx.fillStyle = "red"; ctx.fillRect(o.x-15, o.y-15, 30, 30);
+                if (Math.abs(o.x - gameState.player.x) < 30 && Math.abs(o.y - 430) < 30) endGame();
+                if (o.y > 500) { gameState.entities.splice(i,1); gameState.score++; }
+            });
+            drawBlook(gameState.player.x, 430);
+        }
+
+        function updateVoid() {
+            if (gameState.frame % 25 === 0) {
+                gameState.entities.push({ x: Math.random() * 360 + 20, y: -30, s: 3, size: 30 });
+            }
+            ctx.fillStyle = "#555";
+            gameState.entities.forEach((a, i) => {
+                a.y += a.s;
+                ctx.beginPath(); ctx.arc(a.x, a.y, a.size/2, 0, Math.PI*2); ctx.fill();
+                if (a.y > 500) endGame();
+            });
+            drawBlook(200, 460);
+        }
+
+        function drawBlook(x, y) {
+            ctx.font = "30px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(player.selected, x, y);
+        }
+
+        function endGame() {
+            gameState.active = false;
+            let earned = Math.floor(gameState.score / 2);
+            if (gameState.mode === 'void') earned *= 2; // Core game bonus
+            if (gameState.mode === 'craft') earned = 10; // Fixed payout for playing craft
+            
+            player.coins += earned;
+            saveToCloud();
+            document.getElementById('game-container').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+            document.getElementById('final-stats').innerText = `SCORE: ${gameState.score}`;
+            document.getElementById('coin-stats').innerText = `EARNED: ${earned} 💰`;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (gameState.mode === 'craft') {
+                gameState.world.forEach(b => {
+                    if (x > b.x && x < b.x + 25 && y > b.y && y < b.y + 25) {
+                        if (b.type !== ' ') b.type = ' ';
+                        else b.type = gameState.selectedBlock;
+                    }
+                });
+            } else if (gameState.mode === 'void') {
+                gameState.entities.forEach((a, i) => {
+                    if (Math.hypot(a.x - x, a.y - y) < 30) {
+                        gameState.entities.splice(i, 1);
+                        gameState.score += 10;
+                    }
+                });
+            } else if (gameState.mode === 'flappy') {
+                gameState.player.vy = -6;
+            } else {
+                gameState.player.x = x;
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (gameState.mode === 'craft') {
+                if (e.code === 'KeyA') gameState.player.x -= 10;
+                if (e.code === 'KeyD') gameState.player.x += 10;
+                if (e.code === 'Space') gameState.player.vy = -10;
+            }
+        });
+
+        function showJeopardy() {
+            document.getElementById('jeopardy-screen').classList.remove('hidden');
+            const g = document.getElementById('j-grid');
+            g.innerHTML = '';
+            jeopardyData.forEach(q => {
+                const c = document.createElement('div');
+                c.className = 'jeopardy-cell';
+                c.innerText = `$${q.v}`;
+                c.onclick = () => startQuiz(q);
+                g.appendChild(c);
+            });
+        }
+
+        function startQuiz(q) {
+            document.getElementById('quiz-modal').classList.remove('hidden');
+            document.getElementById('quiz-q').innerText = q.q;
+            const opt = document.getElementById('quiz-options');
+            opt.innerHTML = '';
+            q.a.forEach((a, i) => {
+                const b = document.createElement('button');
+                b.className = 'pixel-btn text-[8px]';
+                b.innerText = a;
+                b.onclick = () => {
+                    if (i === q.c) {
+                        gameState.score += q.v;
+                        document.getElementById('quiz-modal').classList.add('hidden');
+                    } else endGame();
+                };
+                opt.appendChild(b);
+            });
+        }
+
+        function adminClick() {
+            player.coins += 1000;
+            saveToCloud();
+            alert("Cheat Activated: +1000 Coins!");
+        }
     </script>
 </body>
 </html>
