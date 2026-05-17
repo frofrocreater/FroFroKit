@@ -181,11 +181,19 @@
                 <p style="color:#e94560">- Answer questions about the game!</p>
             </div>
             <div id="ai-loading" class="hidden text-[8px] mb-2 animate-pulse text-yellow-500">THINKING...</div>
-            <input type="text" id="ai-input" placeholder="Message FroAI..." class="w-full bg-black border p-3 text-[8px] mb-3 outline-none rounded">
+            <input type="text" id="ai-input" placeholder="Message FroAI..." class="w-full bg-black border p-3 text-[8px] mb-3 outline-none rounded text-white">
             <div class="flex gap-2">
                 <button onclick="handleAI()" class="nav-btn flex-1 py-3">SEND</button>
                 <button onclick="closeModals()" class="nav-btn bg-gray-700 py-3">CLOSE</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Dash / Chat Modal -->
+    <div id="dash-modal" class="modal-container hidden">
+        <div class="bg-black p-2 rounded-2xl border-4 border-blue-500 w-[95%] max-w-2xl relative">
+            <button onclick="closeModals()" class="absolute -top-12 right-0 text-white bg-red-600 px-4 py-2 rounded text-[8px]">CLOSE DASH</button>
+            <iframe id="dash-iframe" src="https://frofrocreater.github.io/FroFroChat/" class="w-full h-[70vh] rounded-lg"></iframe>
         </div>
     </div>
 
@@ -216,7 +224,7 @@
             <div class="mb-6 p-4 border border-blue-500 rounded bg-blue-900/10">
                 <h3 class="text-[8px] mb-2">CUSTOM SETS</h3>
                 <div id="custom-sets-list" class="space-y-2 mb-3"></div>
-                <input type="text" id="manual-set-name" placeholder="New Set Name..." class="w-full bg-black p-2 text-[8px] mb-2 border border-blue-800">
+                <input type="text" id="manual-set-name" placeholder="New Set Name..." class="w-full bg-black p-2 text-[8px] mb-2 border border-blue-800 text-white">
                 <button onclick="createManualSet()" class="nav-btn w-full py-2">SAVE CURRENT SET</button>
             </div>
             <h3 class="text-[8px] mb-2">MY BLOOKS</h3>
@@ -237,7 +245,7 @@
     <!-- Game View -->
     <div id="game-container" class="hidden relative w-full max-w-[400px]">
         <div class="flex justify-between items-center px-4 py-3 text-[8px] bg-[#16213e] rounded-t-lg border-x-4 border-t-4 border-[#0f3460]">
-            <button onclick="exitGame()" class="bg-red-600 px-3 py-1 rounded">EXIT</button>
+            <button onclick="exitGame()" class="bg-red-600 px-3 py-1 rounded text-[8px]">EXIT</button>
             <div id="game-info">SCORE: <span id="score-val">0</span></div>
             <div id="game-skin-display" class="text-xl">🔴</div>
         </div>
@@ -403,10 +411,35 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: `The user said: "${input}". 
-                        If they want a trivia set, return JSON: {"type":"quiz", "name":"SetName", "data":[{"q":"..","a":["..","..",".."],"c":0}]}. 
-                        If they just want to chat, return JSON: {"type":"chat", "text":"Your response"}.
-                        Be friendly and concise.` }] }],
-                        generationConfig: { responseMimeType: "application/json" }
+                        If they want a trivia set, return JSON properties matching the schema defined.
+                        If they just want to chat, reply under 'text'.` }] }],
+                        generationConfig: { 
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    type: { type: "STRING" },
+                                    name: { type: "STRING" },
+                                    data: {
+                                        type: "ARRAY",
+                                        items: {
+                                            type: "OBJECT",
+                                            properties: {
+                                                q: { type: "STRING" },
+                                                a: {
+                                                    type: "ARRAY",
+                                                    items: { type: "STRING" }
+                                                },
+                                                c: { type: "INTEGER" }
+                                            },
+                                            required: ["q", "a", "c"]
+                                        }
+                                    },
+                                    text: { type: "STRING" }
+                                },
+                                required: ["type"]
+                            }
+                        }
                     })
                 });
                 const result = await response.json();
@@ -414,11 +447,11 @@
                 loader.classList.add('hidden');
 
                 if (aiData.type === 'quiz') {
-                    player.customSets.push({ name: aiData.name, questions: aiData.data });
-                    chat.innerHTML += `<p style="color:#e94560">AI: I've created the "${aiData.name}" set! Check your Locker.</p>`;
+                    player.customSets.push({ name: aiData.name || "Custom Set", questions: aiData.data });
+                    chat.innerHTML += `<p style="color:#e94560">AI: I've created the "${aiData.name || 'Custom Set'}" set! Check your Locker.</p>`;
                     updateUI();
                 } else {
-                    chat.innerHTML += `<p style="color:#e94560">AI: ${aiData.text}</p>`;
+                    chat.innerHTML += `<p style="color:#e94560">AI: ${aiData.text || "I didn't quite catch that. Try asking me to make a trivia set!"}</p>`;
                 }
             } catch (e) {
                 loader.classList.add('hidden');
@@ -500,6 +533,10 @@
 
         function startGame(mode) {
             if (mode === 'void' && !player.isCore) return showModal('subs');
+            if (mode === 'dash-game') {
+                showModal('dash');
+                return;
+            }
             
             game = {
                 active: true, mode, score: 0, frame: 0,
@@ -538,7 +575,6 @@
             switch(game.mode) {
                 case 'racer': updateRacer(); break;
                 case 'flappy': updateFlappy(); break;
-                case 'dash-game': updateDash(); break;
                 case 'void': updateVoid(); break;
             }
 
@@ -571,17 +607,6 @@
             });
             if (game.py > 500 || game.py < 0) triggerDeath();
             drawPlayer(80, game.py);
-        }
-
-        function updateDash() {
-            if (game.frame % 20 === 0) game.entities.push({ x: Math.random() * 400, y: -30, s: 4 + Math.random() * 6 });
-            game.entities.forEach((o, i) => {
-                o.y += o.s;
-                ctx.fillStyle = "#f59e0b"; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI*2); ctx.fill();
-                if (Math.abs(o.x - game.px) < 30 && Math.abs(o.y - 450) < 30) triggerDeath();
-                if (o.y > 520) { game.entities.splice(i, 1); game.score += 5; }
-            });
-            drawPlayer(game.px, 450);
         }
 
         function updateVoid() {
@@ -734,6 +759,25 @@
         setupBtn('btn-left', 'left');
         setupBtn('btn-right', 'right');
         setupBtn('btn-up', 'up');
+
+        // Click or tap interactions on Canvas (works on desktop & iPad)
+        canvas.onpointerdown = (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            if (game.mode === 'void') {
+                game.entities.forEach((a, i) => {
+                    if (Math.hypot(a.x - x, a.y - y) < 30) {
+                        game.entities.splice(i, 1);
+                        game.score += 10;
+                    }
+                });
+            }
+        };
 
         function adminClick() { 
             player.coins += 1000; 
